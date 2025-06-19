@@ -11,5 +11,208 @@
     },
     "host": "localhost:8080",
     "basePath": "/api",
-    "paths": {}
+    "paths": {
+        "/api/product": {
+            "post": {
+                "description": "Creates a new product and returns its ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create product",
+                "parameters": [
+                    {
+                        "description": "Product to create",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/product/{id}": {
+            "get": {
+                "description": "Returns a product with its attributes by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Get product",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Product ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType": {
+            "type": "string",
+            "enum": [
+                "string",
+                "int",
+                "float",
+                "bool",
+                "enum"
+            ],
+            "x-enum-varnames": [
+                "AttrDataTypeString",
+                "AttrDataTypeInt",
+                "AttrDataTypeFloat",
+                "AttrDataTypeBool",
+                "AttrDataTypeEnum"
+            ]
+        },
+        "github_com_Neimess_zorkin-store-project_internal_domain.Attribute": {
+            "type": "object",
+            "properties": {
+                "data_type": {
+                    "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_filterable": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_domain.Product": {
+            "type": "object",
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute"
+                    }
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute": {
+            "type": "object",
+            "properties": {
+                "attribute": {
+                    "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Attribute"
+                },
+                "attribute_id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "value_bool": {
+                    "type": "boolean"
+                },
+                "value_enum": {
+                    "type": "string"
+                },
+                "value_float": {
+                    "type": "number"
+                },
+                "value_int": {
+                    "type": "integer"
+                },
+                "value_string": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }

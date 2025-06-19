@@ -1,5 +1,5 @@
 package domain
-
+//go:generate easyjson -all
 type Category struct {
 	ID   int64  `json:"id" db:"category_id"`
 	Name string `json:"name" db:"name"`

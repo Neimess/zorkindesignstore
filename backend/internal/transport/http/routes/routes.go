@@ -1,7 +1,6 @@
-package restHTTP
+package route
 
 import (
-	"log/slog"
 	"net/http"
 	"net/http/pprof"
 	"time"
@@ -14,13 +13,16 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func (h *Handlers) RegisterRoutes(r chi.Router, logger *slog.Logger) {
+func NewRouter(deps Deps) chi.Router {
+	r := deps.Router
+
+	// middleware
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(30 * time.Second))
 	r.Use(middleware.Compress(5))
-	r.Use(httplog.RequestLogger(logger, &httplog.Options{
+	r.Use(httplog.RequestLogger(deps.Logger, &httplog.Options{
 		RecoverPanics:      true,
 		LogRequestHeaders:  []string{"Origin"},
 		LogResponseHeaders: []string{},
@@ -33,20 +35,28 @@ func (h *Handlers) RegisterRoutes(r chi.Router, logger *slog.Logger) {
 		MaxAge:           300,
 	}))
 
+	// API group
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("OK"))
+		})
+
+		ph := deps.Handlers.ProductHandler
+		r.Route("/product", func(r chi.Router) {
+			r.Post("/", ph.Create)
+			r.Get("/{id}", ph.GetDetailed)
 		})
 	})
 
 	r.Get("/swagger", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/swagger/index.html", http.StatusMovedPermanently)
 	})
-
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	r.Mount("/debug/pprof", profiler())
+
+	return r
 }
 
 func profiler() http.Handler {

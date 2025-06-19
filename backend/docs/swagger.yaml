@@ -1,11 +1,146 @@
 basePath: /api
+definitions:
+  github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType:
+    enum:
+    - string
+    - int
+    - float
+    - bool
+    - enum
+    type: string
+    x-enum-varnames:
+    - AttrDataTypeString
+    - AttrDataTypeInt
+    - AttrDataTypeFloat
+    - AttrDataTypeBool
+    - AttrDataTypeEnum
+  github_com_Neimess_zorkin-store-project_internal_domain.Attribute:
+    properties:
+      data_type:
+        $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType'
+      id:
+        type: integer
+      is_filterable:
+        type: boolean
+      name:
+        type: string
+      slug:
+        type: string
+      unit:
+        type: string
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_domain.Product:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute'
+        type: array
+      category_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute:
+    properties:
+      attribute:
+        $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Attribute'
+      attribute_id:
+        type: integer
+      product_id:
+        type: integer
+      value_bool:
+        type: boolean
+      value_enum:
+        type: string
+      value_float:
+        type: number
+      value_int:
+        type: integer
+      value_string:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: API for managing products and categories
   title: Zorkin Store API
   version: "1.0"
-paths: {}
+paths:
+  /api/product:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product and returns its ID
+      parameters:
+      - description: Product to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create product
+      tags:
+      - products
+  /api/product/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a product with its attributes by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get product
+      tags:
+      - products
 schemes:
 - http
 swagger: "2.0"

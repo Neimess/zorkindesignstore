@@ -39,6 +39,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 		psql.WithConnLifetime(dep.Config.Storage.ConnMaxLifetime),
 		psql.WithMaxConns(dep.Config.Storage.MaxOpenConns),
 		psql.WithSSL(dep.Config.Storage.SSLMode),
+		psql.WithDB(dep.Config.Storage.DBName),
 	)
 	if err != nil {
 		log.Error("db connect failed", slog.Any("error", err))
@@ -52,7 +53,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 	)
 
 	// 2. Репозитории — отвечают за доступ к данным
-	repos := repository.New(db)
+	repos := repository.New(db, dep.Logger)
 	logNew.Debug("repositories initialized")
 
 	// 3. Сервисы — бизнес-логика, используют репозиторий
@@ -71,6 +72,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 	restHandlers := restHTTP.New(&restHTTP.Deps{
 		ProductService:  services.ProductService,
 		CategoryService: services.CategoryService,
+		Logger:          dep.Logger,
 	})
 	// 5. Сервер — HTTP-сервер
 	srv := rest.NewServer(dep.Config.HTTPServer, restHandlers, dep.Logger)

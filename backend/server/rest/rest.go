@@ -8,6 +8,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/routes"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -18,7 +19,11 @@ type Server struct {
 
 func NewServer(cfg config.HTTPServer, handlers *restHTTP.Handlers, logger *slog.Logger) *Server {
 	r := chi.NewRouter()
-	handlers.RegisterRoutes(r, logger)
+	route.NewRouter(route.Deps{
+		Router: r,
+		Handlers: handlers,
+		Logger: logger,
+	})
 
 	srv := &http.Server{
 		Handler:           r,

@@ -26,3 +26,4 @@ func New(d Deps) *Service {
 		CategoryService: NewCategoryService(d.CategoryRepository, d.Logger),
 	}
 }
+

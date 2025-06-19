@@ -3,125 +3,126 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"embed"
 	_ "embed"
+	"errors"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/jackc/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
-// //go:embed sql/product/get_product_with_characteristics.sql
-// var queryGetProductByIdWithCharacteristics string
+//go:embed sql/*.sql
+var queries embed.FS
+
+var (
+	ErrProductIsNil      = errors.New("product is nil")
+	ErrProductNotFound   = errors.New("product not found")
+	ErrCategoryNotExists = errors.New("referenced category does not exist")
+)
 
 type ProductRepository struct {
-	db *sqlx.DB
+	db  *sqlx.DB
+	log *slog.Logger
 }
 
-func NewProductRepository(db *sqlx.DB) *ProductRepository {
-	return &ProductRepository{db: db}
+func NewProductRepository(db *sqlx.DB, logger *slog.Logger) *ProductRepository {
+	return &ProductRepository{db: db, log: logger.With("component", "repo.product")}
 }
 
-func (r *ProductRepository) CreateProduct(ctx context.Context, p *domain.Product, images []domain.ProductImage) (retErr error) {
-	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-	if err != nil {
-		return err
+func (r *ProductRepository) CreateProduct(ctx context.Context, p *domain.Product) (int64, error) {
+	const op = "repository.psql.product.create_product"
+	log := r.log.With("op", op)
+	if p == nil {
+		return 0, ErrProductIsNil
 	}
 
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback()
-			panic(p)
-		} else if retErr != nil {
-			_ = tx.Rollback()
-		} else {
-			retErr = tx.Commit()
-		}
-	}()
-
-	const queryProduct = `INSERT INTO products (name, price, category_id) VALUES (?, ?, ?)`
-	res, retErr := tx.ExecContext(ctx, queryProduct, p.Name, p.Price, p.CategoryID)
-	if retErr != nil {
-		return retErr
-	}
-	p.ID, err = res.LastInsertId()
-	if err != nil {
-		return err
-	}
-
-	// Если нет изображений, вставляем пустую запись
-	if len(images) > 0 {
-		const queryImage = `INSERT INTO product_images (product_id, url, alt_text) VALUES (?, ?, ?)`
-		for _, img := range images {
-			if retErr != nil {
-				break
-			}
-			_, retErr = tx.ExecContext(ctx, queryImage, p.ID, img.URL, img.AltText)
-		}
-	} else {
-		const queryImage = `INSERT INTO product_images (product_id, url, alt_text) VALUES (?, '', '')`
-		_, retErr = tx.ExecContext(ctx, queryImage, p.ID)
-	}
-	return retErr
-}
-
-func (r *ProductRepository) GetProduct(ctx context.Context, id int64) (*domain.ProductWithImages, error) {
-	var p struct {
-		domain.Product
-		CategoryName string `db:"category_name"`
-	}
 	const query = `
-		SELECT product_id, name, price, category_id, category_name
-		FROM products 
-		JOIN USING (category_id)
-		WHERE product_id = ?`
+	INSERT INTO products(name, price, description, category_id, image_url)
+	VALUES ($1, $2, $3, $4, $5)
+	RETURNING product_id, created_at
+	`
+	var (
+		id         int64
+		created_at time.Time
+	)
+
+	log.Debug("exec query", slog.String("query", query))
+	err := r.db.QueryRowContext(
+		ctx,
+		query,
+		p.Name,
+		p.Price,
+		p.Description,
+		p.CategoryID,
+		p.ImageURL,
+	).Scan(&id, &created_at)
+
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return 0, err
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23503":
+				return 0, ErrCategoryNotExists
+			case "23505":
+				return 0, fmt.Errorf("product already exists: %w", err)
+			}
+		}
+
+		return 0, fmt.Errorf("create product: %w", err)
+	}
+
+	p.ID = id
+	p.CreatedAt = created_at
+	return id, nil
+
+}
+
+// GetProduct fetches a product by its id along with its attributes.
+// Returns ErrProductNotFound if the row does not exist.
+func (r *ProductRepository) GetProductWithAttrs(ctx context.Context, id int64) (*domain.Product, error) {
+	const op = "repository.psql.product.create_product"
+	log := r.log.With("op", op)
+	const query = `
+        SELECT product_id, name, price, description, category_id, image_url, created_at
+        FROM products
+        WHERE product_id = $1
+    `
+	log.Debug("exec query", slog.String("query", query))
+	var p domain.Product
 	if err := r.db.GetContext(ctx, &p, query, id); err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrProductNotFound
+		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+			return nil, err
+		default:
+			return nil, fmt.Errorf("get product by id=%d: %w", id, err)
+		}
+	}
+	log.Debug(fmt.Sprintf("select product with id = %d", id), "product", p)
+	attrQuery, err := queries.ReadFile("sql/productAttributesQuery.sql")
+	if err != nil {
+		return nil, fmt.Errorf("read productAttributesQuery.sql: %w", err)
 	}
 
-	var imgs []domain.ProductImage
-	if err := r.db.SelectContext(ctx, &imgs, `SELECT image_id, product_id, url, alt_text FROM product_images WHERE product_id = ? ORDER BY image_id`, p.ID); err != nil {
-		return nil, err
+	log.Debug("exec query", slog.String("query", string(attrQuery)))
+	var attrs []domain.ProductAttribute
+	if err := r.db.SelectContext(ctx, &attrs, string(attrQuery), p.ID); err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("fetch product attributes for product_id=%d: %w", p.ID, err)
 	}
-
-	return &domain.ProductWithImages{
-		Product: p.Product,
-		Images:  imgs,
-	}, nil
-}
-
-// GetProductByID возвращает продукт по ID с его изображениями.
-func (r *ProductRepository) GetByID(ctx context.Context, productID int64) (*domain.ProductWithCharacteristics, error) {
-	var p domain.ProductWithCharacteristics
-	const qProduct = `
-		SELECT product_id, name, price, category_id
-		FROM products
-		WHERE product_id = ?
-	`
-	if err := r.db.GetContext(ctx, &p, qProduct, productID); err != nil {
-		return nil, fmt.Errorf("get product: %w", err)
-	}
-
-	const qImages = `
-		SELECT image_id, url, alt_text
-		FROM product_images
-		WHERE product_id = ?
-	`
-	if err := r.db.SelectContext(ctx, &p.Images, qImages, productID); err != nil {
-		return nil, fmt.Errorf("get images: %w", err)
-	}
-
-	const qChars = `
-		SELECT characteristic_id, characteristic_name
-		FROM category_characteristics
-		WHERE category_id = ?
-	`
-	if err := r.db.SelectContext(ctx, &p.Characteristics, qChars, p.CategoryID); err != nil {
-		return nil, fmt.Errorf("get characteristics: %w", err)
-	}
-
+	log.Debug("getted attrs", "attrs", attrs)
+	p.Attributes = attrs
+	log.Debug("final product with attrs", "product", p)
 	return &p, nil
-}
-
-func GetAllProductInCategory(category_id int64) {
-	
 }

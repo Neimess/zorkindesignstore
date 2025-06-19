@@ -92,7 +92,6 @@ func (r *ProductRepository) GetProduct(ctx context.Context, id int64) (*domain.P
 // GetProductByID возвращает продукт по ID с его изображениями.
 func (r *ProductRepository) GetByID(ctx context.Context, productID int64) (*domain.ProductWithCharacteristics, error) {
 	var p domain.ProductWithCharacteristics
-
 	const qProduct = `
 		SELECT product_id, name, price, category_id
 		FROM products
@@ -123,19 +122,6 @@ func (r *ProductRepository) GetByID(ctx context.Context, productID int64) (*doma
 	return &p, nil
 }
 
-// GetAllProducts возвращает все продукты с их изображениями.
-func (r *ProductRepository) GetAllProductsInCategory(ctx context.Context, category_id int64) ([]domain.ProductWithImages, error) {
-	var products []domain.Product
-	if err := r.db.SelectContext(ctx, &products, `SELECT product_id, name, price, category_id FROM products WHERE category_id = ?`); err != nil {
-		return nil, err
-	}
-	result := make([]domain.ProductWithImages, 0, len(products))
-	for _, p := range products {
-		var imgs []domain.ProductImage
-		if err := r.db.SelectContext(ctx, &imgs, `SELECT image_id, product_id, url, alt_text FROM product_images WHERE product_id = ? ORDER BY image_id`, p.ID); err != nil {
-			return nil, err
-		}
-		result = append(result, domain.ProductWithImages{Product: p, Images: imgs})
-	}
-	return result, nil
+func GetAllProductInCategory(category_id int64) {
+	
 }

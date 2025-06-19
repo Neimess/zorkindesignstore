@@ -2,28 +2,26 @@ package domain
 
 import "time"
 
+
 type Product struct {
-	ID         int64  `db:"product_id"`
-	Name       string `db:"name"`
-	Price      int64  `db:"price"`
-	CategoryID int64  `db:"category_id"`
+    ID          int64     `json:"id" db:"product_id"`
+    Name        string    `json:"name" db:"name"`
+    Price       float64   `json:"price" db:"price"`
+    Description string    `json:"description,omitempty" db:"description"`
+    CategoryID  int64     `json:"category_id" db:"category_id"`
+    ImageURL    string    `json:"image_url,omitempty" db:"image_url"`
+    CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
-type ProductImage struct {
-	ID        int64  `db:"image_id"`
-	ProductID int64  `db:"product_id"`
-	URL       string `db:"url"`
-	AltText   string `db:"alt_text"`
-}
+type ProductAttribute struct {
+    ProductID   int64    `json:"product_id" db:"product_id"`
+    AttributeID int64    `json:"attribute_id" db:"attribute_id"`
 
-type Preset struct {
-	ID          int64     `db:"id"`
-	Name        string    `db:"name"`
-	Description string    `db:"description"`
-	ImageURL    string    `db:"image_url"`
-	ProductIDs  []int64   `db:"-"`
-	CreatedAt   time.Time `db:"created_at"`
-	IsActive    bool      `db:"is_active"`
+    ValueString *string  `json:"value_string,omitempty" db:"value_string"`
+    ValueInt    *int64   `json:"value_int,omitempty" db:"value_int"`
+    ValueFloat  *float64 `json:"value_float,omitempty" db:"value_float"`
+    ValueBool   *bool    `json:"value_bool,omitempty" db:"value_bool"`
+    ValueEnum   *string  `json:"value_enum,omitempty" db:"value_enum"`
 }
 
 type PresetProduct struct {

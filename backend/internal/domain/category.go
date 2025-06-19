@@ -1,12 +1,18 @@
 package domain
 
 type Category struct {
-	ID   int64  `db:"category_id"`
-	Name string `db:"category_name"`
+	ID   int64  `json:"id" db:"category_id"`
+	Name string `json:"name" db:"name"`
 }
 
-type CategoryCharacteristic struct {
-	ID         int64  `db:"characteristic_id"`
-	Name       string `db:"characteristic_name"`
-	CategoryID int64  `db:"category_id"`
+type CategoryAttribute struct {
+    CategoryID  int64 `json:"category_id" db:"category_id"`
+    AttributeID int64 `json:"attribute_id" db:"attribute_id"`
+    IsRequired  bool  `json:"is_required" db:"is_required"`
+}
+
+type CategoryAttributePriority struct {
+    CategoryID  int64 `json:"category_id" db:"category_id"`
+    AttributeID int64 `json:"attribute_id" db:"attribute_id"`
+    Priority    int   `json:"priority" db:"priority"`
 }

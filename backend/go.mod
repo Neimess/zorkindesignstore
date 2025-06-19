@@ -6,7 +6,9 @@ require (
 	github.com/MatusOllah/slogcolor v1.6.0
 	github.com/alexflint/go-arg v1.5.1
 	github.com/go-chi/chi/v5 v5.2.1
+	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/httplog/v3 v3.2.0
+	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.5.4

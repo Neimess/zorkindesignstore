@@ -32,19 +32,20 @@ func New(opts ...Opt) (*Migrator, error) {
 }
 
 func (m *Migrator) Up() error {
-	return m.run(func(mg *migrate.Migrate) error { return mg.Up() })
+	return m.runRaw(func(mg *migrate.Migrate) error { return mg.Up() })
 }
 
+
 func (m *Migrator) Down() error {
-	return m.run(func(mg *migrate.Migrate) error { return mg.Steps(-1) })
+	return m.runRaw(func(mg *migrate.Migrate) error { return mg.Steps(-1) })
 }
 
 func (m *Migrator) Steps(n int) error {
-	return m.run(func(mg *migrate.Migrate) error { return mg.Steps(n) })
+	return m.runRaw(func(mg *migrate.Migrate) error { return mg.Steps(n) })
 }
 
 func (m *Migrator) Force(version int) error {
-	return m.run(func(mg *migrate.Migrate) error {
+	return m.runRaw(func(mg *migrate.Migrate) error {
 		if err := mg.Force(version); err != nil && err != migrate.ErrNoChange {
 			return fmt.Errorf("force failed: %w", err)
 		}
@@ -53,7 +54,7 @@ func (m *Migrator) Force(version int) error {
 }
 
 func (m *Migrator) Version() (version uint, err error) {
-	err = m.run(func(mg *migrate.Migrate) error {
+	err = m.runRaw(func(mg *migrate.Migrate) error {
 		version, _, err = mg.Version()
 		return err
 	})
@@ -63,7 +64,8 @@ func (m *Migrator) Version() (version uint, err error) {
 	return version, nil
 }
 
-func (m *Migrator) run(f func(*migrate.Migrate) error) error {
+
+func (m *Migrator) runRaw(f func(*migrate.Migrate) error) error {
 	dbDrv, dbName, closeFn, err := m.db.Driver()
 	if err != nil {
 		return fmt.Errorf("db driver: %w", err)
@@ -82,8 +84,6 @@ func (m *Migrator) run(f func(*migrate.Migrate) error) error {
 		return fmt.Errorf("migrate init: %w", err)
 	}
 
-	if err := f(mg); err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-	return nil
+	return f(mg)
 }
+

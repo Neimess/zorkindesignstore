@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/Neimess/zorkin-store-project/docs"
 	"github.com/Neimess/zorkin-store-project/internal/app"
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	"github.com/Neimess/zorkin-store-project/pkg/args"

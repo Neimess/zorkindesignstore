@@ -1,0 +1,11 @@
+basePath: /api
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing products and categories
+  title: Zorkin Store API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+swagger: "2.0"

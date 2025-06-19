@@ -1,0 +1,21 @@
+env: local
+admin_code: "admin123"
+
+http_server:
+    address: "0.0.0.0:8080"
+    max_header_bytes: 1048576
+    read_timeout: 10s
+    write_timeout: 10s
+    shutdown_timeout: 5s
+    idle_timeout: 120s
+    enable_cors: true
+    enable_pprof: false
+
+storage:
+    host: localhost
+    port: 5450
+    user: zorkindev
+    password: zorkindevpass
+    dbname: zorkindevdb
+    conn_max_timeout: 30s
+

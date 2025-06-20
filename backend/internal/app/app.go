@@ -73,21 +73,23 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	services := service.New(
 		service.Deps{
-			Logger:             dep.Logger,
-			Config:             dep.Config,
-			ProductRepository:  repos.ProductRepository,
-			CategoryRepository: repos.CategoryRepository,
-			JWTGenerator:       jwtGenerator,
+			Logger:                      dep.Logger,
+			Config:                      dep.Config,
+			ProductRepository:           repos.ProductRepository,
+			CategoryRepository:          repos.CategoryRepository,
+			CategoryAttributeRepository: repos.CategoryAttributeRepository,
+			JWTGenerator:                jwtGenerator,
 		},
 	)
 	logNew.Debug("services wired")
 
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)
 	restHandlers := restHTTP.New(&restHTTP.Deps{
-		ProductService:  services.ProductService,
-		CategoryService: services.CategoryService,
-		AuthService:     services.AuthService,
-		Logger:          dep.Logger,
+		ProductService:           services.ProductService,
+		CategoryService:          services.CategoryService,
+		AuthService:              services.AuthService,
+		CategoryAttributeService: services.CategoryAttributeService,
+		Logger:                   dep.Logger,
 	})
 	// 5. Сервер — HTTP-сервер
 	srv := rest.NewServer(rest.Deps{

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	_ "github.com/Neimess/zorkin-store-project/docs"
-	customMiddlewares "github.com/Neimess/zorkin-store-project/pkg/http/middleware"
+	customMiddlewares "github.com/Neimess/zorkin-store-project/pkg/httputils/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -59,25 +59,47 @@ func NewRouter(deps Deps) chi.Router {
 			r.Get("/category/{id}", ph.ListByCategory)
 			r.Get("/{id}", ph.GetDetailed)
 		})
+
 		ch := deps.Handlers.CategoryHandler
 		r.Route("/category", func(r chi.Router) {
 
 			r.Get("/{id}", ch.Get)
 			r.Get("/", ch.List)
-			r.Post("/", ch.Create)
-			r.Put("/{id}", ch.Update)
-			r.Delete("/{id}", ch.Delete)
 		})
+
 		authH := deps.Handlers.AuthHandler
+
 		r.Route("/admin", func(r chi.Router) {
+			// 1) одноразовый login по “секретному” URL
 			r.Get(fmt.Sprintf("/auth/%s", deps.Config.AdminCode), authH.Login)
 
-
-			r.Route("/product", func(r chi.Router) {
+			// 2) всё, что ниже, за JWT
+			r.Group(func(r chi.Router) {
 				r.Use(jwtMiddleware.CheckJWT)
 
-				r.Post("/", ph.Create)
-				r.Post("/detailed", ph.CreateWithAttributes)
+				// ── продукты (CRUD) ──
+				r.Route("/product", func(r chi.Router) {
+					r.Post("/", ph.Create)
+					r.Post("/detailed", ph.CreateWithAttributes)
+					// r.Put("/{id}",    ph.Update)
+					// r.Delete("/{id}", ph.Delete)
+				})
+
+				// ── категории (CRUD) ──
+				r.Route("/category", func(r chi.Router) {
+					r.Post("/", ch.Create)
+					r.Put("/{id}", ch.Update)
+					r.Delete("/{id}", ch.Delete)
+
+					// ── Category-Attribute связи ──
+					cah := deps.Handlers.CategoryAttributeHandler
+					r.Route("/{categoryID}/attribute", func(r chi.Router) {
+						r.Get("/", cah.GetByCategory)          // список связей
+						r.Post("/", cah.Create)                // создать
+						r.Put("/{attributeID}", cah.Update)    // обновить
+						r.Delete("/{attributeID}", cah.Delete) // удалить
+					})
+				})
 			})
 		})
 	})

@@ -4,8 +4,9 @@ package restHTTP
 import "log/slog"
 
 type Deps struct {
-	ProductService  ProductService
-	CategoryService CategoryService
-	AuthService     AuthService
-	Logger          *slog.Logger
+	ProductService           ProductService
+	CategoryService          CategoryService
+	AuthService              AuthService
+	CategoryAttributeService CategoryAttributeService
+	Logger                   *slog.Logger
 }

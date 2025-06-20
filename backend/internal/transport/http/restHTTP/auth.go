@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 
@@ -36,7 +37,7 @@ func NewAuthHandler(srv AuthService, log *slog.Logger) *AuthHandler {
 // @Success      201  {object}  dto.TokenResponse  "Returns generated token"
 // @Failure      401  {object}  dto.ErrorResponse  "Unauthorized access"
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
-// @Router       /api/auth/login/{secret_admin_key} [get]
+// @Router       /api/admin/auth/{secret_admin_key} [get]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.auth.CreateToken"
 	log := h.log.With("op", op)
@@ -45,11 +46,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := h.srv.GenerateToken(userID)
 	if err != nil {
 		log.Error("failed to generate token", slog.Any("error", err))
-		writeError(w, http.StatusInternalServerError, "failed to generate token")
+		httputils.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, dto.TokenResponse{
+	httputils.WriteJSON(w, http.StatusCreated, dto.TokenResponse{
 		Token: token,
 	})
 }

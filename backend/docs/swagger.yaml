@@ -1,4 +1,26 @@
 definitions:
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest:
+    properties:
+      attribute_id:
+        type: integer
+      category_id:
+        type: integer
+      is_required:
+        type: boolean
+      priority:
+        type: integer
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeResponse:
+    properties:
+      attribute_id:
+        type: integer
+      category_id:
+        type: integer
+      is_required:
+        type: boolean
+      priority:
+        type: integer
+    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest:
     properties:
       name:
@@ -133,10 +155,196 @@ definitions:
     type: object
 info:
   contact: {}
-  description: API for managing products and categories
   title: Zorkin Store API
   version: "1.0"
 paths:
+  /api/admin/auth/{secret_admin_key}:
+    get:
+      description: Generates a Bearer token for the user
+      parameters:
+      - description: Secret admin key for login, injected via route
+        in: path
+        name: secret_admin_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns generated token
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Login user
+      tags:
+      - auth
+  /api/admin/category/{categoryID}/attribute:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает все атрибуты, привязанные к категории, в порядке приоритета.
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeResponse'
+            type: array
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List attributes of a category
+      tags:
+      - category-attributes
+    post:
+      consumes:
+      - application/json
+      description: Создаёт связь «категория ↔ атрибут» с указанием обязательности
+        и приоритета.
+      parameters:
+      - description: Mapping to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Bind attribute to category
+      tags:
+      - category-attributes
+  /api/admin/category/{categoryID}/attribute/{attributeID}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаляет связь атрибута и категории.
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute ID
+        in: path
+        name: attributeID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Mapping not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete mapping
+      tags:
+      - category-attributes
+    put:
+      consumes:
+      - application/json
+      description: Обновляет обязательность/приоритет связки «категория ↔ атрибут».
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute ID
+        in: path
+        name: attributeID
+        required: true
+        type: integer
+      - description: New values
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Mapping not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update mapping
+      tags:
+      - category-attributes
   /api/admin/product:
     post:
       consumes:
@@ -247,37 +455,9 @@ paths:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
       security:
       - BearerAuth: []
-      - AdminAuth: []
       summary: Create product with attributes
       tags:
       - products
-  /api/auth/login/{secret_admin_key}:
-    get:
-      description: Generates a Bearer token for the user
-      parameters:
-      - description: Secret admin key for login, injected via route
-        in: path
-        name: secret_admin_key
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Returns generated token
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse'
-        "401":
-          description: Unauthorized access
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      summary: Login user
-      tags:
-      - auth
   /api/category:
     get:
       produces:
@@ -325,6 +505,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Create category
       tags:
       - categories
@@ -353,6 +535,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Delete category
       tags:
       - categories
@@ -417,6 +601,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update category
       tags:
       - categories
@@ -502,6 +688,7 @@ schemes:
 - http
 securityDefinitions:
   BearerAuth:
+    description: Type **"Bearer <JWT>"** here
     in: header
     name: Authorization
     type: apiKey

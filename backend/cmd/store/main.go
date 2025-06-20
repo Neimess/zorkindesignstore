@@ -18,10 +18,10 @@ const op = "cmd.main"
 
 // @title Zorkin Store API
 // @version 1.0
-// @description API for managing products and categories
 // @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
+// @in                         header
+// @name                       Authorization
+// @description                Type **"Bearer <JWT>"** here
 // @host localhost:8080
 
 // @schemes http

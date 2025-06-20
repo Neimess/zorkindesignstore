@@ -9,6 +9,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
 	"github.com/mailru/easyjson"
@@ -65,14 +66,14 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var input dto.ProductCreateRequest
 	if err := easyjson.UnmarshalFromReader(r.Body, &input); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
 	validator.StructCtx(ctx, &input)
 	if err := validator.StructCtx(ctx, &input); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
-		writeError(w, http.StatusUnprocessableEntity, "invalid product data")
+		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
 		return
 	}
 	product := mapCreateReqToDomain(&input)
@@ -84,14 +85,14 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 			slog.Int64("category_id", product.CategoryID),
 			slog.String("name", product.Name),
 		)
-		writeError(w, http.StatusBadRequest, "invalid foreign key in product")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid foreign key in product")
 		return
 	case err != nil:
 		log.Error("unexpected service error", slog.Any("error", err))
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
 	default:
 		log.Error("unexpected service error", slog.Any("error", err))
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -105,7 +106,6 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Security     AdminAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
 // @Success      201      {object}  dto.IDResponse  "Returns created product ID"
 // @Failure      400      {object}  dto.ErrorResponse "Bad request"
@@ -124,7 +124,7 @@ func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Re
 	var req dto.ProductCreateRequest
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
@@ -137,11 +137,11 @@ func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Re
 			log.Warn("validation failed",
 				slog.String("reason", "invalid attribute_id"),
 			)
-			_, _ = writeError(w, http.StatusBadRequest, "invalid product data")
+			_, _ = httputils.WriteError(w, http.StatusBadRequest, "invalid product data")
 			return
 		default:
 			log.Error("unexpected service error", slog.Any("error", err))
-			_, _ = writeError(w, http.StatusInternalServerError, "internal server error")
+			_, _ = httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 	}
@@ -164,13 +164,13 @@ func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Re
 func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.GetDetailed")
-	id, err := idFromUrlToInt64(r)
+	id, err := httputils.IDFromURL(r, "id")
 
 	if err != nil || id <= 0 {
 		log.Warn("parse id error",
 			slog.Any("product_id", id),
 			slog.String("error", err.Error()))
-		writeError(w, http.StatusBadRequest, "invalid product ID")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid product ID")
 		return
 	}
 
@@ -178,17 +178,17 @@ func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, service.ErrProductNotFound):
 		log.Warn("product not found", slog.Int64("product_id", id))
-		writeError(w, 404, "product not found")
+		httputils.WriteError(w, 404, "product not found")
 		return
 	case err != nil:
 		log.Error("unhandled service error", slog.Any("err", err))
-		writeError(w, 500, "internal server error")
+		httputils.WriteError(w, 500, "internal server error")
 		return
 	}
 
 	resp := mapDomainToProductResponse(product)
 
-	writeJSON(w, http.StatusOK, resp)
+	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // ListProductsByCategory godoc
@@ -208,13 +208,13 @@ func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 func (ph *ProductHandler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.GetByCategoryID")
-	categoryID, err := idFromUrlToInt64(r)
+	categoryID, err := httputils.IDFromURL(r, "id")
 
 	if err != nil || categoryID <= 0 {
 		log.Warn("parse category_id error",
 			slog.Any("category_id", categoryID),
 			slog.String("error", err.Error()))
-		writeError(w, http.StatusBadRequest, "invalid category ID")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid category ID")
 		return
 	}
 
@@ -222,11 +222,11 @@ func (ph *ProductHandler) ListByCategory(w http.ResponseWriter, r *http.Request)
 	switch {
 	case errors.Is(err, service.ErrCategoryNotFound):
 		log.Warn("category not found", slog.Int64("category_id", categoryID))
-		writeError(w, 404, "category not found")
+		httputils.WriteError(w, 404, "category not found")
 		return
 	case err != nil:
 		log.Error("unhandled service error", slog.Any("err", err))
-		writeError(w, 500, "internal server error")
+		httputils.WriteError(w, 500, "internal server error")
 		return
 	}
 
@@ -235,7 +235,7 @@ func (ph *ProductHandler) ListByCategory(w http.ResponseWriter, r *http.Request)
 		resp = append(resp, *mapDomainToProductResponse(&p))
 	}
 
-	writeJSON(w, http.StatusOK, resp)
+	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
 func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {

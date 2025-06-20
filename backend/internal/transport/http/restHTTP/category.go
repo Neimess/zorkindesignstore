@@ -9,6 +9,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
 	"github.com/mailru/easyjson"
@@ -45,6 +46,7 @@ var validate = validator.GetValidator()
 //	@Tags			categories
 //	@Accept			json
 //	@Produce		json
+//  @Security       BearerAuth
 //	@Param			category	body	dto.CategoryCreateRequest	true	"Category to create"
 //	@Success		201
 //	@Failure		400			{object}	dto.ErrorResponse
@@ -59,12 +61,12 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CategoryCreateRequest
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
 		log.Warn("invalid JSON", slog.Any("err", err))
-		writeError(w, 400, "invalid JSON")
+		httputils.WriteError(w, 400, "invalid JSON")
 		return
 	}
 	if err := validate.StructCtx(ctx, &req); err != nil {
 		log.Warn("validation failed", slog.Any("err", err))
-		writeError(w, 400, "validation failed")
+		httputils.WriteError(w, 400, "validation failed")
 		return
 	}
 
@@ -72,11 +74,11 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, service.ErrCategoryExists):
 		log.Warn("duplicate category", slog.String("name", req.Name))
-		writeError(w, 409, "category already exists")
+		httputils.WriteError(w, 409, "category already exists")
 		return
 	case err != nil:
 		log.Error("service error", slog.Any("err", err))
-		writeError(w, 500, "internal server error")
+		httputils.WriteError(w, 500, "internal server error")
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
@@ -88,20 +90,22 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Get category by ID
 //	@Tags			categories
 //	@Produce		json
-//	@Param			id	path	int	true	"Category ID"
-//	@Success		200	{object}	dto.CategoryResponse
-//	@Failure		400	{object}	dto.ErrorResponse
-//	@Failure		404	{object}	dto.ErrorResponse
-//	@Failure		500	{object}	dto.ErrorResponse
-//	@Router			/api/category/{id} [get]
+//
+// @Param			id	path	int	true	"Category ID"
+//
+// @Success		200	{object}	dto.CategoryResponse
+// @Failure		400	{object}	dto.ErrorResponse
+// @Failure		404	{object}	dto.ErrorResponse
+// @Failure		500	{object}	dto.ErrorResponse
+// @Router			/api/category/{id} [get]
 func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Get")
 
-	id, err := idFromUrlToInt64(r)
+	id, err := httputils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
 		log.Warn("bad id", slog.Any("err", err))
-		writeError(w, 400, "invalid id")
+		httputils.WriteError(w, 400, "invalid id")
 		return
 	}
 
@@ -109,16 +113,16 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case errors.Is(err, service.ErrCategoryNotFound):
 		log.Warn("category not found", slog.Int64("id", id))
-		writeError(w, 404, "not found")
+		httputils.WriteError(w, 404, "not found")
 		return
 	case err != nil:
 		log.Error("service error", slog.Any("err", err))
-		writeError(w, 500, "internal server error")
+		httputils.WriteError(w, 500, "internal server error")
 		return
 	}
 
 	resp := dto.CategoryResponse{ID: cat.ID, Name: cat.Name}
-	writeJSON(w, http.StatusOK, &resp)
+	httputils.WriteJSON(w, http.StatusOK, &resp)
 }
 
 // -----------------------------------------------------------------------------
@@ -137,7 +141,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 	cats, err := h.srv.List(ctx)
 	if err != nil {
 		log.Error("service error", slog.Any("err", err))
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -145,7 +149,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cats {
 		resp = append(resp, dto.CategoryResponse{ID: c.ID, Name: c.Name})
 	}
-	writeJSON(w, http.StatusOK, resp)
+	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // -----------------------------------------------------------------------------
@@ -155,6 +159,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 //	@Tags			categories
 //	@Accept			json
 //	@Produce		json
+//  @Security       BearerAuth
 //	@Param			id			path	int							true	"Category ID"
 //	@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
 //	@Success		204
@@ -166,29 +171,29 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Update")
 
-	id, err := idFromUrlToInt64(r)
+	id, err := httputils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		writeError(w, http.StatusBadRequest, "invalid id")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
 	var req dto.CategoryUpdateRequest
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if err := validate.StructCtx(ctx, &req); err != nil {
-		writeError(w, http.StatusBadRequest, "validation failed")
+		httputils.WriteError(w, http.StatusBadRequest, "validation failed")
 		return
 	}
 
 	if err := h.srv.Update(ctx, &domain.Category{ID: id, Name: req.Name}); err != nil {
 		switch {
 		case errors.Is(err, service.ErrCategoryNotFound):
-			writeError(w, http.StatusNotFound, "not found")
+			httputils.WriteError(w, http.StatusNotFound, "not found")
 		default:
 			log.Error("service error", slog.Any("err", err))
-			writeError(w, http.StatusInternalServerError, "internal")
+			httputils.WriteError(w, http.StatusInternalServerError, "internal")
 		}
 		return
 	}
@@ -201,6 +206,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 //	@Summary		Delete category
 //	@Tags			categories
 //	@Produce		json
+//  @Security       BearerAuth
 //	@Param			id	path	int	true	"Category ID"
 //	@Success		204
 //	@Failure		400	{object}	dto.ErrorResponse
@@ -211,20 +217,20 @@ func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Delete")
 
-	id, err := idFromUrlToInt64(r)
+	id, err := httputils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		writeError(w, 400, "invalid id")
+		httputils.WriteError(w, 400, "invalid id")
 		return
 	}
 	if err := h.srv.Delete(ctx, id); err != nil {
 		switch {
 		case errors.Is(err, service.ErrCategoryNotFound):
-			writeError(w, http.StatusNotFound, "not found")
+			httputils.WriteError(w, http.StatusNotFound, "not found")
 		case errors.Is(err, service.ErrCategoryInUse):
-			writeError(w, http.StatusConflict, "category in use")
+			httputils.WriteError(w, http.StatusConflict, "category in use")
 		default:
 			log.Error("service error", slog.Any("err", err))
-			writeError(w, 500, "internal")
+			httputils.WriteError(w, 500, "internal")
 		}
 		return
 	}

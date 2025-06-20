@@ -131,13 +131,126 @@ definitions:
       token:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: API for managing products and categories
   title: Zorkin Store API
   version: "1.0"
 paths:
+  /api/admin/product:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product and returns its ID
+      parameters:
+      - description: Product to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns created product ID
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "403":
+          description: Forbidden access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "405":
+          description: Method not allowed, e.g. POST on GET endpoint
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "409":
+          description: Conflict, e.g. duplicate product
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "422":
+          description: Unprocessable entity, e.g. validation error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "429":
+          description: Too many requests, e.g. rate limiting
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create product
+      tags:
+      - products
+  /api/admin/product/detailed:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product with its attributes and returns the created
+        ID.
+      parameters:
+      - description: Product to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns created product ID
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "403":
+          description: Forbidden access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "405":
+          description: Method not allowed, e.g. POST on GET endpoint
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "409":
+          description: Conflict, e.g. duplicate product
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - AdminAuth: []
+      summary: Create product with attributes
+      tags:
+      - products
   /api/auth/login/{secret_admin_key}:
     get:
       description: Generates a Bearer token for the user
@@ -307,36 +420,6 @@ paths:
       summary: Update category
       tags:
       - categories
-  /api/product:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new product and returns its ID
-      parameters:
-      - description: Product to create
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Returns created product ID
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      summary: Create product
-      tags:
-      - products
   /api/product/{id}:
     get:
       consumes:
@@ -370,37 +453,11 @@ paths:
       summary: Get product
       tags:
       - products
-  /api/product/detailed:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new product with its attributes and returns the created
-        ID.
-      parameters:
-      - description: Product to create
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Returns created product ID
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      summary: Create product with attributes
-      tags:
-      - products
 schemes:
 - http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -18,8 +18,7 @@ type ProductService interface {
 	Create(ctx context.Context, product *domain.Product) (int64, error)
 	CreateWithAttrs(ctx context.Context, product *domain.Product) (int64, error)
 	GetDetailed(ctx context.Context, id int64) (*domain.Product, error)
-	// GetByID(ctx context.Context, id int64) (*domain.ProductWithImages, error)
-	// GetAll(ctx context.Context) ([]domain.ProductWithImages, error)
+	// GetByCategoryID(ctx context.Context, categoryID int64) ([]domain.Product, error)
 }
 
 type ProductHandler struct {
@@ -43,11 +42,19 @@ func NewProductHandler(service ProductService, log *slog.Logger) *ProductHandler
 // @Tags         products
 // @Accept       json
 // @Produce      json
+// @Security     BearerAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
 // @Success      201      {object}  dto.IDResponse "Returns created product ID"
 // @Failure      400      {object}  dto.ErrorResponse "Bad request"
+// @Failure      401      {object}  dto.ErrorResponse "Unauthorized access"
+// @Failure      403      {object}  dto.ErrorResponse "Forbidden access"
+// @Failure      405	  {object}  dto.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      404      {object}  dto.ErrorResponse "Not found"
+// @Failure      409      {object}  dto.ErrorResponse "Conflict, e.g. duplicate product"
+// @Failure      422      {object}  dto.ErrorResponse "Unprocessable entity, e.g. validation error"
+// @Failure      429      {object}  dto.ErrorResponse "Too many requests, e.g. rate limiting"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
-// @Router       /api/product [post]
+// @Router       /api/admin/product [post]
 func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.Create")
@@ -65,7 +72,7 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	validator.StructCtx(ctx, &input)
 	if err := validator.StructCtx(ctx, &input); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
-		writeError(w, http.StatusBadRequest, "invalid product data")
+		writeError(w, http.StatusUnprocessableEntity, "invalid product data")
 		return
 	}
 	product := mapCreateReqToDomain(&input)
@@ -97,11 +104,18 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Tags         products
 // @Accept       json
 // @Produce      json
+// @Security     BearerAuth
+// @Security     AdminAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
 // @Success      201      {object}  dto.IDResponse  "Returns created product ID"
 // @Failure      400      {object}  dto.ErrorResponse "Bad request"
+// @Failure      401      {object}  dto.ErrorResponse "Unauthorized access"
+// @Failure      403      {object}  dto.ErrorResponse "Forbidden access"
+// @Failure      404      {object}  dto.ErrorResponse "Not found"
+// @Failure      405	  {object}  dto.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      409      {object}  dto.ErrorResponse "Conflict, e.g. duplicate product"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
-// @Router       /api/product/detailed [post]
+// @Router       /api/admin/product/detailed [post]
 func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.GetDetailed")
@@ -176,6 +190,8 @@ func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, resp)
 }
+
+
 
 func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {
 	p := &domain.Product{

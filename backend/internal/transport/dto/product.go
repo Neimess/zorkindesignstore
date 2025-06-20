@@ -44,3 +44,6 @@ type ProductAttributeValueResponse struct {
 	IsFilterable bool    `json:"is_filterable"`
 	Value        string  `json:"value" example:"1.25"`
 }
+
+//easyjson:json
+type ProductListResponse []ProductResponse

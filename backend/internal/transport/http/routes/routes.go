@@ -56,25 +56,29 @@ func NewRouter(deps Deps) chi.Router {
 
 		ph := deps.Handlers.ProductHandler
 		r.Route("/product", func(r chi.Router) {
-			r.Group(func(r chi.Router) {
-				r.Use(jwtMiddleware.CheckJWT)
-				r.Post("/", ph.Create)
-				r.Post("/detailed", ph.CreateWithAttributes)
-			})
 
 			r.Get("/{id}", ph.GetDetailed)
 		})
 		ch := deps.Handlers.CategoryHandler
 		r.Route("/category", func(r chi.Router) {
-			r.Post("/", ch.Create)
+
 			r.Get("/{id}", ch.Get)
 			r.Get("/", ch.List)
+			r.Post("/", ch.Create)
 			r.Put("/{id}", ch.Update)
 			r.Delete("/{id}", ch.Delete)
 		})
 		authH := deps.Handlers.AuthHandler
 		r.Route("/admin", func(r chi.Router) {
 			r.Get(fmt.Sprintf("/auth/%s", deps.Config.AdminCode), authH.Login)
+
+
+			r.Route("/product", func(r chi.Router) {
+				r.Use(jwtMiddleware.CheckJWT)
+
+				r.Post("/", ph.Create)
+				r.Post("/detailed", ph.CreateWithAttributes)
+			})
 		})
 	})
 

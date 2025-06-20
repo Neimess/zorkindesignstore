@@ -21,6 +21,7 @@ type ProductRepository interface {
 	Create(ctx context.Context, p *domain.Product) (int64, error)
 	CreateWithAttrs(ctx context.Context, p *domain.Product) (int64, error)
 	GetWithAttrs(ctx context.Context, id int64) (*domain.Product, error)
+	ListByCategory(ctx context.Context, catID int64) ([]domain.Product, error)
 }
 
 type ProductService struct {
@@ -96,4 +97,21 @@ func (ps *ProductService) GetDetailed(ctx context.Context, id int64) (*domain.Pr
 		slog.String("name", product.Name),
 	)
 	return product, nil
+}
+
+func (ps *ProductService) GetByCategoryID(ctx context.Context, catID int64) ([]domain.Product, error) {
+	const op = "service.product.GetByCategoryID"
+	log := ps.log.With("op", op)
+
+	products, err := ps.repo.ListByCategory(ctx, catID)
+	switch {
+	case errors.Is(err, repository.ErrCategoryNotFound):
+		return nil, ErrCategoryNotFound
+	case err != nil:
+		log.Error("repo error", slog.Any("err", err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("products retrieved", slog.Int64("category_id", catID), slog.Int("count", len(products)))
+	return products, nil
 }

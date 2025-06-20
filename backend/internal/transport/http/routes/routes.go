@@ -56,7 +56,7 @@ func NewRouter(deps Deps) chi.Router {
 
 		ph := deps.Handlers.ProductHandler
 		r.Route("/product", func(r chi.Router) {
-
+			r.Get("/category/{id}", ph.ListByCategory)
 			r.Get("/{id}", ph.GetDetailed)
 		})
 		ch := deps.Handlers.CategoryHandler

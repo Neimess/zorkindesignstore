@@ -13,6 +13,7 @@ import (
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 var (
@@ -151,7 +152,7 @@ func (r *ProductRepository) GetWithAttrs(ctx context.Context, id int64) (*domain
         SELECT
           pa.attribute_id,
           pa.value,
-          a.name, a.slug, a.data_type, a.unit, a.is_filterable
+          a.name, a.slug, a.unit, a.is_filterable
         FROM product_attributes pa
         JOIN attributes a ON a.attribute_id = pa.attribute_id
         WHERE pa.product_id = $1
@@ -196,6 +197,98 @@ func (r *ProductRepository) GetWithAttrs(ctx context.Context, id int64) (*domain
 	}
 	p.Attributes = attrs
 	return &p, nil
+}
+
+func (r *ProductRepository) ListByCategory(ctx context.Context, catID int64) ([]domain.Product, error) {
+	const query = `
+	SELECT product_id, name, price, description, category_id, image_url, created_at
+	FROM products
+	WHERE category_id = $1
+	`
+	done := dbLog(ctx, r.log, query)
+
+	var products []domain.Product
+	err := r.db.SelectContext(ctx, &products, query, catID)
+	done(err, slog.Int64("category_id", catID))
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, nil
+		case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
+			return nil, err
+		default:
+			return nil, fmt.Errorf("list products by category: %w", err)
+		}
+	}
+
+	if len(products) == 0 {
+		return products, nil
+	}
+
+	productMap := make(map[int64]*domain.Product, len(products))
+	for i := range products {
+		p := &products[i]
+		productMap[p.ID] = p
+	}
+
+	const attrQuery = `
+	SELECT pa.product_id, pa.attribute_id, pa.value,
+	a.name, a.slug, a.unit, a.is_filterable
+	FROM product_attributes pa JOIN attributes a ON a.attribute_id = pa.attribute_id
+	WHERE pa.product_id = ANY($1)
+	`
+
+	productIDs := make([]int64, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+
+	attrDone := dbLog(ctx, r.log, attrQuery)
+	rows, err := r.db.QueryxContext(ctx, attrQuery, pq.Array(productIDs))
+	attrDone(err)
+	if err != nil {
+		return nil, fmt.Errorf("query attributes for products: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			productID int64
+			pa        domain.ProductAttribute
+			meta      struct {
+				Name         string
+				Slug         string
+				Unit         sql.NullString
+				IsFilterable bool
+			}
+		)
+		err := rows.Scan(
+			&productID,
+			&pa.AttributeID,
+			&pa.Value,
+			&meta.Name,
+			&meta.Slug,
+			&meta.Unit,
+			&meta.IsFilterable,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan attribute row: %w", err)
+		}
+
+		pa.Attribute = domain.Attribute{
+			ID:           pa.AttributeID,
+			Name:         meta.Name,
+			Slug:         meta.Slug,
+			Unit:         optionalString(meta.Unit),
+			IsFilterable: meta.IsFilterable,
+		}
+
+		if product, ok := productMap[productID]; ok {
+			product.Attributes = append(product.Attributes, pa)
+		}
+	}
+
+	return products, nil
 }
 
 func optionalString(ns sql.NullString) *string {

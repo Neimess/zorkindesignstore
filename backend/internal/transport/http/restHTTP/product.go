@@ -18,7 +18,7 @@ type ProductService interface {
 	Create(ctx context.Context, product *domain.Product) (int64, error)
 	CreateWithAttrs(ctx context.Context, product *domain.Product) (int64, error)
 	GetDetailed(ctx context.Context, id int64) (*domain.Product, error)
-	// GetByCategoryID(ctx context.Context, categoryID int64) ([]domain.Product, error)
+	GetByCategoryID(ctx context.Context, categoryID int64) ([]domain.Product, error)
 }
 
 type ProductHandler struct {
@@ -191,7 +191,52 @@ func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// ListProductsByCategory godoc
+// @Summary      List products by category
+// @Description  Returns all products that belong to the specified category
+// @Tags         products
+// @Produce      json
+// @Param        id   path      int  true  "Category ID"
+// @Success      200  {array}   dto.ProductResponse  "List of products"
+// @Failure      400  {object}  dto.ErrorResponse    "Invalid ID"
+// @Failure      401  {object}  dto.ErrorResponse    "Unauthorized access"
+// @Failure      403  {object}  dto.ErrorResponse    "Forbidden access"
+// @Failure      404  {object}  dto.ErrorResponse    "Category not found"
+// @Failure      405  {object}  dto.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      500  {object}  dto.ErrorResponse    "Internal server error"
+// @Router       /api/product/category/{id} [get]
+func (ph *ProductHandler) ListByCategory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := ph.log.With("op", "transport.http.restHTTP.product.GetByCategoryID")
+	categoryID, err := idFromUrlToInt64(r)
 
+	if err != nil || categoryID <= 0 {
+		log.Warn("parse category_id error",
+			slog.Any("category_id", categoryID),
+			slog.String("error", err.Error()))
+		writeError(w, http.StatusBadRequest, "invalid category ID")
+		return
+	}
+
+	products, err := ph.srv.GetByCategoryID(ctx, categoryID)
+	switch {
+	case errors.Is(err, service.ErrCategoryNotFound):
+		log.Warn("category not found", slog.Int64("category_id", categoryID))
+		writeError(w, 404, "category not found")
+		return
+	case err != nil:
+		log.Error("unhandled service error", slog.Any("err", err))
+		writeError(w, 500, "internal server error")
+		return
+	}
+
+	var resp dto.ProductListResponse
+	for _, p := range products {
+		resp = append(resp, *mapDomainToProductResponse(&p))
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
 
 func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {
 	p := &domain.Product{

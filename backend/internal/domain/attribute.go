@@ -12,7 +12,7 @@ const (
 
 //go:generate easyjson -all
 type Attribute struct {
-	ID           int64        `json:"id" db:"attribute_id"`
+	ID           int64        `json:"attribute_id" db:"attribute_id"`
 	Name         string       `json:"name" db:"name"`
 	Slug         string       `json:"slug" db:"slug"`
 	DataType     AttrDataType `json:"data_type" db:"data_type"`

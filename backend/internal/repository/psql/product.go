@@ -10,14 +10,13 @@ import (
 	"log/slog"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
 
 //go:embed sql/*.sql
 var queries embed.FS
-
-
 
 type ProductRepository struct {
 	db  *sqlx.DB
@@ -54,6 +53,58 @@ func (r *ProductRepository) CreateProduct(ctx context.Context, p *domain.Product
 	p.CreatedAt = createdAt
 	return id, nil
 
+}
+
+func (r *ProductRepository) CreateProductWithAttrs(ctx context.Context, p *domain.Product) (int64, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+	const insertProduct = `
+    INSERT INTO products (name, price, description, category_id, image_url)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING product_id
+	`
+
+	var productID int64
+	if err := tx.QueryRowContext(ctx, insertProduct,
+		p.Name, p.Price, p.Description, p.CategoryID, p.ImageURL,
+	).Scan(&productID); err != nil {
+		return 0, fmt.Errorf("insert product: %w", err)
+	}
+
+	attrs := p.Attributes
+	if len(attrs) > 0 {
+		builder := sq.
+			Insert("product_attributes").
+			Columns("product_id", "attribute_id", "value_string", "value_int", "value_float", "value_bool", "value_enum").
+			PlaceholderFormat(sq.Dollar)
+
+		for _, attr := range attrs {
+			builder = builder.Values(
+				productID,
+				attr.AttributeID,
+				attr.ValueString,
+				attr.ValueInt,
+				attr.ValueFloat,
+				attr.ValueBool,
+				attr.ValueEnum,
+			)
+		}
+		sqlAttrs, args, err := builder.ToSql()
+		if err != nil {
+			return 0, fmt.Errorf("build attrs query: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, sqlAttrs, args...); err != nil {
+			return 0, fmt.Errorf("insert attributes: %w", err)
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit tx: %w", err)
+	}
+	p.ID = productID
+	return productID, nil
 }
 
 // GetProduct fetches a product by its id along with its attributes.

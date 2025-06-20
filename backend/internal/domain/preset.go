@@ -4,7 +4,7 @@ import "time"
 
 //go:generate easyjson -all
 type Preset struct {
-	ID          int64     `json:"id" db:"preset_id"`
+	ID          int64     `json:"preset_id" db:"preset_id"`
 	Name        string    `json:"name" db:"name"`
 	Description string    `json:"description,omitempty" db:"description"`
 	TotalPrice  float64   `json:"total_price" db:"total_price"`

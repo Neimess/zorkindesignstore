@@ -4,7 +4,7 @@ import "time"
 
 //go:generate easyjson -all
 type Product struct {
-	ID          int64              `json:"id" db:"product_id"`
+	ID          int64              `json:"product_id" db:"product_id"`
 	Name        string             `json:"name" db:"name"`
 	Price       float64            `json:"price" db:"price"`
 	Description string             `json:"description,omitempty" db:"description"`
@@ -15,7 +15,7 @@ type Product struct {
 }
 
 type ProductAttribute struct {
-	ProductID   int64     `json:"product_id" db:"product_id"`
+	ProductID   int64     `json:"-" db:"product_id"`
 	AttributeID int64     `json:"attribute_id" db:"attribute_id"`
 	ValueString *string   `json:"value_string,omitempty" db:"value_string"`
 	ValueInt    *int64    `json:"value_int,omitempty" db:"value_int"`

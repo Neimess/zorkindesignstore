@@ -25,7 +25,7 @@ func TestProductService_Create_Success(t *testing.T) {
 	}
 
 	mockRepo.EXPECT().
-		CreateProduct(ctx, product).
+		Create(ctx, product).
 		Return(int64(42), nil)
 
 	id, err := svc.Create(ctx, product)
@@ -41,7 +41,7 @@ func TestProductService_Create_NotFound(t *testing.T) {
 
 	p := &domain.Product{Name: "Тест", Price: 123, CategoryID: 99}
 	mockRepo.EXPECT().
-		CreateProduct(ctx, p).
+		Create(ctx, p).
 		Return(int64(0), repo.ErrNotFound)
 
 	id, err := svc.Create(ctx, p)
@@ -66,7 +66,7 @@ func TestProductService_Create_UnicodeNames(t *testing.T) {
 	for _, p := range products {
 		p := p
 		mockRepo.EXPECT().
-			CreateProduct(ctx, &p).
+			Create(ctx, &p).
 			Return(int64(1), nil)
 
 		t.Run(p.Name, func(t *testing.T) {

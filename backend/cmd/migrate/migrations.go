@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/migrations"
 	"github.com/Neimess/zorkin-store-project/pkg/args"
 	"github.com/Neimess/zorkin-store-project/pkg/migrator"
-	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/v4"
 )
 
 func runMigrations(cfg *config.Config, log *slog.Logger) error {
@@ -22,6 +23,7 @@ func runMigrations(cfg *config.Config, log *slog.Logger) error {
 	m, err := migrator.New(
 		migrator.WithDatabase(provider),
 		migrator.WithSource(migrator.EmbeddedSource{FS: migrations.FS, Directory: "."}),
+		migrator.WithLogger(log),
 	)
 	if err != nil {
 		log.Error("migrator failed", slog.Any("error", err))
@@ -38,20 +40,13 @@ func runMigrations(cfg *config.Config, log *slog.Logger) error {
 		)
 
 	case errors.Is(err, migrate.ErrNoChange):
-		log.Info("no migrations to apply")
+		return nil
 
 	case errors.Is(err, context.DeadlineExceeded):
-		log.Error("db ping timeout",
-			slog.String("host", cfg.Storage.Host),
-			slog.Int("port", cfg.Storage.Port),
-			slog.Duration("timeout", cfg.Storage.BusyTimeout),
-			slog.Any("error", err),
-		)
-		return err
+		return fmt.Errorf("db ping timeout: %w", err)
 
 	default:
-		log.Error("migrations failed", slog.Any("error", err))
-		return err
+		return fmt.Errorf("migrations failed: %w", err)
 	}
 	return nil
 }

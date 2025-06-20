@@ -20,9 +20,9 @@ type Server struct {
 func NewServer(cfg config.HTTPServer, handlers *restHTTP.Handlers, logger *slog.Logger) *Server {
 	r := chi.NewRouter()
 	route.NewRouter(route.Deps{
-		Router: r,
+		Router:   r,
 		Handlers: handlers,
-		Logger: logger,
+		Logger:   logger,
 	})
 
 	srv := &http.Server{

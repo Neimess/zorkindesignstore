@@ -15,6 +15,7 @@ func main() {
 	if err := handleMigrations(a, cfg, log); err != nil {
 		log.Error("error while migrate:", slog.String("err", err.Error()))
 	}
+	log.Info("migrations completed successfully")
 }
 
 func parseArgsAndConfig() (*args.Args, *config.Config) {

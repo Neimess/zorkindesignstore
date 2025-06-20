@@ -10,7 +10,6 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/api",
     "paths": {
         "/api/product": {
             "post": {
@@ -32,30 +31,73 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created",
+                        "description": "Returns created product ID",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer"
-                            }
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse"
                         }
                     },
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/product/detailed": {
+            "post": {
+                "description": "Creates a new product with its attributes and returns the created ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "products"
+                ],
+                "summary": "Create product with attributes",
+                "parameters": [
+                    {
+                        "description": "Product to create",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Returns created product ID",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     }
                 }
@@ -85,27 +127,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns product details",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     }
                 }
@@ -113,104 +155,144 @@
         }
     },
     "definitions": {
-        "github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType": {
-            "type": "string",
-            "enum": [
-                "string",
-                "int",
-                "float",
-                "bool",
-                "enum"
-            ],
-            "x-enum-varnames": [
-                "AttrDataTypeString",
-                "AttrDataTypeInt",
-                "AttrDataTypeFloat",
-                "AttrDataTypeBool",
-                "AttrDataTypeEnum"
-            ]
-        },
-        "github_com_Neimess_zorkin-store-project_internal_domain.Attribute": {
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse": {
             "type": "object",
             "properties": {
-                "data_type": {
-                    "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType"
+                "message": {
+                    "type": "string",
+                    "example": "invalid request payload"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest": {
+            "type": "object",
+            "required": [
+                "attribute_id",
+                "value"
+            ],
+            "properties": {
+                "attribute_id": {
+                    "type": "integer",
+                    "example": 2
                 },
-                "id": {
-                    "type": "integer"
+                "value": {
+                    "type": "string",
+                    "example": "1.25"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueResponse": {
+            "type": "object",
+            "properties": {
+                "attribute_id": {
+                    "type": "integer",
+                    "example": 2
                 },
                 "is_filterable": {
                     "type": "boolean"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Объём"
                 },
                 "slug": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "volume"
                 },
                 "unit": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "л"
+                },
+                "value": {
+                    "type": "string",
+                    "example": "1.25"
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_internal_domain.Product": {
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "name",
+                "price"
+            ],
+            "properties": {
+                "attributes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest"
+                    }
+                },
+                "category_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Прочный плиточный материал"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/image.png"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "example": "Керамогранит"
+                },
+                "price": {
+                    "type": "number",
+                    "example": 3490
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Product created successfully"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductResponse": {
             "type": "object",
             "properties": {
                 "attributes": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute"
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueResponse"
                     }
                 },
                 "category_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2025-06-20T15:00:00Z"
                 },
                 "description": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "image_url": {
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Керамогранит"
                 },
                 "price": {
-                    "type": "number"
-                }
-            }
-        },
-        "github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute": {
-            "type": "object",
-            "properties": {
-                "attribute": {
-                    "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Attribute"
-                },
-                "attribute_id": {
-                    "type": "integer"
+                    "type": "number",
+                    "example": 3490
                 },
                 "product_id": {
-                    "type": "integer"
-                },
-                "value_bool": {
-                    "type": "boolean"
-                },
-                "value_enum": {
-                    "type": "string"
-                },
-                "value_float": {
-                    "type": "number"
-                },
-                "value_int": {
-                    "type": "integer"
-                },
-                "value_string": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 10
                 }
             }
         }

@@ -1,0 +1,1 @@
+CREATE INDEX idx_prodattr_product ON product_attributes(product_id);

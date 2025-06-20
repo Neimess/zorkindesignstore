@@ -2,7 +2,6 @@ package domain
 
 import "time"
 
-//go:generate easyjson -all
 type Preset struct {
 	ID          int64     `json:"preset_id" db:"preset_id"`
 	Name        string    `json:"name" db:"name"`

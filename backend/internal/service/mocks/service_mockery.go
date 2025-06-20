@@ -65,12 +65,12 @@ func (_m *MockProductRepository) EXPECT() *MockProductRepository_Expecter {
 	return &MockProductRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreateProduct provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) CreateProduct(ctx context.Context, p *domain.Product) (int64, error) {
+// Create provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) Create(ctx context.Context, p *domain.Product) (int64, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateProduct")
+		panic("no return value specified for Create")
 	}
 
 	var r0 int64
@@ -91,19 +91,19 @@ func (_mock *MockProductRepository) CreateProduct(ctx context.Context, p *domain
 	return r0, r1
 }
 
-// MockProductRepository_CreateProduct_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProduct'
-type MockProductRepository_CreateProduct_Call struct {
+// MockProductRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockProductRepository_Create_Call struct {
 	*mock.Call
 }
 
-// CreateProduct is a helper method to define mock.On call
+// Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - p *domain.Product
-func (_e *MockProductRepository_Expecter) CreateProduct(ctx interface{}, p interface{}) *MockProductRepository_CreateProduct_Call {
-	return &MockProductRepository_CreateProduct_Call{Call: _e.mock.On("CreateProduct", ctx, p)}
+func (_e *MockProductRepository_Expecter) Create(ctx interface{}, p interface{}) *MockProductRepository_Create_Call {
+	return &MockProductRepository_Create_Call{Call: _e.mock.On("Create", ctx, p)}
 }
 
-func (_c *MockProductRepository_CreateProduct_Call) Run(run func(ctx context.Context, p *domain.Product)) *MockProductRepository_CreateProduct_Call {
+func (_c *MockProductRepository_Create_Call) Run(run func(ctx context.Context, p *domain.Product)) *MockProductRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -121,22 +121,88 @@ func (_c *MockProductRepository_CreateProduct_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockProductRepository_CreateProduct_Call) Return(n int64, err error) *MockProductRepository_CreateProduct_Call {
+func (_c *MockProductRepository_Create_Call) Return(n int64, err error) *MockProductRepository_Create_Call {
 	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockProductRepository_CreateProduct_Call) RunAndReturn(run func(ctx context.Context, p *domain.Product) (int64, error)) *MockProductRepository_CreateProduct_Call {
+func (_c *MockProductRepository_Create_Call) RunAndReturn(run func(ctx context.Context, p *domain.Product) (int64, error)) *MockProductRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetProductWithAttrs provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) GetProductWithAttrs(ctx context.Context, id int64) (*domain.Product, error) {
+// CreateWithAttrs provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) CreateWithAttrs(ctx context.Context, p *domain.Product) (int64, error) {
+	ret := _mock.Called(ctx, p)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateWithAttrs")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.Product) (int64, error)); ok {
+		return returnFunc(ctx, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *domain.Product) int64); ok {
+		r0 = returnFunc(ctx, p)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *domain.Product) error); ok {
+		r1 = returnFunc(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockProductRepository_CreateWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWithAttrs'
+type MockProductRepository_CreateWithAttrs_Call struct {
+	*mock.Call
+}
+
+// CreateWithAttrs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - p *domain.Product
+func (_e *MockProductRepository_Expecter) CreateWithAttrs(ctx interface{}, p interface{}) *MockProductRepository_CreateWithAttrs_Call {
+	return &MockProductRepository_CreateWithAttrs_Call{Call: _e.mock.On("CreateWithAttrs", ctx, p)}
+}
+
+func (_c *MockProductRepository_CreateWithAttrs_Call) Run(run func(ctx context.Context, p *domain.Product)) *MockProductRepository_CreateWithAttrs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *domain.Product
+		if args[1] != nil {
+			arg1 = args[1].(*domain.Product)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductRepository_CreateWithAttrs_Call) Return(n int64, err error) *MockProductRepository_CreateWithAttrs_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockProductRepository_CreateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *domain.Product) (int64, error)) *MockProductRepository_CreateWithAttrs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetWithAttrs provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) GetWithAttrs(ctx context.Context, id int64) (*domain.Product, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetProductWithAttrs")
+		panic("no return value specified for GetWithAttrs")
 	}
 
 	var r0 *domain.Product
@@ -159,19 +225,19 @@ func (_mock *MockProductRepository) GetProductWithAttrs(ctx context.Context, id 
 	return r0, r1
 }
 
-// MockProductRepository_GetProductWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProductWithAttrs'
-type MockProductRepository_GetProductWithAttrs_Call struct {
+// MockProductRepository_GetWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetWithAttrs'
+type MockProductRepository_GetWithAttrs_Call struct {
 	*mock.Call
 }
 
-// GetProductWithAttrs is a helper method to define mock.On call
+// GetWithAttrs is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id int64
-func (_e *MockProductRepository_Expecter) GetProductWithAttrs(ctx interface{}, id interface{}) *MockProductRepository_GetProductWithAttrs_Call {
-	return &MockProductRepository_GetProductWithAttrs_Call{Call: _e.mock.On("GetProductWithAttrs", ctx, id)}
+func (_e *MockProductRepository_Expecter) GetWithAttrs(ctx interface{}, id interface{}) *MockProductRepository_GetWithAttrs_Call {
+	return &MockProductRepository_GetWithAttrs_Call{Call: _e.mock.On("GetWithAttrs", ctx, id)}
 }
 
-func (_c *MockProductRepository_GetProductWithAttrs_Call) Run(run func(ctx context.Context, id int64)) *MockProductRepository_GetProductWithAttrs_Call {
+func (_c *MockProductRepository_GetWithAttrs_Call) Run(run func(ctx context.Context, id int64)) *MockProductRepository_GetWithAttrs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -189,12 +255,12 @@ func (_c *MockProductRepository_GetProductWithAttrs_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockProductRepository_GetProductWithAttrs_Call) Return(product *domain.Product, err error) *MockProductRepository_GetProductWithAttrs_Call {
+func (_c *MockProductRepository_GetWithAttrs_Call) Return(product *domain.Product, err error) *MockProductRepository_GetWithAttrs_Call {
 	_c.Call.Return(product, err)
 	return _c
 }
 
-func (_c *MockProductRepository_GetProductWithAttrs_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.Product, error)) *MockProductRepository_GetProductWithAttrs_Call {
+func (_c *MockProductRepository_GetWithAttrs_Call) RunAndReturn(run func(ctx context.Context, id int64) (*domain.Product, error)) *MockProductRepository_GetWithAttrs_Call {
 	_c.Call.Return(run)
 	return _c
 }

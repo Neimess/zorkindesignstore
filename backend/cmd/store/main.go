@@ -21,7 +21,6 @@ const op = "cmd.main"
 // @description API for managing products and categories
 
 // @host localhost:8080
-// @BasePath /api
 
 // @schemes http
 func main() {

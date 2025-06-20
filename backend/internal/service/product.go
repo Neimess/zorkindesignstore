@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"io"
+	"fmt"
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
@@ -11,15 +11,16 @@ import (
 )
 
 var (
-	ErrProductNameEmpty = errors.New("product name is empty")
-	ErrProductIsNil     = errors.New("product is nil")
+	ErrProductRepoIsNil = errors.New("repo is nil")
 	ErrProductNotFound  = errors.New("product not found")
-	ErrProductRepoIsNil = errors.New("product service: repo is nil")
+	ErrBadCategoryID    = errors.New("bad category ID")
+	ErrInvalidAttribute = errors.New("invalid product attribute")
 )
 
 type ProductRepository interface {
-	CreateProduct(ctx context.Context, p *domain.Product) (int64, error)
-	GetProductWithAttrs(ctx context.Context, id int64) (*domain.Product, error)
+	Create(ctx context.Context, p *domain.Product) (int64, error)
+	CreateWithAttrs(ctx context.Context, p *domain.Product) (int64, error)
+	GetWithAttrs(ctx context.Context, id int64) (*domain.Product, error)
 }
 
 type ProductService struct {
@@ -43,42 +44,54 @@ func NewProductService(repo ProductRepository, logger *slog.Logger) (*ProductSer
 func (ps *ProductService) Create(ctx context.Context, product *domain.Product) (int64, error) {
 	const op = "service.product.Create"
 	log := ps.log.With("op", op)
-	if product == nil {
-		log.Warn("attempted to create nil product")
-		return 0, ErrProductIsNil
-	}
-	if product.Name == "" {
-		log.Warn("validation failed: name is empty")
-		return 0, ErrProductNameEmpty
-	}
-	id, err := ps.repo.CreateProduct(ctx, product)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			log.Warn("referenced category does not exist",
-				slog.Int("category_id", int(product.CategoryID)),
-			)
-		}
-		log.Error("failed to create product", slog.Any("error", err))
-		return 0, err
-	}
-	ps.log.Info("product created",
-		slog.Int64("product_id", id),
-		slog.String("name", product.Name),
-		slog.Int("category_id", int(product.CategoryID)),
-	)
 
+	id, err := ps.repo.Create(ctx, product)
+
+	switch {
+	case errors.Is(err, repository.ErrInvalidForeignKey):
+		log.Warn("invalid category", slog.Int64("category_id", product.CategoryID))
+		return 0, ErrBadCategoryID
+	case err != nil:
+		log.Error("repo failed", slog.Int64("product_id", product.ID), slog.Any("error", err))
+		return 0, fmt.Errorf("%s: %w", op, err)
+	default:
+		log.Info("product created",
+			slog.Int64("product_id", id))
+	}
 	return id, nil
 }
+
+func (ps *ProductService) CreateWithAttrs(ctx context.Context, product *domain.Product) (int64, error) {
+	const op = "service.product.CreateWithAttributes"
+	log := ps.log.With("op", op)
+
+	id, err := ps.repo.CreateWithAttrs(ctx, product)
+	switch {
+	case errors.Is(err, repository.ErrInvalidForeignKey):
+		log.Warn("invalid category", slog.Int64("category_id", product.CategoryID))
+		return 0, ErrBadCategoryID
+	case err != nil:
+		log.Error("repo failed", slog.Int64("product_id", product.ID), slog.Any("error", err))
+		return 0, fmt.Errorf("%s: %w", op, err)
+	default:
+		log.Info("product with attributes created",
+			slog.Int64("product_id", id))
+	}
+	return id, nil
+
+}
+
+// GetDetailed returns domain.Product with it's domain.ProductAttribute
 func (ps *ProductService) GetDetailed(ctx context.Context, id int64) (*domain.Product, error) {
 	const op = "service.product.GetDetailed"
 	log := ps.log.With("op", op)
-	product, err := ps.repo.GetProductWithAttrs(ctx, id)
+	product, err := ps.repo.GetWithAttrs(ctx, id)
 
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			log.Info("not found product", slog.Any("product_id", id), slog.Any("error", err))
-		}
-		log.Info("failed to get product", slog.Any("product_id", id), slog.Any("error", err))
+	switch {
+	case errors.Is(err, repository.ErrProductNotFound):
+		return nil, ErrProductNotFound
+	case err != nil:
+		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("err", err))
 		return nil, err
 	}
 	log.Info("product retrieved",
@@ -86,8 +99,4 @@ func (ps *ProductService) GetDetailed(ctx context.Context, id int64) (*domain.Pr
 		slog.String("name", product.Name),
 	)
 	return product, nil
-}
-
-func silentLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }

@@ -1,73 +1,103 @@
-basePath: /api
 definitions:
-  github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType:
-    enum:
-    - string
-    - int
-    - float
-    - bool
-    - enum
-    type: string
-    x-enum-varnames:
-    - AttrDataTypeString
-    - AttrDataTypeInt
-    - AttrDataTypeFloat
-    - AttrDataTypeBool
-    - AttrDataTypeEnum
-  github_com_Neimess_zorkin-store-project_internal_domain.Attribute:
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse:
     properties:
-      data_type:
-        $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.AttrDataType'
-      id:
+      message:
+        example: invalid request payload
+        type: string
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest:
+    properties:
+      attribute_id:
+        example: 2
+        type: integer
+      value:
+        example: "1.25"
+        type: string
+    required:
+    - attribute_id
+    - value
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueResponse:
+    properties:
+      attribute_id:
+        example: 2
         type: integer
       is_filterable:
         type: boolean
       name:
+        example: Объём
         type: string
       slug:
+        example: volume
         type: string
       unit:
+        example: л
+        type: string
+      value:
+        example: "1.25"
         type: string
     type: object
-  github_com_Neimess_zorkin-store-project_internal_domain.Product:
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest:
     properties:
       attributes:
         items:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest'
         type: array
       category_id:
+        example: 1
+        type: integer
+      description:
+        example: Прочный плиточный материал
+        type: string
+      image_url:
+        example: https://example.com/image.png
+        type: string
+      name:
+        example: Керамогранит
+        minLength: 2
+        type: string
+      price:
+        example: 3490
+        type: number
+    required:
+    - category_id
+    - name
+    - price
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse:
+    properties:
+      id:
+        example: 42
+        type: integer
+      message:
+        example: Product created successfully
+        type: string
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueResponse'
+        type: array
+      category_id:
+        example: 1
         type: integer
       created_at:
+        example: "2025-06-20T15:00:00Z"
         type: string
       description:
         type: string
-      id:
-        type: integer
       image_url:
         type: string
       name:
+        example: Керамогранит
         type: string
       price:
+        example: 3490
         type: number
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_domain.ProductAttribute:
-    properties:
-      attribute:
-        $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Attribute'
-      attribute_id:
-        type: integer
       product_id:
+        example: 10
         type: integer
-      value_bool:
-        type: boolean
-      value_enum:
-        type: string
-      value_float:
-        type: number
-      value_int:
-        type: integer
-      value_string:
-        type: string
     type: object
 host: localhost:8080
 info:
@@ -87,24 +117,22 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
       produces:
       - application/json
       responses:
         "201":
-          description: Created
+          description: Returns created product ID
           schema:
-            additionalProperties:
-              type: integer
-            type: object
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse'
         "400":
           description: Bad request
           schema:
-            type: string
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
       summary: Create product
       tags:
       - products
@@ -123,22 +151,53 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns product details
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_domain.Product'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductResponse'
         "400":
           description: Invalid ID
           schema:
-            type: string
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "404":
           description: Not found
           schema:
-            type: string
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
       summary: Get product
+      tags:
+      - products
+  /api/product/detailed:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product with its attributes and returns the created
+        ID.
+      parameters:
+      - description: Product to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns created product ID
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Create product with attributes
       tags:
       - products
 schemes:

@@ -1,69 +1,53 @@
+-- This migration script creates the initial schema for the online merch store database.
 CREATE TABLE categories (
-    category_id smallserial PRIMARY KEY,
-    name varchar(255) NOT NULL
+    category_id SMALLSERIAL PRIMARY KEY,
+    name  VARCHAR(255) UNIQUE NOT NULL
 );
-CREATE TYPE attr_data_type AS ENUM ('string', 'int', 'float', 'bool', 'enum');
 CREATE TABLE attributes (
-    attribute_id bigserial PRIMARY KEY,
-    name varchar(255) NOT NULL,
-    slug varchar(100) UNIQUE NOT NULL,
-    data_type attr_data_type NOT NULL,
-    unit varchar(50),
-    is_filterable boolean DEFAULT false
+    attribute_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    unit VARCHAR(50),
+    is_filterable BOOLEAN DEFAULT FALSE
 );
 CREATE TABLE products (
-    product_id bigserial PRIMARY KEY,
-    name varchar(255) NOT NULL,
-    price numeric(10, 2),
-    description text,
-    category_id bigint REFERENCES categories(category_id) ON DELETE RESTRICT,
-    image_url text,
-    created_at timestamptz DEFAULT now()
+    product_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price NUMERIC(10, 2),
+    description TEXT,
+    category_id SMALLINT NOT NULL REFERENCES categories(category_id) ON DELETE RESTRICT,
+    image_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE product_attributes (
+    product_attribute_id BIGSERIAL PRIMARY KEY,
+    product_id BIGINT NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
+    attribute_id BIGINT NOT NULL REFERENCES attributes(attribute_id) ON DELETE CASCADE,
+    value VARCHAR(100) NOT NULL,
+    UNIQUE (product_id, attribute_id)
 );
 CREATE TABLE category_attributes (
-    category_attribute_priority_id bigserial PRIMARY KEY,
-    category_id bigint REFERENCES categories(category_id) ON DELETE CASCADE,
-    attribute_id bigint REFERENCES attributes(attribute_id) ON DELETE CASCADE,
-    is_required boolean DEFAULT false,
-    UNIQUE (category_id, attribute_id)
-);
-CREATE TABLE category_attribute_priority (
-    category_attribute_priority_id bigserial PRIMARY KEY,
-    category_id bigint REFERENCES categories(category_id) ON DELETE CASCADE,
-    attribute_id bigint REFERENCES attributes(attribute_id) ON DELETE CASCADE,
-    priority int NOT NULL CHECK (
+    category_attribute_id BIGSERIAL PRIMARY KEY,
+    category_id SMALLINT NOT NULL REFERENCES categories(category_id) ON DELETE CASCADE,
+    attribute_id BIGINT NOT NULL REFERENCES attributes(attribute_id) ON DELETE CASCADE,
+    is_required BOOLEAN NOT NULL DEFAULT FALSE,
+    priority SMALLINT NOT NULL CHECK (
         priority BETWEEN 1 AND 10
     ),
     UNIQUE (category_id, attribute_id)
 );
-CREATE TABLE product_attributes (
-    product_attribute_id bigserial PRIMARY KEY,
-    product_id bigint REFERENCES products(product_id) ON DELETE CASCADE,
-    attribute_id bigint REFERENCES attributes(attribute_id) ON DELETE CASCADE,
-    value_string text,
-    value_int bigint,
-    value_float numeric,
-    value_bool boolean,
-    value_enum text,
-    UNIQUE (product_id, attribute_id)
-);
 CREATE TABLE presets (
-    preset_id bigserial PRIMARY KEY,
-    name varchar(255) NOT NULL,
-    description text,
-    total_price numeric(10, 2) NOT NULL,
-    image_url text,
-    created_at timestamptz DEFAULT now()
+    preset_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    total_price NUMERIC(10, 2) NOT NULL,
+    image_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE preset_items (
-    preset_item_id bigserial PRIMARY KEY,
-    preset_id bigint REFERENCES presets(preset_id) ON DELETE CASCADE,
-    product_id bigint REFERENCES products(product_id) ON DELETE RESTRICT,
-    quantity numeric(10, 2) NOT NULL,
-    -- Учитываем, что может быть 1.5 м² плитки
-    unit varchar(20),
-    -- м², шт., рулон, л, кг
-    note text,
-    -- Дополнительно: "для пола", "для стены"
+    preset_item_id BIGSERIAL PRIMARY KEY,
+    preset_id BIGINT NOT NULL REFERENCES presets(preset_id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(product_id) ON DELETE RESTRICT,
     UNIQUE (preset_id, product_id)
 );

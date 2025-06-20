@@ -6,5 +6,5 @@ import "log/slog"
 type Deps struct {
 	ProductService  ProductService
 	CategoryService CategoryService
-	Logger			*slog.Logger
+	Logger          *slog.Logger
 }

@@ -45,6 +45,7 @@ func NewRouter(deps Deps) chi.Router {
 		ph := deps.Handlers.ProductHandler
 		r.Route("/product", func(r chi.Router) {
 			r.Post("/", ph.Create)
+			r.Post("/detailed", ph.CreateWithAttributes)
 			r.Get("/{id}", ph.GetDetailed)
 		})
 	})

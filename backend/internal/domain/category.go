@@ -1,18 +1,13 @@
 package domain
-//go:generate easyjson -all
+
 type Category struct {
-	ID   int64  `json:"id" db:"category_id"`
-	Name string `json:"name" db:"name"`
+	ID   int64  `db:"category_id"`
+	Name string `db:"name"`
 }
 
 type CategoryAttribute struct {
-    CategoryID  int64 `json:"category_id" db:"category_id"`
-    AttributeID int64 `json:"attribute_id" db:"attribute_id"`
-    IsRequired  bool  `json:"is_required" db:"is_required"`
-}
-
-type CategoryAttributePriority struct {
-    CategoryID  int64 `json:"category_id" db:"category_id"`
-    AttributeID int64 `json:"attribute_id" db:"attribute_id"`
-    Priority    int   `json:"priority" db:"priority"`
+	CategoryID  int64 `db:"category_id"`
+	AttributeID int64 `db:"attribute_id"`
+	IsRequired  bool  `db:"is_required"`
+	Priority    int   `db:"priority"`
 }

@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/golang-migrate/migrate/v4"
 )
@@ -12,8 +13,9 @@ func WithSource(src Source) Opt    { return func(m *Migrator) { m.src = src } }
 func WithDatabase(db Database) Opt { return func(m *Migrator) { m.db = db } }
 
 type Migrator struct {
-	src Source
-	db  Database
+	src    Source
+	db     Database
+	logger *slog.Logger
 }
 
 func New(opts ...Opt) (*Migrator, error) {
@@ -31,10 +33,13 @@ func New(opts ...Opt) (*Migrator, error) {
 	return m, nil
 }
 
+func WithLogger(log *slog.Logger) Opt {
+	return func(m *Migrator) { m.logger = log }
+}
+
 func (m *Migrator) Up() error {
 	return m.runRaw(func(mg *migrate.Migrate) error { return mg.Up() })
 }
-
 
 func (m *Migrator) Down() error {
 	return m.runRaw(func(mg *migrate.Migrate) error { return mg.Steps(-1) })
@@ -64,7 +69,6 @@ func (m *Migrator) Version() (version uint, err error) {
 	return version, nil
 }
 
-
 func (m *Migrator) runRaw(f func(*migrate.Migrate) error) error {
 	dbDrv, dbName, closeFn, err := m.db.Driver()
 	if err != nil {
@@ -84,6 +88,9 @@ func (m *Migrator) runRaw(f func(*migrate.Migrate) error) error {
 		return fmt.Errorf("migrate init: %w", err)
 	}
 
+	if m.logger != nil {
+		mg.Log = &migrateLogger{log: m.logger}
+	}
+
 	return f(mg)
 }
-

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (r *ProductRepository) dbLog(ctx context.Context, query string) func(err error, extras ...slog.Attr) {
+func dbLog(ctx context.Context, log *slog.Logger, query string) func(err error, extras ...slog.Attr) {
 	start := time.Now()
 
 	reqID, _ := ctx.Value("request_id").(string)
@@ -30,6 +30,6 @@ func (r *ProductRepository) dbLog(ctx context.Context, query string) func(err er
 		for _, attr := range attrs {
 			args = append(args, attr)
 		}
-		r.log.Log(ctx, level, "db query", args...)
+		log.Log(ctx, level, "db query", args...)
 	}
 }

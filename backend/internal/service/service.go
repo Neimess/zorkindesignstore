@@ -9,9 +9,14 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/config"
 )
 
+type JWTGenerator interface {
+	Generate(userID string) (string, error)
+}
+
 type Deps struct {
 	Logger             *slog.Logger
 	Config             *config.Config
+	JWTGenerator       JWTGenerator
 	ProductRepository  ProductRepository
 	CategoryRepository CategoryRepository
 }
@@ -19,12 +24,14 @@ type Deps struct {
 type Service struct {
 	ProductService  *ProductService
 	CategoryService *CategoryService
+	AuthService     *AuthService
 }
 
 func New(d Deps) *Service {
 	return &Service{
-		ProductService:  NewProductService(d.ProductRepository, silentLogger()),
-		CategoryService: NewCategoryService(d.CategoryRepository, silentLogger()),
+		ProductService:  NewProductService(d.ProductRepository, d.Logger),
+		CategoryService: NewCategoryService(d.CategoryRepository, d.Logger),
+		AuthService:     NewAuthService(d.JWTGenerator, d.Logger),
 	}
 }
 

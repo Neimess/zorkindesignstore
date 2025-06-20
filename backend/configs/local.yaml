@@ -19,3 +19,8 @@ storage:
     dbname: devdb
     conn_max_timeout: 30s
 
+jwt_config:
+    secret: supersecretkey
+    issuer: zorkindev.ru
+    audience: admin_app
+    algorithm: HS256

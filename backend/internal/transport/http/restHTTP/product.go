@@ -51,6 +51,7 @@ func NewProductHandler(service ProductService, log *slog.Logger) *ProductHandler
 func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.Create")
+	log.Debug("ctx", slog.Any("ctx", ctx))
 	validator := validator.GetValidator()
 	defer r.Body.Close()
 
@@ -173,7 +174,7 @@ func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 
 	resp := mapDomainToProductResponse(product)
 
-	JSONCtx(ctx, w, http.StatusOK, resp, log)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {

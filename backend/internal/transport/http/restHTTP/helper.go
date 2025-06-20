@@ -1,9 +1,7 @@
 package restHTTP
 
 import (
-	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -29,11 +27,9 @@ func writeError(w http.ResponseWriter, statusCode int, msg string) (int, error) 
 	}, w)
 }
 
-func JSONCtx(ctx context.Context, w http.ResponseWriter, statusCode int, data easyjson.Marshaler, logger *slog.Logger) {
+func writeJSON(w http.ResponseWriter, statusCode int, data easyjson.Marshaler) (int, error) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	if _, err := easyjson.MarshalToWriter(data, w); err != nil {
-		logger.ErrorContext(ctx, "easyjson marshal failed", slog.String("error", err.Error()))
-	}
+	return easyjson.MarshalToWriter(data, w)
 }

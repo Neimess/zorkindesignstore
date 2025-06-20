@@ -1,16 +1,15 @@
-package route
+package rest
 
 import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
-	"github.com/go-chi/chi/v5"
 )
 
 type Deps struct {
-	Router   chi.Router
+	Server   config.HTTPServer
+	Config   *config.Config
 	Logger   *slog.Logger
 	Handlers *restHTTP.Handlers
-	Config   *config.Config
 }

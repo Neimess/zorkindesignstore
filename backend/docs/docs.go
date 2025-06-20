@@ -15,6 +15,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/auth/login/{secret_admin_key}": {
+            "get": {
+                "description": "Generates a Bearer token for the user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Secret admin key for login, injected via route",
+                        "name": "secret_admin_key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Returns generated token",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/category": {
             "get": {
                 "produces": [
@@ -553,6 +594,14 @@ const docTemplate = `{
                 "product_id": {
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
                 }
             }
         }

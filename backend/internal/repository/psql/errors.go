@@ -11,6 +11,5 @@ const (
 
 var (
 	ErrInvalidForeignKey = errors.New("invalid attribute_id: does not exist")
-	ErrDuplicateName	 = errors.New("duplicate name: already exists")
-
+	ErrDuplicateName     = errors.New("duplicate name: already exists")
 )

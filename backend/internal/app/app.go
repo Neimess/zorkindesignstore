@@ -12,6 +12,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
 	"github.com/Neimess/zorkin-store-project/pkg/database/psql"
+	"github.com/Neimess/zorkin-store-project/pkg/secret/jwt"
 	"github.com/Neimess/zorkin-store-project/server/rest"
 
 	// httpDelivery "github.com/Neimess/zorkin-store-project/internal/delivery/http"
@@ -62,12 +63,21 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	// 3. Сервисы — бизнес-логика, используют репозиторий
 
+	// 4. Генераторы
+	jwtGenerator := jwt.NewGenerator(jwt.JWTConfig{
+		Secret:    dep.Config.JWTConfig.SecretKey,
+		Issuer:    dep.Config.JWTConfig.Issuer,
+		Audience:  dep.Config.JWTConfig.Audience,
+		Algorithm: dep.Config.JWTConfig.Algorithm,
+	})
+
 	services := service.New(
 		service.Deps{
 			Logger:             dep.Logger,
 			Config:             dep.Config,
 			ProductRepository:  repos.ProductRepository,
 			CategoryRepository: repos.CategoryRepository,
+			JWTGenerator:       jwtGenerator,
 		},
 	)
 	logNew.Debug("services wired")
@@ -76,10 +86,16 @@ func NewApplication(dep *Deps) (*Application, error) {
 	restHandlers := restHTTP.New(&restHTTP.Deps{
 		ProductService:  services.ProductService,
 		CategoryService: services.CategoryService,
+		AuthService:     services.AuthService,
 		Logger:          dep.Logger,
 	})
 	// 5. Сервер — HTTP-сервер
-	srv := rest.NewServer(dep.Config.HTTPServer, restHandlers, dep.Logger)
+	srv := rest.NewServer(rest.Deps{
+		Server:   dep.Config.HTTPServer,
+		Config:   dep.Config,
+		Handlers: restHandlers,
+		Logger:   dep.Logger,
+	})
 	logNew.Info("http server constructed",
 		slog.String("addr", dep.Config.HTTPServer.Address),
 	)

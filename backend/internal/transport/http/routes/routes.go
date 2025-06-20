@@ -1,11 +1,13 @@
 package route
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"time"
 
 	_ "github.com/Neimess/zorkin-store-project/docs"
+	customMiddlewares "github.com/Neimess/zorkin-store-project/pkg/http/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -15,6 +17,15 @@ import (
 
 func NewRouter(deps Deps) chi.Router {
 	r := deps.Router
+	jwtMiddleware, err := customMiddlewares.NewJWTMiddleware(customMiddlewares.JWTCfg{
+		Secret:    []byte(deps.Config.JWTConfig.SecretKey),
+		Algorithm: deps.Config.JWTConfig.Algorithm,
+		Issuer:    deps.Config.JWTConfig.Issuer,
+		Audience:  deps.Config.JWTConfig.Audience,
+	})
+	if err != nil {
+		panic("failed to create JWT middleware: " + err.Error())
+	}
 
 	// middleware
 	r.Use(middleware.RequestID)
@@ -37,6 +48,7 @@ func NewRouter(deps Deps) chi.Router {
 
 	// API group
 	r.Route("/api", func(r chi.Router) {
+
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("OK"))
@@ -44,8 +56,12 @@ func NewRouter(deps Deps) chi.Router {
 
 		ph := deps.Handlers.ProductHandler
 		r.Route("/product", func(r chi.Router) {
-			r.Post("/", ph.Create)
-			r.Post("/detailed", ph.CreateWithAttributes)
+			r.Group(func(r chi.Router) {
+				r.Use(jwtMiddleware.CheckJWT)
+				r.Post("/", ph.Create)
+				r.Post("/detailed", ph.CreateWithAttributes)
+			})
+
 			r.Get("/{id}", ph.GetDetailed)
 		})
 		ch := deps.Handlers.CategoryHandler
@@ -55,6 +71,10 @@ func NewRouter(deps Deps) chi.Router {
 			r.Get("/", ch.List)
 			r.Put("/{id}", ch.Update)
 			r.Delete("/{id}", ch.Delete)
+		})
+		authH := deps.Handlers.AuthHandler
+		r.Route("/admin", func(r chi.Router) {
+			r.Get(fmt.Sprintf("/auth/%s", deps.Config.AdminCode), authH.Login)
 		})
 	})
 

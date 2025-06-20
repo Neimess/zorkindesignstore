@@ -46,7 +46,7 @@ var validate = validator.GetValidator()
 //	@Accept			json
 //	@Produce		json
 //	@Param			category	body	dto.CategoryCreateRequest	true	"Category to create"
-//	@Success		201			
+//	@Success		201
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Failure		409			{object}	dto.ErrorResponse
 //	@Failure		500			{object}	dto.ErrorResponse
@@ -118,7 +118,7 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.CategoryResponse{ID: cat.ID, Name: cat.Name}
-	JSONCtx(ctx, w, http.StatusOK, &resp, log)
+	writeJSON(w, http.StatusOK, &resp)
 }
 
 // -----------------------------------------------------------------------------
@@ -145,7 +145,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cats {
 		resp = append(resp, dto.CategoryResponse{ID: c.ID, Name: c.Name})
 	}
-	JSONCtx(ctx, w, http.StatusOK, resp, log)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // -----------------------------------------------------------------------------

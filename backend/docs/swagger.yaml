@@ -126,6 +126,11 @@ definitions:
         example: 10
         type: integer
     type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -133,6 +138,33 @@ info:
   title: Zorkin Store API
   version: "1.0"
 paths:
+  /api/auth/login/{secret_admin_key}:
+    get:
+      description: Generates a Bearer token for the user
+      parameters:
+      - description: Secret admin key for login, injected via route
+        in: path
+        name: secret_admin_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Returns generated token
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.TokenResponse'
+        "401":
+          description: Unauthorized access
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Login user
+      tags:
+      - auth
   /api/category:
     get:
       produces:

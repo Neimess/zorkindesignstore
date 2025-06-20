@@ -14,6 +14,7 @@ type Config struct {
 	Version    string     `yaml:"version" env:"VERSION" end-default:"1.0.0"`
 	AdminCode  string     `yaml:"admin_code" env:"ADMIN_CODE" envRequired:"true"`
 	HTTPServer HTTPServer `yaml:"http_server"`
+	JWTConfig  JWTConfig  `yaml:"jwt_config"`
 	Storage    Storage    `yaml:"storage"`
 }
 
@@ -46,6 +47,13 @@ type Storage struct {
 	MaxIdleConns    int           `yaml:"max_idle_conns"    env:"STORAGE_MAX_IDLE" end-default:"5"`
 	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" env:"STORAGE_LIFETIME" end-default:"30m"`
 	ConnMaxTimeout  time.Duration `yaml:"conn_max_timeout"  env:"STORAGE_TIMEOUT"  end-default:"5s"`
+}
+
+type JWTConfig struct {
+	SecretKey string `yaml:"secret" env:"JWT_SECRET" env-required:"true"`
+	Issuer    string `yaml:"issuer" env:"JWT_ISSUER" env-required:"true"`
+	Audience  string `yaml:"audience" env:"JWT_AUDIENCE" env-required:"true"`
+	Algorithm string `yaml:"algorithm" env:"JWT_ALGORITHM" env-default:"HS256"`
 }
 
 func MustLoad(argument *args.Args) *Config {

@@ -6,9 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Neimess/zorkin-store-project/internal/config"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/routes"
+	route "github.com/Neimess/zorkin-store-project/internal/transport/http/routes"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -17,27 +15,28 @@ type Server struct {
 	logger     *slog.Logger
 }
 
-func NewServer(cfg config.HTTPServer, handlers *restHTTP.Handlers, logger *slog.Logger) *Server {
+func NewServer(dep Deps) *Server {
 	r := chi.NewRouter()
 	route.NewRouter(route.Deps{
 		Router:   r,
-		Handlers: handlers,
-		Logger:   logger,
+		Handlers: dep.Handlers,
+		Logger:   dep.Logger,
+		Config:   dep.Config,
 	})
 
 	srv := &http.Server{
 		Handler:           r,
-		Addr:              cfg.Address,
-		ReadTimeout:       cfg.ReadTimeout,
-		ReadHeaderTimeout: cfg.ReadTimeout,
-		WriteTimeout:      cfg.WriteTimeout,
-		IdleTimeout:       cfg.IdleTimeout,
-		MaxHeaderBytes:    cfg.MaxHeaderBytes,
+		Addr:              dep.Server.Address,
+		ReadTimeout:       dep.Server.ReadTimeout,
+		ReadHeaderTimeout: dep.Server.ReadTimeout,
+		WriteTimeout:      dep.Server.WriteTimeout,
+		IdleTimeout:       dep.Server.IdleTimeout,
+		MaxHeaderBytes:    dep.Server.MaxHeaderBytes,
 	}
 
 	return &Server{
 		httpServer: srv,
-		logger:     logger.With(slog.String("component", "rest_server")),
+		logger:     dep.Logger.With(slog.String("component", "rest_server")),
 	}
 }
 

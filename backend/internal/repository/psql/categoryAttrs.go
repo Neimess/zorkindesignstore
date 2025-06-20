@@ -13,6 +13,7 @@ import (
 var (
 	ErrCategoryAttributeNotFound = errors.New("category attribute not found")
 )
+
 type CategoryAttributeRepository struct {
 	db  *sqlx.DB
 	log *slog.Logger

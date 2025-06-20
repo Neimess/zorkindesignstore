@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/mailru/easyjson"
 )
@@ -47,40 +46,33 @@ func NewProductHandler(service ProductService, logger *slog.Logger) *ProductHand
 // @Router       /api/product [post]
 func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ph.log.With("op", "product.create")
-	bodyBytes, err := io.ReadAll(r.Body)
+	log := ph.log.With("op", "transport.http.restHTTP.product.Create")
 	defer r.Body.Close()
-	log.Debug("RequestBody", "body", string(bodyBytes))
-	if err != nil {
-		log.Error("read body failed", "error", err)
-		http.Error(w, "cannot read request", http.StatusBadRequest)
-		return
-	}
+
 	var input domain.Product
-	if err := easyjson.Unmarshal(bodyBytes, &input); err != nil {
-		log.Warn("invalid json", "error", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err := easyjson.UnmarshalFromReader(r.Body, &input); err != nil {
+		log.Warn("invalid JSON", slog.Any("error", err))
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	log.Debug("Product processed", slog.Any("input", input))
 	id, err := ph.srv.Create(ctx, &input)
 	if err != nil {
-		var ve domain.ValidationError
-		if errors.As(err, &ve) {
-			log.Warn("validation error", "error", err)
+		switch {
+		case errors.Is(err, service.ErrProductIsNil),
+			errors.Is(err, service.ErrProductNameEmpty):
+			log.Warn("validation failed", slog.Any("error", err))
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
-		}
-		if errors.Is(err, repository.ErrCategoryNotExists) {
-			log.Warn("invalid category", "error", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+
+		default:
+			log.Error("unexpected service error", slog.Any("error", err))
+			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
-		log.Error("internal service error", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
 	}
+
+	log.Info("product created", slog.Int64("product_id", id))
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]int64{"id": id})
 }
@@ -100,20 +92,22 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (ph *ProductHandler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "product.get_detailed")
-	
+
 	idStr := chi.URLParam(r, "id")
 	log.Debug("parse id from param", "id", idStr)
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil || id <= 0 {
+		log.Warn("parse id error",
+			slog.Any("product_id", id),
+			slog.String("error", err.Error()))
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
 	product, err := ph.srv.GetDetailed(ctx, id)
-	log.Debug("Get product", "product", product)
 	if err != nil {
-		if errors.Is(err, repository.ErrProductNotFound) {
-			log.Warn("product not found", "product_id", id)
+		if errors.Is(err, service.ErrProductNotFound) {
+			log.Warn("product not found", slog.Any("product_id", id))
 			http.Error(w, "product not found", http.StatusNotFound)
 			return
 		}

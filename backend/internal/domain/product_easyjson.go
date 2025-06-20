@@ -36,8 +36,6 @@ func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalDomain(in *
 			continue
 		}
 		switch key {
-		case "product_id":
-			out.ProductID = int64(in.Int64())
 		case "attribute_id":
 			out.AttributeID = int64(in.Int64())
 		case "value_string":
@@ -107,13 +105,13 @@ func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalDomain(out 
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"product_id\":"
-		out.RawString(prefix[1:])
-		out.Int64(int64(in.ProductID))
-	}
-	{
 		const prefix string = ",\"attribute_id\":"
-		out.RawString(prefix)
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
 		out.Int64(int64(in.AttributeID))
 	}
 	if in.ValueString != nil {
@@ -191,7 +189,7 @@ func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalDomain1(in 
 			continue
 		}
 		switch key {
-		case "id":
+		case "product_id":
 			out.ID = int64(in.Int64())
 		case "name":
 			out.Name = string(in.String())
@@ -245,7 +243,7 @@ func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalDomain1(out
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"id\":"
+		const prefix string = ",\"product_id\":"
 		out.RawString(prefix[1:])
 		out.Int64(int64(in.ID))
 	}

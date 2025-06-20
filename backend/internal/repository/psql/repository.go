@@ -2,9 +2,6 @@ package repository
 
 import (
 	"errors"
-	"log/slog"
-
-	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -16,9 +13,9 @@ type Repositories struct {
 	CategoryRepository *CategoryRepository
 }
 
-func New(db *sqlx.DB, logger *slog.Logger) *Repositories {
+func New(deps Deps) *Repositories {
 	return &Repositories{
-		ProductRepository: NewProductRepository(db, logger),
+		ProductRepository: NewProductRepository(deps.DB, deps.Logger),
 		// CategoryRepository: NewCategoryRepository(db, logger),
 	}
 }

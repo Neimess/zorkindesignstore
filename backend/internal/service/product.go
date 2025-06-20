@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
@@ -13,6 +14,7 @@ var (
 	ErrProductNameEmpty = errors.New("product name is empty")
 	ErrProductIsNil     = errors.New("product is nil")
 	ErrProductNotFound  = errors.New("product not found")
+	ErrProductRepoIsNil = errors.New("product service: repo is nil")
 )
 
 type ProductRepository interface {
@@ -25,11 +27,17 @@ type ProductService struct {
 	log  *slog.Logger
 }
 
-func NewProductService(repo ProductRepository, logger *slog.Logger) *ProductService {
+func NewProductService(repo ProductRepository, logger *slog.Logger) (*ProductService, error) {
+	if repo == nil {
+		return nil, ErrProductRepoIsNil
+	}
+	if logger == nil {
+		logger = silentLogger()
+	}
 	return &ProductService{
 		repo: repo,
 		log:  logger,
-	}
+	}, nil
 }
 
 func (ps *ProductService) Create(ctx context.Context, product *domain.Product) (int64, error) {
@@ -78,4 +86,8 @@ func (ps *ProductService) GetDetailed(ctx context.Context, id int64) (*domain.Pr
 		slog.String("name", product.Name),
 	)
 	return product, nil
+}
+
+func silentLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }

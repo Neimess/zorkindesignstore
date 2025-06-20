@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -43,7 +44,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 	)
 	if err != nil {
 		log.Error("db connect failed", slog.Any("error", err))
-		return nil, err
+		return nil, fmt.Errorf("application.dbconnect: %w", err)
 	}
 
 	logNew.Info("db connected",
@@ -53,12 +54,15 @@ func NewApplication(dep *Deps) (*Application, error) {
 	)
 
 	// 2. Репозитории — отвечают за доступ к данным
-	repos := repository.New(db, dep.Logger)
+	repos := repository.New(repository.Deps{
+		DB:     db,
+		Logger: dep.Logger,
+	})
 	logNew.Debug("repositories initialized")
 
 	// 3. Сервисы — бизнес-логика, используют репозиторий
 
-	services := service.New(
+	services, err := service.New(
 		service.Deps{
 			Logger:             dep.Logger,
 			Config:             dep.Config,
@@ -66,6 +70,10 @@ func NewApplication(dep *Deps) (*Application, error) {
 			CategoryRepository: repos.CategoryRepository,
 		},
 	)
+	if err != nil {
+		log.Error("service isn't started", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("application.service : %w", err)
+	}
 	logNew.Debug("services wired")
 
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)

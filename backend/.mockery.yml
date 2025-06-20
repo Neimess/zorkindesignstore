@@ -1,0 +1,18 @@
+# mockery v3.4.0
+all: false
+log-level: info
+
+packages:
+  github.com/Neimess/zorkin-store-project/internal/service:
+    config:
+      all: true
+      filename: service_mockery.go
+      dir: "{{.InterfaceDir}}/mocks"
+      formatter: goimports
+      structname: "{{.Mock}}{{.InterfaceName}}"
+      pkgname: mocks
+      recursive: false
+      require-template-schema-exists: true
+      template: testify
+      template-schema: "{{.Template}}.schema.json"
+      force-file-write: true

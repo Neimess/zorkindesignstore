@@ -21,19 +21,11 @@ type Service struct {
 	CategoryService *CategoryService
 }
 
-func New(d Deps) (*Service, error) {
-	ps, err := NewProductService(d.ProductRepository, d.Logger)
-	if err != nil {
-		return nil, err
-	}
-	// cs, err := NewCategoryService(d.CategoryRepository, d.Logger)
-	// if err != nil {
-	// 	return nil, err
-	// }
+func New(d Deps) *Service {
 	return &Service{
-		ProductService: ps,
-		// CategoryService: cs,
-	}, nil
+		ProductService:  NewProductService(d.ProductRepository, silentLogger()),
+		CategoryService: NewCategoryService(d.CategoryRepository, silentLogger()),
+	}
 }
 
 func silentLogger() *slog.Logger {

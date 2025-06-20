@@ -10,6 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
@@ -17,13 +18,20 @@ import (
 var (
 	ErrProductNotFound = errors.New("product not found")
 )
+
 type ProductRepository struct {
 	db  *sqlx.DB
 	log *slog.Logger
 }
 
-func NewProductRepository(db *sqlx.DB, logger *slog.Logger) *ProductRepository {
-	return &ProductRepository{db: db, log: logger.With("component", "repo.product")}
+func NewProductRepository(db *sqlx.DB, log *slog.Logger) *ProductRepository {
+	if db == nil {
+		panic("NewProductRepository: db is nil")
+	}
+	return &ProductRepository{
+		db:  db,
+		log: logger.WithComponent(log, "repo.category"),
+	}
 }
 
 func (r *ProductRepository) Create(ctx context.Context, p *domain.Product) (int64, error) {

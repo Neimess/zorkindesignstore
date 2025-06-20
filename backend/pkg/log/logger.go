@@ -43,3 +43,10 @@ func MustInitLogger(env string) *slog.Logger {
 
 	return log
 }
+
+func WithComponent(logger *slog.Logger, name string) *slog.Logger {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return logger.With("component", name)
+}

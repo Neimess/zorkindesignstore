@@ -44,9 +44,3 @@ type ProductAttributeValueResponse struct {
 	IsFilterable bool    `json:"is_filterable"`
 	Value        string  `json:"value" example:"1.25"`
 }
-
-// swagger:model ProductIDResponse
-type ProductIDResponse struct {
-	ID      int64  `json:"id" example:"42"`
-	Message string `json:"message" example:"Product created successfully"`
-}

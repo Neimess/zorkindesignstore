@@ -8,10 +8,10 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 
 var (
-	ErrProductRepoIsNil = errors.New("repo is nil")
 	ErrProductNotFound  = errors.New("product not found")
 	ErrBadCategoryID    = errors.New("bad category ID")
 	ErrInvalidAttribute = errors.New("invalid product attribute")
@@ -28,17 +28,14 @@ type ProductService struct {
 	log  *slog.Logger
 }
 
-func NewProductService(repo ProductRepository, logger *slog.Logger) (*ProductService, error) {
+func NewProductService(repo ProductRepository, log *slog.Logger) *ProductService {
 	if repo == nil {
-		return nil, ErrProductRepoIsNil
-	}
-	if logger == nil {
-		logger = silentLogger()
+		panic("product service: repo is nil")
 	}
 	return &ProductService{
 		repo: repo,
-		log:  logger,
-	}, nil
+		log:  logger.WithComponent(log, "service.product"),
+	}
 }
 
 func (ps *ProductService) Create(ctx context.Context, product *domain.Product) (int64, error) {

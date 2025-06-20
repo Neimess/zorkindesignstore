@@ -180,80 +180,7 @@ func (v *ProductResponse) UnmarshalJSON(data []byte) error {
 func (v *ProductResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(l, v)
 }
-func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(in *jlexer.Lexer, out *ProductIDResponse) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "id":
-			out.ID = int64(in.Int64())
-		case "message":
-			out.Message = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(out *jwriter.Writer, in ProductIDResponse) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"id\":"
-		out.RawString(prefix[1:])
-		out.Int64(int64(in.ID))
-	}
-	{
-		const prefix string = ",\"message\":"
-		out.RawString(prefix)
-		out.String(string(in.Message))
-	}
-	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v ProductIDResponse) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v ProductIDResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *ProductIDResponse) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *ProductIDResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(l, v)
-}
-func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(in *jlexer.Lexer, out *ProductCreateRequest) {
+func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(in *jlexer.Lexer, out *ProductCreateRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -347,7 +274,7 @@ func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 		in.Consumed()
 	}
 }
-func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(out *jwriter.Writer, in ProductCreateRequest) {
+func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(out *jwriter.Writer, in ProductCreateRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -404,27 +331,27 @@ func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 // MarshalJSON supports json.Marshaler interface
 func (v ProductCreateRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ProductCreateRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ProductCreateRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&r, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ProductCreateRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(l, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(l, v)
 }
-func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(in *jlexer.Lexer, out *ProductAttributeValueResponse) {
+func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(in *jlexer.Lexer, out *ProductAttributeValueResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -473,7 +400,7 @@ func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 		in.Consumed()
 	}
 }
-func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(out *jwriter.Writer, in ProductAttributeValueResponse) {
+func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(out *jwriter.Writer, in ProductAttributeValueResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -513,27 +440,27 @@ func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 // MarshalJSON supports json.Marshaler interface
 func (v ProductAttributeValueResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(&w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ProductAttributeValueResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ProductAttributeValueResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(&r, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ProductAttributeValueResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(l, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(l, v)
 }
-func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(in *jlexer.Lexer, out *ProductAttributeValueRequest) {
+func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(in *jlexer.Lexer, out *ProductAttributeValueRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -574,7 +501,7 @@ func easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 		in.Consumed()
 	}
 }
-func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(out *jwriter.Writer, in ProductAttributeValueRequest) {
+func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(out *jwriter.Writer, in ProductAttributeValueRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -598,23 +525,23 @@ func easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 // MarshalJSON supports json.Marshaler interface
 func (v ProductAttributeValueRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(&w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ProductAttributeValueRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(w, v)
+	easyjsonCf3f67efEncodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ProductAttributeValueRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(&r, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ProductAttributeValueRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto4(l, v)
+	easyjsonCf3f67efDecodeGithubComNeimessZorkinStoreProjectInternalTransportDto3(l, v)
 }

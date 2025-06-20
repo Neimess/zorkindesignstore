@@ -62,7 +62,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	// 3. Сервисы — бизнес-логика, используют репозиторий
 
-	services, err := service.New(
+	services := service.New(
 		service.Deps{
 			Logger:             dep.Logger,
 			Config:             dep.Config,
@@ -70,10 +70,6 @@ func NewApplication(dep *Deps) (*Application, error) {
 			CategoryRepository: repos.CategoryRepository,
 		},
 	)
-	if err != nil {
-		log.Error("service isn't started", slog.String("error", err.Error()))
-		return nil, fmt.Errorf("application.service : %w", err)
-	}
 	logNew.Debug("services wired")
 
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)

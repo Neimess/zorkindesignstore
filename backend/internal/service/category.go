@@ -8,14 +8,15 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 
 var (
 	ErrCategoryIsNil     = errors.New("category is nil")
 	ErrCategoryNameEmpty = errors.New("category name is empty")
 	ErrCategoryNotFound  = errors.New("category not found")
-	ErrCategoryRepoIsNil = errors.New("category service: repo is nil")
-	ErrCategoryExists	 = errors.New("category already exists with this name")
+	ErrCategoryExists    = errors.New("category already exists with this name")
+	ErrCategoryInUse     = errors.New("category is in use by some products and cannot be deleted")
 )
 
 type CategoryRepository interface {
@@ -31,17 +32,14 @@ type CategoryService struct {
 	log  *slog.Logger
 }
 
-func NewCategoryService(repo CategoryRepository, logger *slog.Logger) (*CategoryService, error) {
+func NewCategoryService(repo CategoryRepository, log *slog.Logger) *CategoryService {
 	if repo == nil {
-		return nil, ErrCategoryRepoIsNil
-	}
-	if logger == nil {
-		logger = silentLogger()
+		panic("category service: repo is nil")
 	}
 	return &CategoryService{
 		repo: repo,
-		log:  logger,
-	}, nil
+		log:  logger.WithComponent(log, "service.category"),
+	}
 }
 
 func (cs *CategoryService) Create(ctx context.Context, c *domain.Category) (int64, error) {
@@ -116,15 +114,26 @@ func (cs *CategoryService) Update(ctx context.Context, c *domain.Category) error
 func (cs *CategoryService) Delete(ctx context.Context, id int64) error {
 	const op = "service.category.Delete"
 	log := cs.log.With("op", op)
+	err := cs.repo.Delete(ctx, id)
 
-	if err := cs.repo.Delete(ctx, id); err != nil {
-		if errors.Is(err, repository.ErrCategoryNotFound) {
-			log.Info("category not found for delete", slog.Int64("category_id", id))
-			return ErrCategoryNotFound
-		}
+	switch {
+	case errors.Is(err, context.Canceled):
+		log.Info("context canceled while deleting category", slog.Int64("category_id", id))
+		return context.Canceled
+	case errors.Is(err, context.DeadlineExceeded):
+		log.Info("context deadline exceeded while deleting category", slog.Int64("category_id", id))
+		return context.DeadlineExceeded
+	case errors.Is(err, repository.ErrCategoryInUse):
+		log.Info("category cannot be deleted because it is in use", slog.Int64("category_id", id))
+		return ErrCategoryInUse
+	case errors.Is(err, repository.ErrCategoryNotFound):
+		return ErrCategoryNotFound
+	case err != nil:
 		log.Error("failed to delete category", slog.Any("error", err))
 		return fmt.Errorf("%s: %w", op, err)
+	default:
+		log.Info("category deleted", slog.Int64("category_id", id))
 	}
-	log.Info("category deleted", slog.Int64("category_id", id))
+
 	return nil
 }

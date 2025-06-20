@@ -9,6 +9,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
 	"github.com/mailru/easyjson"
 )
@@ -26,10 +27,13 @@ type ProductHandler struct {
 	log *slog.Logger
 }
 
-func NewProductHandler(service ProductService, logger *slog.Logger) *ProductHandler {
+func NewProductHandler(service ProductService, log *slog.Logger) *ProductHandler {
+	if service == nil {
+		panic("product handler: service is nil")
+	}
 	return &ProductHandler{
 		srv: service,
-		log: logger.With("component", "product_http"),
+		log: logger.WithComponent(log, "transport.http.restHTTP.product"),
 	}
 }
 
@@ -40,7 +44,7 @@ func NewProductHandler(service ProductService, logger *slog.Logger) *ProductHand
 // @Accept       json
 // @Produce      json
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
-// @Success      201      {object}  dto.ProductIDResponse "Returns created product ID"
+// @Success      201      {object}  dto.IDResponse "Returns created product ID"
 // @Failure      400      {object}  dto.ErrorResponse "Bad request"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
 // @Router       /api/product [post]
@@ -65,7 +69,7 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	product := mapCreateReqToDomain(&input)
 
-	id, err := ph.srv.Create(ctx, product)
+	_, err := ph.srv.Create(ctx, product)
 	switch {
 	case errors.Is(err, service.ErrBadCategoryID):
 		log.Warn("invalid foreign key in product",
@@ -83,12 +87,7 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := dto.ProductIDResponse{
-		ID:      id,
-		Message: "successfully_created",
-	}
-
-	JSONCtx(ctx, w, http.StatusCreated, &resp, log)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // CreateWithAttributes godoc
@@ -98,7 +97,7 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
-// @Success      201      {object}  dto.ProductIDResponse  "Returns created product ID"
+// @Success      201      {object}  dto.IDResponse  "Returns created product ID"
 // @Failure      400      {object}  dto.ErrorResponse "Bad request"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
 // @Router       /api/product/detailed [post]
@@ -116,7 +115,7 @@ func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Re
 
 	domainProd := mapCreateReqToDomain(&req)
 
-	id, err := ph.srv.CreateWithAttrs(ctx, domainProd)
+	_, err := ph.srv.CreateWithAttrs(ctx, domainProd)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrInvalidAttribute):
@@ -132,12 +131,7 @@ func (ph *ProductHandler) CreateWithAttributes(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	resp := dto.ProductIDResponse{
-		ID:      id,
-		Message: "successfully_created",
-	}
-
-	JSONCtx(ctx, w, http.StatusCreated, &resp, log)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // GetDetailedProduct godoc

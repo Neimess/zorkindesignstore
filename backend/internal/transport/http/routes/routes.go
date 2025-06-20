@@ -48,6 +48,14 @@ func NewRouter(deps Deps) chi.Router {
 			r.Post("/detailed", ph.CreateWithAttributes)
 			r.Get("/{id}", ph.GetDetailed)
 		})
+		ch := deps.Handlers.CategoryHandler
+		r.Route("/category", func(r chi.Router) {
+			r.Post("/", ch.Create)
+			r.Get("/{id}", ch.Get)
+			r.Get("/", ch.List)
+			r.Put("/{id}", ch.Update)
+			r.Delete("/{id}", ch.Delete)
+		})
 	})
 
 	r.Get("/swagger", func(w http.ResponseWriter, r *http.Request) {

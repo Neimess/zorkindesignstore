@@ -8,6 +8,6 @@ type Repositories struct {
 func New(deps Deps) *Repositories {
 	return &Repositories{
 		ProductRepository: NewProductRepository(deps.DB, deps.Logger),
-		// CategoryRepository: NewCategoryRepository(db, logger),
+		CategoryRepository: NewCategoryRepository(deps.DB, deps.Logger),
 	}
 }

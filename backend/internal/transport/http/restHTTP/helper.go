@@ -21,17 +21,17 @@ func idFromUrlToInt64(r *http.Request) (int64, error) {
 	return id, nil
 }
 
-func writeError(w http.ResponseWriter, status int, msg string) (int, error) {
+func writeError(w http.ResponseWriter, statusCode int, msg string) (int, error) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(statusCode)
 	return easyjson.MarshalToWriter(dto.ErrorResponse{
 		Message: msg,
 	}, w)
 }
 
-func JSONCtx(ctx context.Context, w http.ResponseWriter, status int, data easyjson.Marshaler, logger *slog.Logger) {
+func JSONCtx(ctx context.Context, w http.ResponseWriter, statusCode int, data easyjson.Marshaler, logger *slog.Logger) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(statusCode)
 
 	if _, err := easyjson.MarshalToWriter(data, w); err != nil {
 		logger.ErrorContext(ctx, "easyjson marshal failed", slog.String("error", err.Error()))

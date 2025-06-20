@@ -1,8 +1,44 @@
 definitions:
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest:
+    properties:
+      name:
+        example: Плитка
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse:
+    properties:
+      id:
+        example: 3
+        type: integer
+      name:
+        example: Керамогранит
+        type: string
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest:
+    properties:
+      name:
+        example: Керамогранит
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse:
     properties:
       message:
         example: invalid request payload
+        type: string
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse:
+    properties:
+      id:
+        example: 42
+        type: integer
+      message:
+        example: created
         type: string
     type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest:
@@ -64,15 +100,6 @@ definitions:
     - name
     - price
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse:
-    properties:
-      id:
-        example: 42
-        type: integer
-      message:
-        example: Product created successfully
-        type: string
-    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductResponse:
     properties:
       attributes:
@@ -106,6 +133,148 @@ info:
   title: Zorkin Store API
   version: "1.0"
 paths:
+  /api/category:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse'
+              type: array
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: List categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category to create
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Create category
+      tags:
+      - categories
+  /api/category/{id}:
+    delete:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Delete category
+      tags:
+      - categories
+    get:
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Get category by ID
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New name
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Update category
+      tags:
+      - categories
   /api/product:
     post:
       consumes:
@@ -124,7 +293,7 @@ paths:
         "201":
           description: Returns created product ID
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
         "400":
           description: Bad request
           schema:
@@ -188,7 +357,7 @@ paths:
         "201":
           description: Returns created product ID
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductIDResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
         "400":
           description: Bad request
           schema:

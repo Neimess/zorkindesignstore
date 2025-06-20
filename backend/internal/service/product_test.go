@@ -13,8 +13,7 @@ import (
 
 func TestProductService_Create_Success(t *testing.T) {
 	mockRepo := mocks.NewMockProductRepository(t)
-	svc, err := NewProductService(mockRepo, silentLogger())
-	require.NoError(t, err)
+	svc := NewProductService(mockRepo, silentLogger())
 
 	ctx := context.Background()
 	product := &domain.Product{
@@ -35,24 +34,22 @@ func TestProductService_Create_Success(t *testing.T) {
 
 func TestProductService_Create_NotFound(t *testing.T) {
 	mockRepo := mocks.NewMockProductRepository(t)
-	svc, err := NewProductService(mockRepo, silentLogger())
-	require.NoError(t, err)
+	svc := NewProductService(mockRepo, silentLogger())
 	ctx := context.Background()
 
 	p := &domain.Product{Name: "Тест", Price: 123, CategoryID: 99}
 	mockRepo.EXPECT().
 		Create(ctx, p).
-		Return(int64(0), repo.ErrNotFound)
+		Return(int64(0), repo.ErrProductNotFound)
 
 	id, err := svc.Create(ctx, p)
-	require.ErrorIs(t, err, repo.ErrNotFound)
+	require.ErrorIs(t, err, repo.ErrProductNotFound)
 	require.Zero(t, id)
 }
 
 func TestProductService_Create_UnicodeNames(t *testing.T) {
 	mockRepo := mocks.NewMockProductRepository(t)
-	svc, err := NewProductService(mockRepo, silentLogger())
-	require.NoError(t, err)
+	svc := NewProductService(mockRepo, silentLogger())
 	ctx := context.Background()
 
 	products := []domain.Product{

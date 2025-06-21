@@ -1,4 +1,4 @@
-version: '3.9'
+name: production
 
 networks:
   store-net:
@@ -34,9 +34,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./configs:/opt/migrate/configs:ro
-    command: ["./migrate"]
+    command: ["./migrate --up"]
     environment:
       DSN: ${DSN}
     networks: [ store-net ]
@@ -60,7 +58,7 @@ services:
       - ./configs:/app/configs:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
       interval: 10s
       timeout: 5s
       retries: 5

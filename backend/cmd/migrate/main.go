@@ -16,8 +16,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
-
-
 func main() {
 	var (
 		up    = flag.Bool("up", false, "Apply all up migrations")
@@ -34,8 +32,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to open DB: %v", err)
 	}
-	defer db.Close()
-
+	defer func() {
+		_ = db.Close()
+	}()
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		log.Fatalf("create postgres driver: %v", err)

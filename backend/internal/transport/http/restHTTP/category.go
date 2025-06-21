@@ -42,17 +42,17 @@ var validate = validator.GetValidator()
 
 // CreateCategory godoc
 //
-//	@Summary		Create category
-//	@Tags			categories
-//	@Accept			json
-//	@Produce		json
-//  @Security       BearerAuth
-//	@Param			category	body	dto.CategoryCreateRequest	true	"Category to create"
-//	@Success		201
-//	@Failure		400			{object}	dto.ErrorResponse
-//	@Failure		409			{object}	dto.ErrorResponse
-//	@Failure		500			{object}	dto.ErrorResponse
-//	@Router			/api/admin/category [post]
+//		@Summary		Create category
+//		@Tags			categories
+//		@Accept			json
+//		@Produce		json
+//	 @Security       BearerAuth
+//		@Param			category	body	dto.CategoryCreateRequest	true	"Category to create"
+//		@Success		201
+//		@Failure		400			{object}	dto.ErrorResponse
+//		@Failure		409			{object}	dto.ErrorResponse
+//		@Failure		500			{object}	dto.ErrorResponse
+//		@Router			/api/admin/category [post]
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
@@ -155,18 +155,18 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 // -----------------------------------------------------------------------------
 // UpdateCategory godoc
 //
-//	@Summary		Update category
-//	@Tags			categories
-//	@Accept			json
-//	@Produce		json
-//  @Security       BearerAuth
-//	@Param			id			path	int							true	"Category ID"
-//	@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
-//	@Success		204
-//	@Failure		400	{object}	dto.ErrorResponse
-//	@Failure		404	{object}	dto.ErrorResponse
-//	@Failure		500	{object}	dto.ErrorResponse
-//	@Router			/api/admin/category/{id} [put]
+//		@Summary		Update category
+//		@Tags			categories
+//		@Accept			json
+//		@Produce		json
+//	 @Security       BearerAuth
+//		@Param			id			path	int							true	"Category ID"
+//		@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
+//		@Success		204
+//		@Failure		400	{object}	dto.ErrorResponse
+//		@Failure		404	{object}	dto.ErrorResponse
+//		@Failure		500	{object}	dto.ErrorResponse
+//		@Router			/api/admin/category/{id} [put]
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Update")
@@ -203,16 +203,16 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 // -----------------------------------------------------------------------------
 // DeleteCategory godoc
 //
-//	@Summary		Delete category
-//	@Tags			categories
-//	@Produce		json
-//  @Security       BearerAuth
-//	@Param			id	path	int	true	"Category ID"
-//	@Success		204
-//	@Failure		400	{object}	dto.ErrorResponse
-//	@Failure		404	{object}	dto.ErrorResponse
-//	@Failure		500	{object}	dto.ErrorResponse
-//	@Router			/api/admin/category/{id} [delete]
+//		@Summary		Delete category
+//		@Tags			categories
+//		@Produce		json
+//	 @Security       BearerAuth
+//		@Param			id	path	int	true	"Category ID"
+//		@Success		204
+//		@Failure		400	{object}	dto.ErrorResponse
+//		@Failure		404	{object}	dto.ErrorResponse
+//		@Failure		500	{object}	dto.ErrorResponse
+//		@Router			/api/admin/category/{id} [delete]
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Delete")

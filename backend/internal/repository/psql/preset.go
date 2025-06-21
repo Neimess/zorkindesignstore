@@ -200,6 +200,7 @@ func (r *PresetRepository) ListShort(ctx context.Context) ([]domain.Preset, erro
 	}
 	return presets, nil
 }
+
 // Delete removes preset and its items (ON DELETE CASCADE in DB or explicit delete).
 func (r *PresetRepository) Delete(ctx context.Context, id int64) error {
 	const q = `DELETE FROM presets WHERE preset_id = $1`

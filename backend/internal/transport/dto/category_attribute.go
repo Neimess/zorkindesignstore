@@ -10,6 +10,7 @@ type CategoryAttributeRequest struct {
 
 //easyjson:json
 type CategoryAttributeListResponse []CategoryAttributeResponse
+
 //easyjson:json
 type CategoryAttributeResponse struct {
 	CategoryID  int64 `json:"category_id"`

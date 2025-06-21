@@ -46,7 +46,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := h.srv.GenerateToken(userID)
 	if err != nil {
 		log.Error("failed to generate token", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "failed to generate token")
+		_, _ = httputils.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 

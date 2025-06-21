@@ -3,7 +3,6 @@
 package service
 
 import (
-	"io"
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
@@ -41,6 +40,6 @@ func New(d Deps) *Service {
 	}
 }
 
-func silentLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
-}
+// func silentLogger() *slog.Logger {
+// 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+// }

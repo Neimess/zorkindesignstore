@@ -1,0 +1,19 @@
+[Unit]
+Description=Zorkin Store Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=zorkin
+Group=zorkin
+WorkingDirectory=/opt/zorkin-backend
+ExecStart=/opt/zorkin-backend/zorkin-backend \
+  -config /opt/zorkin-backend/configs/config.yaml
+Restart=on-failure
+RestartSec=3s
+Environment=ENV=production
+Environment=LOG_LEVEL=info
+Environment=GOMEMLIMIT=1GiB
+
+[Install]
+WantedBy=multi-user.target

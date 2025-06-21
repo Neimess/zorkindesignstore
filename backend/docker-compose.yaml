@@ -1,0 +1,83 @@
+version: '3.9'
+
+networks:
+  store-net:
+    driver: bridge
+
+volumes:
+  pgadmin-data:
+  postgres_data:
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: store-postgres
+    restart: unless-stopped
+    networks: [ store-net ]
+    environment:
+      POSTGRES_USER:   ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:     ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      dockerfile: ./Dockerfiles/Dockerfile.Migrate
+      context: .
+      target: migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./configs:/opt/migrate/configs:ro
+    command: ["./migrate"]
+    environment:
+      DSN: ${DSN}
+    networks: [ store-net ]
+    restart: "no"
+
+
+  backend:
+    build:
+      dockerfile: ./Dockerfiles/Dockerfile.Store
+      context: .
+      target: runner          
+    container_name: store-backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [ store-net ]
+    environment:
+      ENV: production
+      LOG_LEVEL: info
+    volumes:
+      - ./configs:/app/configs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: store-nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks: [ store-net ]
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+
+

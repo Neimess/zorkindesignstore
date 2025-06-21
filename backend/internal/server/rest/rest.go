@@ -1,4 +1,3 @@
-// internal/adapter/rest/server.go
 package rest
 
 import (
@@ -6,9 +5,18 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Neimess/zorkin-store-project/internal/config"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
 	route "github.com/Neimess/zorkin-store-project/internal/transport/http/routes"
 	"github.com/go-chi/chi/v5"
 )
+
+type Deps struct {
+	Server   config.HTTPServer
+	Config   *config.Config
+	Logger   *slog.Logger
+	Handlers *restHTTP.Handlers
+}
 
 type Server struct {
 	httpServer *http.Server

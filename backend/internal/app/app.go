@@ -9,11 +9,11 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	"github.com/Neimess/zorkin-store-project/internal/server/rest"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
 	"github.com/Neimess/zorkin-store-project/pkg/database/psql"
 	"github.com/Neimess/zorkin-store-project/pkg/secret/jwt"
-	"github.com/Neimess/zorkin-store-project/server/rest"
 
 	// httpDelivery "github.com/Neimess/zorkin-store-project/internal/delivery/http"
 
@@ -78,6 +78,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 			ProductRepository:           repos.ProductRepository,
 			CategoryRepository:          repos.CategoryRepository,
 			CategoryAttributeRepository: repos.CategoryAttributeRepository,
+			PresetRepository:            repos.PresetRepository,
 			JWTGenerator:                jwtGenerator,
 		},
 	)
@@ -89,6 +90,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 		CategoryService:          services.CategoryService,
 		AuthService:              services.AuthService,
 		CategoryAttributeService: services.CategoryAttributeService,
+		PresetService:            services.PresetService,
 		Logger:                   dep.Logger,
 	})
 	// 5. Сервер — HTTP-сервер

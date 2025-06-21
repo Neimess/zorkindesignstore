@@ -52,7 +52,7 @@ var validate = validator.GetValidator()
 //	@Failure		400			{object}	dto.ErrorResponse
 //	@Failure		409			{object}	dto.ErrorResponse
 //	@Failure		500			{object}	dto.ErrorResponse
-//	@Router			/api/category [post]
+//	@Router			/api/admin/category [post]
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
@@ -166,7 +166,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	dto.ErrorResponse
 //	@Failure		404	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
-//	@Router			/api/category/{id} [put]
+//	@Router			/api/admin/category/{id} [put]
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Update")
@@ -212,7 +212,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400	{object}	dto.ErrorResponse
 //	@Failure		404	{object}	dto.ErrorResponse
 //	@Failure		500	{object}	dto.ErrorResponse
-//	@Router			/api/category/{id} [delete]
+//	@Router			/api/admin/category/{id} [delete]
 func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Delete")

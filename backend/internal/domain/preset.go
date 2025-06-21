@@ -3,19 +3,18 @@ package domain
 import "time"
 
 type Preset struct {
-	ID          int64     `json:"preset_id" db:"preset_id"`
-	Name        string    `json:"name" db:"name"`
-	Description string    `json:"description,omitempty" db:"description"`
-	TotalPrice  float64   `json:"total_price" db:"total_price"`
-	ImageURL    string    `json:"image_url,omitempty" db:"image_url"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
+	ID          int64        `json:"preset_id" db:"preset_id"`
+	Name        string       `json:"name" db:"name"`
+	Description string       `json:"description,omitempty" db:"description"`
+	TotalPrice  float64      `json:"total_price" db:"total_price"`
+	ImageURL    string       `json:"image_url,omitempty" db:"image_url"`
+	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
+	Items       []PresetItem `json:"items,omitempty" db:"-"`
 }
 
 type PresetItem struct {
-	ID        int64   `json:"id" db:"preset_item_id"`
-	PresetID  int64   `json:"preset_id" db:"preset_id"`
-	ProductID int64   `json:"product_id" db:"product_id"`
-	Quantity  float64 `json:"quantity" db:"quantity"`
-	Unit      string  `json:"unit,omitempty" db:"unit"`
-	Note      string  `json:"note,omitempty" db:"note"`
+	ID        int64           `json:"id" db:"preset_item_id"`
+	PresetID  int64           `json:"preset_id" db:"preset_id"`
+	ProductID int64           `json:"product_id" db:"product_id"`
+	Product   *ProductSummary `json:"product,omitempty"`
 }

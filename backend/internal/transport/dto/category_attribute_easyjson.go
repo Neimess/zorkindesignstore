@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(in *jlexer.Lexer, out *CategoryAttributeRequest) {
+func easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(in *jlexer.Lexer, out *CategoryAttributeResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -54,7 +54,94 @@ func easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 		in.Consumed()
 	}
 }
-func easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(out *jwriter.Writer, in CategoryAttributeRequest) {
+func easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(out *jwriter.Writer, in CategoryAttributeResponse) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"category_id\":"
+		out.RawString(prefix[1:])
+		out.Int64(int64(in.CategoryID))
+	}
+	{
+		const prefix string = ",\"attribute_id\":"
+		out.RawString(prefix)
+		out.Int64(int64(in.AttributeID))
+	}
+	{
+		const prefix string = ",\"is_required\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.IsRequired))
+	}
+	{
+		const prefix string = ",\"priority\":"
+		out.RawString(prefix)
+		out.Int(int(in.Priority))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v CategoryAttributeResponse) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v CategoryAttributeResponse) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *CategoryAttributeResponse) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *CategoryAttributeResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(l, v)
+}
+func easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(in *jlexer.Lexer, out *CategoryAttributeRequest) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "category_id":
+			out.CategoryID = int64(in.Int64())
+		case "attribute_id":
+			out.AttributeID = int64(in.Int64())
+		case "is_required":
+			out.IsRequired = bool(in.Bool())
+		case "priority":
+			out.Priority = int(in.Int())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(out *jwriter.Writer, in CategoryAttributeRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -84,23 +171,89 @@ func easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDt
 // MarshalJSON supports json.Marshaler interface
 func (v CategoryAttributeRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(&w, v)
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v CategoryAttributeRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto(w, v)
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *CategoryAttributeRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(&r, v)
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *CategoryAttributeRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto(l, v)
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto1(l, v)
+}
+func easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(in *jlexer.Lexer, out *CategoryAttributeListResponse) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(CategoryAttributeListResponse, 0, 2)
+			} else {
+				*out = CategoryAttributeListResponse{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 CategoryAttributeResponse
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(out *jwriter.Writer, in CategoryAttributeListResponse) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v CategoryAttributeListResponse) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v CategoryAttributeListResponse) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson16eeec75EncodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *CategoryAttributeListResponse) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *CategoryAttributeListResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson16eeec75DecodeGithubComNeimessZorkinStoreProjectInternalTransportDto2(l, v)
 }

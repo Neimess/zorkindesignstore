@@ -50,6 +50,59 @@
                 }
             }
         },
+        "/api/admin/category": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Create category",
+                "parameters": [
+                    {
+                        "description": "Category to create",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/admin/category/{categoryID}/attribute": {
             "get": {
                 "security": [
@@ -297,6 +350,211 @@
                 }
             }
         },
+        "/api/admin/category/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Update category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New name",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Delete category",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/presets": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new preset with its items",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Preset"
+                ],
+                "summary": "Create a new preset",
+                "parameters": [
+                    {
+                        "description": "Preset data",
+                        "name": "preset",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Preset created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid JSON or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/presets/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Preset"
+                ],
+                "summary": "Delete preset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Preset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/admin/product": {
             "post": {
                 "security": [
@@ -500,57 +758,6 @@
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Create category",
-                "parameters": [
-                    {
-                        "description": "Category to create",
-                        "name": "category",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/api/category/{id}": {
@@ -597,55 +804,26 @@
                         }
                     }
                 }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
+            }
+        },
+        "/api/presets": {
+            "get": {
+                "description": "Get a list of all presets with basic info (short version)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "categories"
+                    "Preset"
                 ],
-                "summary": "Update category",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Category ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "New name",
-                        "name": "category",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest"
-                        }
-                    }
-                ],
+                "summary": "List presets with basic info",
                 "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetShortResponse"
+                            }
                         }
                     },
                     "500": {
@@ -655,47 +833,76 @@
                         }
                     }
                 }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
+            }
+        },
+        "/api/presets/detailed": {
+            "get": {
+                "description": "Get a list of all presets with their items",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "categories"
+                    "Preset"
                 ],
-                "summary": "Delete category",
+                "summary": "List presets with it's items",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/presets/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Preset"
+                ],
+                "summary": "Get preset by ID",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Category ID",
+                        "description": "Preset ID",
                         "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponse"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "invalid id",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "not found",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "internal error",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
@@ -918,6 +1125,118 @@
                 }
             }
         },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetRequest": {
+            "type": "object",
+            "required": [
+                "items",
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetRequestItem"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "total_price": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetRequestItem": {
+            "type": "object",
+            "required": [
+                "product_id"
+            ],
+            "properties": {
+                "product_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-06-20T15:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Полный комплект для ванной комнаты"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/image.png"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponseItem"
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Комплект для ванной"
+                },
+                "preset_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "total_price": {
+                    "type": "number",
+                    "example": 15000
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponseItem": {
+            "type": "object",
+            "properties": {
+                "product": {
+                    "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductSummary"
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetShortResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2025-06-20T15:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Для ванной комнаты"
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/image.png"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Комплект для ванной"
+                },
+                "preset_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "total_price": {
+                    "description": "может быть опциональным",
+                    "type": "number",
+                    "example": 15000
+                }
+            }
+        },
         "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductAttributeValueRequest": {
             "type": "object",
             "required": [
@@ -1034,6 +1353,27 @@
                 "product_id": {
                     "type": "integer",
                     "example": 10
+                }
+            }
+        },
+        "github_com_Neimess_zorkin-store-project_internal_transport_dto.ProductSummary": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/shampoo.png"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Шампунь"
+                },
+                "price": {
+                    "type": "number",
+                    "example": 499
                 }
             }
         },

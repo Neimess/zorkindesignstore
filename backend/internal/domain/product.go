@@ -24,3 +24,10 @@ type PresetProduct struct {
 	PresetID  int64 `db:"preset_id"`
 	ProductID int64 `db:"product_id"`
 }
+
+type ProductSummary struct {
+	ID       int64   `json:"id"`
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+	ImageURL *string `json:"image_url,omitempty"`
+}

@@ -59,7 +59,6 @@ func NewProductHandler(service ProductService, log *slog.Logger) *ProductHandler
 func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := ph.log.With("op", "transport.http.restHTTP.product.Create")
-	log.Debug("ctx", slog.Any("ctx", ctx))
 	validator := validator.GetValidator()
 	defer r.Body.Close()
 
@@ -70,7 +69,6 @@ func (ph ProductHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validator.StructCtx(ctx, &input)
 	if err := validator.StructCtx(ctx, &input); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")

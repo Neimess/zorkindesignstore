@@ -222,6 +222,10 @@ func (ph *ProductHandler) ListByCategory(w http.ResponseWriter, r *http.Request)
 		log.Warn("category not found", slog.Int64("category_id", categoryID))
 		httputils.WriteError(w, 404, "category not found")
 		return
+	case errors.Is(err, service.ErrNoProductsFound):
+		log.Warn("products not found", slog.Int64("category_id", categoryID))
+		httputils.WriteError(w, 404, "products with current category not found")
+		return
 	case err != nil:
 		log.Error("unhandled service error", slog.Any("err", err))
 		httputils.WriteError(w, 500, "internal server error")

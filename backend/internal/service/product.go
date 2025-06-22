@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	ErrNoProductsFound = errors.New("products not found")
 	ErrProductNotFound  = errors.New("product not found")
 	ErrBadCategoryID    = errors.New("bad category ID")
 	ErrInvalidAttribute = errors.New("invalid product attribute")
@@ -107,6 +108,8 @@ func (ps *ProductService) GetByCategoryID(ctx context.Context, catID int64) ([]d
 	switch {
 	case errors.Is(err, repository.ErrCategoryNotFound):
 		return nil, ErrCategoryNotFound
+	case len(products) == 0:
+		return nil, ErrNoProductsFound
 	case err != nil:
 		log.Error("repo error", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)

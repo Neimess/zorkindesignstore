@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	ErrNoProductsFound = errors.New("products not found")
+	ErrNoProductsFound  = errors.New("products not found")
 	ErrProductNotFound  = errors.New("product not found")
 	ErrBadCategoryID    = errors.New("bad category ID")
 	ErrInvalidAttribute = errors.New("invalid product attribute")

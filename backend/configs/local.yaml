@@ -1,6 +1,5 @@
 env: local
 admin_code: "admin123"
-
 http_server:
     address: "0.0.0.0:8080"
     max_header_bytes: 1048576
@@ -11,7 +10,6 @@ http_server:
     enable_cors: true
     enable_pprof: true
     enable_gzip: true
-
 storage:
     host: localhost
     port: 5432
@@ -19,8 +17,12 @@ storage:
     password: devpassword
     dbname: devdb
     conn_max_timeout: 30s
-
 jwt_config:
     issuer: zorkindev.ru
     audience: admin_app
     algorithm: HS256
+swagger:
+    enable: true
+    host: your-domain
+    scheme: [https, http]
+    version: 1.0.0

@@ -23,23 +23,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-
-  migrate:
-    build:
-      dockerfile: ./Dockerfiles/Dockerfile.Migrate
-      context: .
-      target: migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: ["./migrate --up"]
-    environment:
-      DSN: ${DSN}
-    networks: [ store-net ]
-    restart: "no"
-
+      timeout: 100s
+      retries: 10
 
   backend:
     build:
@@ -47,10 +32,10 @@ services:
       context: .
       target: runner          
     container_name: store-backend
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
     networks: [ store-net ]
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       ENV: production
       LOG_LEVEL: info
@@ -59,8 +44,8 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 100s
+      timeout: 30s
       retries: 5
 
 

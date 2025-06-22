@@ -1,4 +1,12 @@
 PWD := $(shell pwd)
+APP_NAME = zorkin-store
+VERSION  = $(shell git describe --tags --always --dirty)
+COMMIT   = $(shell git rev-parse --short HEAD)
+DATE     = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+LDFLAGS = -s -w \
+    -X 'main.version=$(VERSION)' \
+    -X 'main.commit=$(COMMIT)' \
+    -X 'main.buildDate=$(DATE)'
 
 # Генерация OpenAPI-документации с помощью swag
 doc:
@@ -8,14 +16,5 @@ doc:
 		--parseInternal \
 		--parseDependency
 
-# Выполнение миграций (в режиме разработки)
-# Возможные варианты с ключами --up --down --force
-# Выполнение миграций (можно указать действие: ACTION=--migrate или ACTION=--force=N)
-devMigrate:
-	go run ./cmd/migrate/. $(ACTION)
-
-migrate-up:
-	make devMigrate ACTION=--up
-
-migrate-down:
-	make devMigrate ACTION=--down
+build:
+	go build -ldflags="$(LDFLAGS)" -o build/$(APP_NAME) ./cmd/main.go

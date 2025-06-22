@@ -1,5 +1,4 @@
-env: local
-admin_code: "admin123"
+env: development
 
 http_server:
     address: "0.0.0.0:8080"
@@ -8,19 +7,17 @@ http_server:
     write_timeout: 10s
     shutdown_timeout: 5s
     idle_timeout: 120s
-    enable_cors: true
+    enable_cors: false
+    enable_gzip: false
     enable_pprof: true
-    enable_gzip: true
-
 storage:
-    host: localhost
-    port: 5432
-    user: devuser
-    password: devpassword
-    dbname: devdb
     conn_max_timeout: 30s
-
 jwt_config:
     issuer: zorkindev.ru
     audience: admin_app
     algorithm: HS256
+swagger:
+    enable: true
+    host: your-domain
+    scheme: [https, http]
+    version: 1.0.0

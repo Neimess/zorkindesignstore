@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/Neimess/zorkin-store-project/docs"
 	"github.com/Neimess/zorkin-store-project/internal/app"
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	"github.com/Neimess/zorkin-store-project/pkg/args"
@@ -16,18 +18,22 @@ import (
 
 const op = "cmd.main"
 
+var (
+	version   = "dev"
+	commit    = "none"
+	buildDate = "unknown"
+)
+
 // @title Zorkin Store API
-// @version 1.0
 // @securityDefinitions.apikey BearerAuth
 // @in                         header
 // @name                       Authorization
 // @description                Type **"Bearer <JWT>"** here
-// @host localhost:8080
-
-// @schemes http
 func main() {
 	// 1. аргументы + конфиг
 	cfg := config.MustLoad(args.Parse())
+	printVersion()
+	initSwagger(cfg.Swagger)
 	// 2. логгер (корневой + контекст op)
 	root := logger.MustInitLogger(cfg.Env)
 	logMain := root.With(slog.String("component", "cmd"),
@@ -74,6 +80,12 @@ func runApp(ctx context.Context, cancel context.CancelFunc, a *app.Application, 
 	}
 }
 
+func initSwagger(cfg config.SwaggerInfo) {
+	docs.SwaggerInfo.Host = cfg.Host
+	docs.SwaggerInfo.Schemes = cfg.Schemes
+	docs.SwaggerInfo.Version = cfg.Version
+}
+
 func gracefulShutdown(a *app.Application, root, log *slog.Logger) {
 	log.With(slog.String("op", "cmd.main.graceful_shutdown")).Info("starting graceful shutdown")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -84,4 +96,8 @@ func gracefulShutdown(a *app.Application, root, log *slog.Logger) {
 	} else {
 		root.Info("graceful shutdown complete")
 	}
+}
+
+func printVersion() {
+	fmt.Printf("Version: %s, Commit: %s, Built: %s\n", version, commit, buildDate)
 }

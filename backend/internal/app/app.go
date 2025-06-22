@@ -65,7 +65,7 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	// 4. Генераторы
 	jwtGenerator := jwt.NewGenerator(jwt.JWTConfig{
-		Secret:    dep.Config.JWTConfig.SecretKey,
+		Secret:    dep.Config.JWTConfig.JWTSecret,
 		Issuer:    dep.Config.JWTConfig.Issuer,
 		Audience:  dep.Config.JWTConfig.Audience,
 		Algorithm: dep.Config.JWTConfig.Algorithm,

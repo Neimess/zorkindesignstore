@@ -1,5 +1,4 @@
-env: local
-admin_code: admin123
+env: production
 
 http_server:
     address: "0.0.0.0:8080"
@@ -8,19 +7,14 @@ http_server:
     write_timeout: 10s
     shutdown_timeout: 5s
     idle_timeout: 120s
-    enable_cors: true
+    enable_cors: false
     enable_pprof: false
-
+    enable_gzip: false
 storage:
-    host: postgres
-    port: 5432
-    user: produser
-    password: prodpassword
-    dbname: proddb
     conn_max_timeout: 30s
-
 jwt_config:
-    secret: supersecretkey
     issuer: zorkindev.ru
     audience: admin_app
     algorithm: HS256
+swagger:
+    enable: false

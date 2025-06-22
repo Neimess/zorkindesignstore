@@ -29,20 +29,27 @@ func NewRouter(deps Deps) chi.Router {
 	r.Use(middleware.RequestID, middleware.RealIP, middleware.Recoverer)
 	r.Use(middleware.Timeout(30*time.Second), middleware.Compress(5))
 	r.Use(httplog.RequestLogger(deps.Logger, &httplog.Options{RecoverPanics: true, LogRequestHeaders: []string{"Origin"}}))
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	if deps.Config.HTTPServer.EnableCORS {
+		r.Use(cors.Handler(cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			AllowCredentials: true,
+			MaxAge:           300,
+		}))
+	}
 
 	// ── profiler & swagger ───────────────────────────────────────────────
-	registerSwaggerRoutes(r)
-	r.Mount("/debug/pprof", profiler(deps.Config.Env))
+	isDev := deps.Config.Env == config.EnvLocal || deps.Config.Env == config.EnvDev
+	if isDev && deps.Config.HTTPServer.EnablePProf {
+		r.Mount("/debug/pprof", profiler(deps.Config.Env))
+	}
 
 	// ── public API ───────────────────────────────────────────────────────
 	r.Route("/api", func(r chi.Router) {
+		if isDev && deps.Config.Swagger.Enabled {
+			registerSwaggerRoutes(r)
+		}
 		registerBaseRoutes(r)
 		registerProductPublicRoutes(r, deps.Handlers.ProductHandler)
 		registerCategoryPublicRoutes(r, deps.Handlers.CategoryHandler)
@@ -56,7 +63,7 @@ func NewRouter(deps Deps) chi.Router {
 			// JWT‑protected block
 			cfg := deps.Config.JWTConfig
 			jwtMW, _ := customMiddlewares.NewJWTMiddleware(customMiddlewares.JWTCfg{
-				Secret: []byte(cfg.SecretKey), Algorithm: cfg.Algorithm, Issuer: cfg.Issuer, Audience: cfg.Audience,
+				Secret: []byte(cfg.JWTSecret), Algorithm: cfg.Algorithm, Issuer: cfg.Issuer, Audience: cfg.Audience,
 			})
 			r.Group(func(r chi.Router) {
 				r.Use(jwtMW.CheckJWT)

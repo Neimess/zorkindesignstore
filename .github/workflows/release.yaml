@@ -1,0 +1,56 @@
+name: zorkin_backend_release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+      goos:
+        description: 'Target OS (e.g. linux, windows)'
+        required: true
+        default: linux
+      goarch:
+        description: 'Target ARCH (e.g. amd64, arm64)'
+        required: true
+        default: amd64
+
+env:
+  MODULE_PATH: ./backend
+
+jobs:
+  release:
+    name: Build Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Set build metadata
+        id: meta
+        run: |
+          echo "commit=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      - name: Build binary
+        working-directory: ${{ env.MODULE_PATH }}
+        env:
+          GOOS: ${{ github.event.inputs.goos }}
+          GOARCH: ${{ github.event.inputs.goarch }}
+        run: |
+          go build -ldflags "-s -w \
+            -X 'main.version=${{ github.event.inputs.version }}' \
+            -X 'main.commit=${{ steps.meta.outputs.commit }}' \
+            -X 'main.buildDate=${{ steps.meta.outputs.build_time }}'" \
+            -o bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-backend-${{ github.event.inputs.version }}
+          path: ${{ env.MODULE_PATH }}/bin/
+          retention-days: 7

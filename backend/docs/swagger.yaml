@@ -249,7 +249,6 @@ definitions:
 info:
   contact: {}
   title: Zorkin Store API
-  version: "1.0"
 paths:
   /api/admin/auth/{secret_admin_key}:
     get:
@@ -909,8 +908,6 @@ paths:
       summary: List products by category
       tags:
       - products
-schemes:
-- http
 securityDefinitions:
   BearerAuth:
     description: Type **"Bearer <JWT>"** here

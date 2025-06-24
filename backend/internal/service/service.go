@@ -13,27 +13,27 @@ type JWTGenerator interface {
 }
 
 type Deps struct {
-	Logger                      *slog.Logger
-	Config                      *config.Config
-	JWTGenerator                JWTGenerator
-	ProductRepository           ProductRepository
-	CategoryRepository          CategoryRepository
-	PresetRepository            PresetRepository
+	Logger             *slog.Logger
+	Config             *config.Config
+	JWTGenerator       JWTGenerator
+	ProductRepository  ProductRepository
+	CategoryRepository CategoryRepository
+	PresetRepository   PresetRepository
 }
 
 type Service struct {
-	ProductService           *ProductService
-	CategoryService          *CategoryService
-	AuthService              *AuthService
-	PresetService            *PresetService
+	ProductService  *ProductService
+	CategoryService *CategoryService
+	AuthService     *AuthService
+	PresetService   *PresetService
 }
 
 func New(d Deps) *Service {
 	return &Service{
-		ProductService:           NewProductService(d.ProductRepository, d.Logger),
-		CategoryService:          NewCategoryService(d.CategoryRepository, d.Logger),
-		AuthService:              NewAuthService(d.JWTGenerator, d.Logger),
-		PresetService:            NewPresetService(d.PresetRepository, d.Logger),
+		ProductService:  NewProductService(d.ProductRepository, d.Logger),
+		CategoryService: NewCategoryService(d.CategoryRepository, d.Logger),
+		AuthService:     NewAuthService(d.JWTGenerator, d.Logger),
+		PresetService:   NewPresetService(d.PresetRepository, d.Logger),
 	}
 }
 

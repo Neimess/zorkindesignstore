@@ -18,17 +18,16 @@ type CategoryUpdateRequest struct {
 //
 //easyjson:json
 type CategoryResponse struct {
-	ID   int64  `json:"id" example:"3"`
-	Name string `json:"name" example:"Керамогранит"`
+	ID         int64              `json:"id" example:"3"`
+	Name       string             `json:"name" example:"Керамогранит"`
 	Attributes []AttributePayload `json:"attributes,omitempty"`
 }
 
-
-//swagger:model CreateCategoryReq
 //
+//swagger:model CreateCategoryReq
 //easyjson:json
 type CreateCategoryReq struct {
-	Name       string `json:"name"`
+	Name       string             `json:"name"`
 	Attributes []AttributePayload `json:"attributes"`
 }
 

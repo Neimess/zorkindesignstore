@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-
 type TxFunc[T any] func(*sqlx.Tx) (T, error)
 
 func RunInTx[T any](

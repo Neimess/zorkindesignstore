@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"log/slog"
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/category"
 	"github.com/jmoiron/sqlx"
+	"log/slog"
 )
 
 type Deps struct {

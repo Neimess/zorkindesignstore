@@ -45,7 +45,7 @@ func NewCategoryService(repo CategoryRepository, log *slog.Logger) *CategoryServ
 func (s *CategoryService) CreateCategory(ctx context.Context, name string, attrs []domain.CategoryAttribute) (int64, error) {
 	const op = "service.category.CreateCategory"
 	log := s.log.With("op", op)
-	
+
 	if name == "" {
 		return 0, errors.New("name required")
 	}

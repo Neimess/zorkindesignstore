@@ -21,8 +21,8 @@ func MustInitLogger(env string) *slog.Logger {
 			slogcolor.NewHandler(
 				os.Stdout,
 				&slogcolor.Options{
-					Level:      slog.LevelDebug,
-					TimeFormat: slogcolor.DefaultOptions.TimeFormat,
+					Level:       slog.LevelDebug,
+					TimeFormat:  slogcolor.DefaultOptions.TimeFormat,
 					SrcFileMode: slogcolor.ShortFile,
 				},
 			))

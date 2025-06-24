@@ -73,7 +73,7 @@ func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request)
 			Attr: domain.Attribute{
 				Name:         a.Name,
 				Slug:         a.Slug,
-				Unit:         &a.Unit,
+				Unit:         a.Unit,
 				IsFilterable: a.IsFilterable,
 			},
 			IsRequired: a.IsRequired,
@@ -135,7 +135,7 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 		resp.Attributes = append(resp.Attributes, AttributePayload{
 			Name:         attr.Attr.Name,
 			Slug:         attr.Attr.Slug,
-			Unit:         *attr.Attr.Unit,
+			Unit:         attr.Attr.Unit,
 			IsFilterable: attr.Attr.IsFilterable,
 			IsRequired:   attr.IsRequired,
 			Priority:     attr.Priority,
@@ -165,13 +165,14 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resp CategoryResponseList
+
 	for _, c := range cats {
 		attrs := make([]AttributePayload, 0, len(c.Attributes))
 		for _, attr := range c.Attributes {
 			attrs = append(attrs, AttributePayload{
 				Name:         attr.Attr.Name,
 				Slug:         attr.Attr.Slug,
-				Unit:         *attr.Attr.Unit,
+				Unit:         attr.Attr.Unit,
 				IsFilterable: attr.Attr.IsFilterable,
 				IsRequired:   attr.IsRequired,
 				Priority:     attr.Priority,

@@ -493,7 +493,15 @@ func easyjson56de76c1DecodeGithubComNeimessZorkinStoreProjectInternalTransportHt
 		case "slug":
 			out.Slug = string(in.String())
 		case "unit":
-			out.Unit = string(in.String())
+			if in.IsNull() {
+				in.Skip()
+				out.Unit = nil
+			} else {
+				if out.Unit == nil {
+					out.Unit = new(string)
+				}
+				*out.Unit = string(in.String())
+			}
 		case "is_filterable":
 			out.IsFilterable = bool(in.Bool())
 		case "is_required":
@@ -524,10 +532,10 @@ func easyjson56de76c1EncodeGithubComNeimessZorkinStoreProjectInternalTransportHt
 		out.RawString(prefix)
 		out.String(string(in.Slug))
 	}
-	{
+	if in.Unit != nil {
 		const prefix string = ",\"unit\":"
 		out.RawString(prefix)
-		out.String(string(in.Unit))
+		out.String(string(*in.Unit))
 	}
 	{
 		const prefix string = ",\"is_filterable\":"

@@ -35,12 +35,12 @@ type CreateCategoryReq struct {
 //
 //easyjson:json
 type AttributePayload struct {
-	Name         string `json:"name"`
-	Slug         string `json:"slug"`
-	Unit         string `json:"unit,omitempty"`
-	IsFilterable bool   `json:"is_filterable"`
-	IsRequired   bool   `json:"is_required"`
-	Priority     int    `json:"priority"`
+	Name         string  `json:"name"`
+	Slug         string  `json:"slug"`
+	Unit         *string `json:"unit,omitempty"`
+	IsFilterable bool    `json:"is_filterable"`
+	IsRequired   bool    `json:"is_required"`
+	Priority     int     `json:"priority"`
 }
 
 // swagger:model CategoryResponseList

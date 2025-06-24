@@ -3,6 +3,8 @@ package route
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
+	"strings"
 	"time"
 
 	_ "github.com/Neimess/zorkin-store-project/docs"
@@ -28,7 +30,14 @@ func NewRouter(deps Deps) chi.Router {
 	// ── global middleware ────────────────────────────────────────────────
 	r.Use(middleware.RequestID, middleware.RealIP, middleware.Recoverer)
 	r.Use(middleware.Timeout(30*time.Second), middleware.Compress(5))
-	r.Use(httplog.RequestLogger(deps.Logger, &httplog.Options{RecoverPanics: true, LogRequestHeaders: []string{"Origin"}}))
+	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{
+		RecoverPanics:      true,
+		LogRequestHeaders:  []string{"Origin", "User-Agent", "Accept", "Content-Type", "X-Request-ID"},
+		LogResponseHeaders: []string{"Content-Type", "Content-Length", "X-Request-ID"},
+		LogRequestBody: func(req *http.Request) bool {
+			return req.Method == http.MethodPost && strings.HasPrefix(req.URL.Path, "/debug/")
+		},
+	}))
 	if deps.Config.HTTPServer.EnableCORS {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   []string{"*"},
@@ -69,7 +78,7 @@ func NewRouter(deps Deps) chi.Router {
 				r.Use(jwtMW.CheckJWT)
 
 				registerProductAdminRoutes(r, deps.Handlers.ProductHandler)
-				registerCategoryAdminRoutes(r, deps.Handlers.CategoryHandler, deps.Handlers.CategoryAttributeHandler)
+				registerCategoryAdminRoutes(r, deps.Handlers.CategoryHandler)
 				registerPresetAdminRoutes(r, deps.Handlers.PresetHandler)
 			})
 		})

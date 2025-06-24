@@ -7,7 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/category"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 
@@ -42,19 +42,23 @@ func NewCategoryService(repo CategoryRepository, log *slog.Logger) *CategoryServ
 	}
 }
 
-func (cs *CategoryService) Create(ctx context.Context, c *domain.Category) (int64, error) {
-	const op = "service.category.Create"
-	log := cs.log.With("op", op)
-
-	id, err := cs.repo.Create(ctx, c)
+func (s *CategoryService) CreateCategory(ctx context.Context, name string, attrs []domain.CategoryAttribute) (int64, error) {
+	const op = "service.category.CreateCategory"
+	log := s.log.With("op", op)
+	
+	if name == "" {
+		return 0, errors.New("name required")
+	}
+	cat := domain.NewCategory(name, attrs)
+	id, err := s.repo.Create(ctx, cat)
 	switch {
-	case errors.Is(err, repository.ErrDuplicateName):
-		log.Info("category already exists with this name", slog.String("name", c.Name))
+	case errors.Is(err, repository.ErrCategoryExists):
+		log.Info("category already exists with this name", slog.String("name", cat.Name))
 		return 0, ErrCategoryExists
 	case err != nil:
 		return 0, fmt.Errorf("%s: %w", op, err)
 	default:
-		log.Info("category created", slog.Int64("category_id", id), slog.String("name", c.Name))
+		log.Info("category created", slog.Int64("category_id", id), slog.String("name", cat.Name))
 	}
 	return id, nil
 }

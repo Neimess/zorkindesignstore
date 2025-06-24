@@ -14,24 +14,22 @@ import (
 type Deps struct {
 	Server   config.HTTPServer
 	Config   *config.Config
-	Logger   *slog.Logger
 	Handlers *restHTTP.Handlers
 }
 
 type Server struct {
 	httpServer *http.Server
-	logger     *slog.Logger
+	log        *slog.Logger
 }
 
 func NewServer(dep Deps) *Server {
+
 	r := chi.NewRouter()
 	route.NewRouter(route.Deps{
 		Router:   r,
 		Handlers: dep.Handlers,
-		Logger:   dep.Logger,
 		Config:   dep.Config,
 	})
-
 	srv := &http.Server{
 		Handler:           r,
 		Addr:              dep.Server.Address,
@@ -44,12 +42,12 @@ func NewServer(dep Deps) *Server {
 
 	return &Server{
 		httpServer: srv,
-		logger:     dep.Logger.With(slog.String("component", "rest_server")),
+		log:        slog.Default().With("component", "rest.server", "address", dep.Server.Address),
 	}
 }
 
 func (s *Server) Run() error {
-	s.logger.Info("http server starting",
+	s.log.Info("http server starting",
 		slog.String("address", s.httpServer.Addr),
 		slog.String("read_timeout", s.httpServer.ReadTimeout.String()),
 		slog.String("write_timeout", s.httpServer.WriteTimeout.String()),
@@ -57,7 +55,7 @@ func (s *Server) Run() error {
 	)
 
 	if err := http.ListenAndServe(s.httpServer.Addr, s.httpServer.Handler); err != nil {
-		s.logger.Error("http server error", slog.Any("error", err))
+		s.log.Error("http server error", slog.Any("error", err))
 		return err
 	}
 
@@ -65,6 +63,6 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.logger.Info("http server shutdown initiated")
+	s.log.Info("http server shutdown initiated")
 	return s.httpServer.Shutdown(ctx)
 }

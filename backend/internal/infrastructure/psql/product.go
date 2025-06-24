@@ -20,6 +20,7 @@ import (
 
 var (
 	ErrProductNotFound = errors.New("product not found")
+	ErrCategoryNotFound = errors.New("category not found")
 )
 
 // ProductRepository handles CRUD for products and their attributes.

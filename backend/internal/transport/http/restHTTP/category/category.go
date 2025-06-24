@@ -1,4 +1,4 @@
-package restHTTP
+package category
 
 import (
 	"context"
@@ -8,15 +8,15 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	"github.com/Neimess/zorkin-store-project/internal/service"
-	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	_ "github.com/Neimess/zorkin-store-project/internal/transport/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
+
 	"github.com/mailru/easyjson"
 )
 
 type CategoryService interface {
-	Create(ctx context.Context, c *domain.Category) (int64, error)
+	CreateCategory(ctx context.Context, name string, attrs []domain.CategoryAttribute) (int64, error)
 	GetByID(ctx context.Context, id int64) (*domain.Category, error)
 	List(ctx context.Context) ([]domain.Category, error)
 	Update(ctx context.Context, c *domain.Category) error
@@ -28,13 +28,10 @@ type CategoryHandler struct {
 	srv CategoryService
 }
 
-func NewCategoryHandler(service CategoryService, log *slog.Logger) *CategoryHandler {
-	if service == nil {
-		panic("product handler: service is nil")
-	}
+func NewCategoryHandler(service CategoryService) *CategoryHandler {
 	return &CategoryHandler{
 		srv: service,
-		log: logger.WithComponent(log, "transport.http.restHTTP.product"),
+		log: slog.Default().With("component", "restHTTP.category"),
 	}
 }
 
@@ -47,30 +44,43 @@ var validate = validator.GetValidator()
 //		@Accept			json
 //		@Produce		json
 //	 @Security       BearerAuth
-//		@Param			category	body	dto.CategoryCreateRequest	true	"Category to create"
+//		@Param			category	body	CreateCategoryReq	true	"Category to create"
 //		@Success		201
 //		@Failure		400			{object}	dto.ErrorResponse
 //		@Failure		409			{object}	dto.ErrorResponse
 //		@Failure		500			{object}	dto.ErrorResponse
 //		@Router			/api/admin/category [post]
-func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
 	defer r.Body.Close()
 
-	var req dto.CategoryCreateRequest
+	var req CreateCategoryReq
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
 		log.Warn("invalid JSON", slog.Any("err", err))
 		httputils.WriteError(w, 400, "invalid JSON")
 		return
 	}
-	if err := validate.StructCtx(ctx, &req); err != nil {
-		log.Warn("validation failed", slog.Any("err", err))
-		httputils.WriteError(w, 400, "validation failed")
-		return
-	}
+	// if err := validate.StructCtx(ctx, &req); err != nil {
+	// 	log.Warn("validation failed", slog.Any("err", err))
+	// 	httputils.WriteError(w, 400, "validation failed")
+	// 	return
+	// }
 
-	_, err := h.srv.Create(ctx, &domain.Category{Name: req.Name})
+	attrs := make([]domain.CategoryAttribute, len(req.Attributes))
+	for i, a := range req.Attributes {
+		attrs[i] = domain.CategoryAttribute{
+			Attr: domain.Attribute{
+				Name:         a.Name,
+				Slug:         a.Slug,
+				Unit:         &a.Unit,
+				IsFilterable: a.IsFilterable,
+			},
+			IsRequired: a.IsRequired,
+			Priority:   a.Priority,
+		}
+	}
+	_, err := h.srv.CreateCategory(ctx, req.Name, attrs)
 	switch {
 	case errors.Is(err, service.ErrCategoryExists):
 		log.Warn("duplicate category", slog.String("name", req.Name))
@@ -92,8 +102,7 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //
 // @Param			id	path	int	true	"Category ID"
-//
-// @Success		200	{object}	dto.CategoryResponse
+// @Success		200	{object}	CategoryResponse
 // @Failure		400	{object}	dto.ErrorResponse
 // @Failure		404	{object}	dto.ErrorResponse
 // @Failure		500	{object}	dto.ErrorResponse
@@ -121,7 +130,17 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := dto.CategoryResponse{ID: cat.ID, Name: cat.Name}
+	resp := CategoryResponse{ID: cat.ID, Name: cat.Name, Attributes: make([]AttributePayload, 0, len(cat.Attributes))}
+	for _, attr := range cat.Attributes {
+		resp.Attributes = append(resp.Attributes, AttributePayload{
+			Name:         attr.Attr.Name,
+			Slug:         attr.Attr.Slug,
+			Unit:         *attr.Attr.Unit,
+			IsFilterable: attr.Attr.IsFilterable,
+			IsRequired:   attr.IsRequired,
+			Priority:     attr.Priority,
+		})
+	}
 	httputils.WriteJSON(w, http.StatusOK, &resp)
 }
 
@@ -131,7 +150,7 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 //	@Summary		List categories
 //	@Tags			categories
 //	@Produce		json
-//	@Success		200	{array}	dto.CategoryResponseSlice
+//	@Success		200	{array}	CategoryResponseList
 //	@Failure		500	{object}	dto.ErrorResponse
 //	@Router			/api/category [get]
 func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -145,10 +164,22 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp dto.CategoryResponseSlice
+	var resp CategoryResponseList
 	for _, c := range cats {
-		resp = append(resp, dto.CategoryResponse{ID: c.ID, Name: c.Name})
+		attrs := make([]AttributePayload, 0, len(c.Attributes))
+		for _, attr := range c.Attributes {
+			attrs = append(attrs, AttributePayload{
+				Name:         attr.Attr.Name,
+				Slug:         attr.Attr.Slug,
+				Unit:         *attr.Attr.Unit,
+				IsFilterable: attr.Attr.IsFilterable,
+				IsRequired:   attr.IsRequired,
+				Priority:     attr.Priority,
+			})
+		}
+		resp.Categories = append(resp.Categories, CategoryResponse{ID: c.ID, Name: c.Name, Attributes: attrs})
 	}
+	resp.Total = int64(len(cats))
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -159,9 +190,9 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 //		@Tags			categories
 //		@Accept			json
 //		@Produce		json
-//	 @Security       BearerAuth
+//	 	@Security       BearerAuth
 //		@Param			id			path	int							true	"Category ID"
-//		@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
+//		@Param			category	body	CategoryUpdateRequest	true	"New name"
 //		@Success		204
 //		@Failure		400	{object}	dto.ErrorResponse
 //		@Failure		404	{object}	dto.ErrorResponse
@@ -177,7 +208,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.CategoryUpdateRequest
+	var req CategoryUpdateRequest
 	if err := easyjson.UnmarshalFromReader(r.Body, &req); err != nil {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
@@ -206,7 +237,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 //		@Summary		Delete category
 //		@Tags			categories
 //		@Produce		json
-//	 @Security       BearerAuth
+//	 	@Security       BearerAuth
 //		@Param			id	path	int	true	"Category ID"
 //		@Success		204
 //		@Failure		400	{object}	dto.ErrorResponse

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/psql"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 

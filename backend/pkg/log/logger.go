@@ -23,19 +23,25 @@ func MustInitLogger(env string) *slog.Logger {
 				&slogcolor.Options{
 					Level:      slog.LevelDebug,
 					TimeFormat: slogcolor.DefaultOptions.TimeFormat,
+					SrcFileMode: slogcolor.ShortFile,
 				},
 			))
 	case ENVDev:
 		log = slog.New(
 			slog.NewJSONHandler(
 				os.Stdout,
-				&slog.HandlerOptions{Level: slog.LevelDebug}),
+				&slog.HandlerOptions{
+					Level:     slog.LevelDebug,
+					AddSource: true,
+				}),
 		)
 	case ENVProd:
 		log = slog.New(
 			slog.NewJSONHandler(
 				os.Stdout,
-				&slog.HandlerOptions{Level: slog.LevelInfo}),
+				&slog.HandlerOptions{
+					Level: slog.LevelInfo,
+				}),
 		)
 	default:
 		panic("unknown environment: " + env)

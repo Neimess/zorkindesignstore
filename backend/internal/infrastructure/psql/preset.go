@@ -15,6 +15,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/infrastructure/tx"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
@@ -40,60 +41,45 @@ func NewPresetRepository(db *sqlx.DB, log *slog.Logger) *PresetRepository {
 // Create inserts preset and its items in one transaction.
 // Takes a fully‑formed *domain.Preset where Items contains product IDs.
 func (r *PresetRepository) Create(ctx context.Context, p *domain.Preset) (int64, error) {
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return 0, fmt.Errorf("begin tx: %w", err)
-	}
-	defer func() {
-		if rec := recover(); rec != nil {
-			_ = tx.Rollback()
-			panic(rec)
-		} else if err != nil {
-			_ = tx.Rollback()
-		}
-	}()
+	r.log.Debug("Create preset", slog.String("op", "preset.postgresql.Create"), slog.String("preset_name", p.Name))
+	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (int64, error) {
+		const insertPreset = `INSERT INTO presets (name, description, total_price, image_url)
+		VALUES ($1,$2,$3,$4)
+		RETURNING preset_id, created_at`
 
-	const insertPreset = `INSERT INTO presets (name, description, total_price, image_url)
-                          VALUES ($1,$2,$3,$4)
-                          RETURNING preset_id, created_at`
-
-	var id int64
-	var created time.Time
-	err = database.WithQuery(ctx, r.log, insertPreset, func() error {
-		return tx.QueryRowContext(ctx, insertPreset,
-			p.Name, p.Description, p.TotalPrice, p.ImageURL,
-		).Scan(&id, &created)
-	})
-	if err != nil {
-		return 0, r.wrapError(err, "insert preset")
-	}
-
-	// Mass‑insert items if provided.
-	if len(p.Items) > 0 {
-		builder := sq.Insert("preset_items").
-			Columns("preset_id", "product_id").
-			PlaceholderFormat(sq.Dollar)
-		for _, it := range p.Items {
-			builder = builder.Values(id, it.ProductID)
-		}
-		sqlStr, args, buildErr := builder.ToSql()
-		if buildErr != nil {
-			return 0, fmt.Errorf("build insert items: %w", buildErr)
-		}
-		if err = database.WithQuery(ctx, r.log, sqlStr, func() error {
-			_, execErr := tx.ExecContext(ctx, sqlStr, args...)
-			return execErr
+		var id int64
+		var created time.Time
+		if err := database.WithQuery(ctx, r.log, insertPreset, func() error {
+			return tx.QueryRowContext(ctx, insertPreset,
+				p.Name, p.Description, p.TotalPrice, p.ImageURL,
+			).Scan(&id, &created)
 		}); err != nil {
-			return 0, r.wrapError(err, "insert preset items")
+			return 0, r.wrapError(err, "insert preset")
 		}
-	}
 
-	if err = tx.Commit(); err != nil {
-		return 0, fmt.Errorf("commit tx: %w", err)
-	}
+		// Mass‑insert items if provided.
+		if len(p.Items) > 0 {
+			builder := sq.Insert("preset_items").
+				Columns("preset_id", "product_id").
+				PlaceholderFormat(sq.Dollar)
+			for _, it := range p.Items {
+				builder = builder.Values(id, it.ProductID)
+			}
+			sqlStr, args, buildErr := builder.ToSql()
+			if buildErr != nil {
+				return 0, fmt.Errorf("build insert items: %w", buildErr)
+			}
+			if err := database.WithQuery(ctx, r.log, sqlStr, func() error {
+				_, execErr := tx.ExecContext(ctx, sqlStr, args...)
+				return execErr
+			}); err != nil {
+				return 0, r.wrapError(err, "insert preset items")
+			}
+		}
+		p.ID, p.CreatedAt = id, created
+		return id, nil
+	})
 
-	p.ID, p.CreatedAt = id, created
-	return id, nil
 }
 
 // Get returns preset with embedded Items slice.

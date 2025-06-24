@@ -1,53 +1,4 @@
 definitions:
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest:
-    properties:
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      is_required:
-        type: boolean
-      priority:
-        type: integer
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeResponse:
-    properties:
-      attribute_id:
-        type: integer
-      category_id:
-        type: integer
-      is_required:
-        type: boolean
-      priority:
-        type: integer
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest:
-    properties:
-      name:
-        example: Плитка
-        minLength: 2
-        type: string
-    required:
-    - name
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse:
-    properties:
-      id:
-        example: 3
-        type: integer
-      name:
-        example: Керамогранит
-        type: string
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest:
-    properties:
-      name:
-        example: Керамогранит
-        minLength: 2
-        type: string
-    required:
-    - name
-    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse:
     properties:
       message:
@@ -246,6 +197,61 @@ definitions:
       token:
         type: string
     type: object
+  internal_transport_http_restHTTP_category.AttributePayload:
+    properties:
+      is_filterable:
+        type: boolean
+      is_required:
+        type: boolean
+      name:
+        type: string
+      priority:
+        type: integer
+      slug:
+        type: string
+      unit:
+        type: string
+    type: object
+  internal_transport_http_restHTTP_category.CategoryResponse:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.AttributePayload'
+        type: array
+      id:
+        example: 3
+        type: integer
+      name:
+        example: Керамогранит
+        type: string
+    type: object
+  internal_transport_http_restHTTP_category.CategoryResponseList:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  internal_transport_http_restHTTP_category.CategoryUpdateRequest:
+    properties:
+      name:
+        example: Керамогранит
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  internal_transport_http_restHTTP_category.CreateCategoryReq:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.AttributePayload'
+        type: array
+      name:
+        type: string
+    type: object
 info:
   contact: {}
   title: Zorkin Store API
@@ -287,7 +293,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryCreateRequest'
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.CreateCategoryReq'
       produces:
       - application/json
       responses:
@@ -310,166 +316,6 @@ paths:
       summary: Create category
       tags:
       - categories
-  /api/admin/category/{categoryID}/attribute:
-    get:
-      consumes:
-      - application/json
-      description: Возвращает все атрибуты, привязанные к категории, в порядке приоритета.
-      parameters:
-      - description: Category ID
-        in: path
-        name: categoryID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeResponse'
-            type: array
-        "400":
-          description: Invalid ID
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List attributes of a category
-      tags:
-      - category-attributes
-    post:
-      consumes:
-      - application/json
-      description: Создаёт связь «категория ↔ атрибут» с указанием обязательности
-        и приоритета.
-      parameters:
-      - description: Mapping to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Bind attribute to category
-      tags:
-      - category-attributes
-  /api/admin/category/{categoryID}/attribute/{attributeID}:
-    delete:
-      consumes:
-      - application/json
-      description: Удаляет связь атрибута и категории.
-      parameters:
-      - description: Category ID
-        in: path
-        name: categoryID
-        required: true
-        type: integer
-      - description: Attribute ID
-        in: path
-        name: attributeID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "404":
-          description: Mapping not found
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Delete mapping
-      tags:
-      - category-attributes
-    put:
-      consumes:
-      - application/json
-      description: Обновляет обязательность/приоритет связки «категория ↔ атрибут».
-      parameters:
-      - description: Category ID
-        in: path
-        name: categoryID
-        required: true
-        type: integer
-      - description: Attribute ID
-        in: path
-        name: attributeID
-        required: true
-        type: integer
-      - description: New values
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryAttributeRequest'
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "404":
-          description: Mapping not found
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Update mapping
-      tags:
-      - category-attributes
   /api/admin/category/{id}:
     delete:
       parameters:
@@ -514,7 +360,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryUpdateRequest'
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryUpdateRequest'
       produces:
       - application/json
       responses:
@@ -721,9 +567,7 @@ paths:
           description: OK
           schema:
             items:
-              items:
-                $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse'
-              type: array
+              $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryResponseList'
             type: array
         "500":
           description: Internal Server Error
@@ -746,7 +590,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.CategoryResponse'
+            $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryResponse'
         "400":
           description: Bad Request
           schema:

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
-	repository "github.com/Neimess/zorkin-store-project/internal/repository/psql"
+	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/psql"
 	"github.com/Neimess/zorkin-store-project/internal/server/rest"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
@@ -73,32 +73,29 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	services := service.New(
 		service.Deps{
-			Logger:                      dep.Logger,
-			Config:                      dep.Config,
-			ProductRepository:           repos.ProductRepository,
-			CategoryRepository:          repos.CategoryRepository,
-			CategoryAttributeRepository: repos.CategoryAttributeRepository,
-			PresetRepository:            repos.PresetRepository,
-			JWTGenerator:                jwtGenerator,
+			Logger:             dep.Logger,
+			Config:             dep.Config,
+			ProductRepository:  repos.ProductRepository,
+			CategoryRepository: repos.CategoryRepository,
+			PresetRepository:   repos.PresetRepository,
+			JWTGenerator:       jwtGenerator,
 		},
 	)
 	logNew.Debug("services wired")
 
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)
 	restHandlers := restHTTP.New(&restHTTP.Deps{
-		ProductService:           services.ProductService,
-		CategoryService:          services.CategoryService,
-		AuthService:              services.AuthService,
-		CategoryAttributeService: services.CategoryAttributeService,
-		PresetService:            services.PresetService,
-		Logger:                   dep.Logger,
+		ProductService:  services.ProductService,
+		AuthService:     services.AuthService,
+		PresetService:   services.PresetService,
+		CategoryService: services.CategoryService,
+		Logger:          dep.Logger,
 	})
 	// 5. Сервер — HTTP-сервер
 	srv := rest.NewServer(rest.Deps{
 		Server:   dep.Config.HTTPServer,
 		Config:   dep.Config,
 		Handlers: restHandlers,
-		Logger:   dep.Logger,
 	})
 	logNew.Info("http server constructed",
 		slog.String("addr", dep.Config.HTTPServer.Address),

@@ -1,13 +1,20 @@
 package domain
 
 type Category struct {
-	ID   int64  `db:"category_id"`
-	Name string `db:"name"`
+	ID         int64
+	Name       string
+	Attributes []CategoryAttribute
 }
 
 type CategoryAttribute struct {
-	CategoryID  int64 `db:"category_id"`
-	AttributeID int64 `db:"attribute_id"`
-	IsRequired  bool  `db:"is_required"`
-	Priority    int   `db:"priority"`
+	IsRequired bool      `db:"is_required"`
+	Priority   int       `db:"priority"`
+	Attr       Attribute `db:"-"`
+}
+
+func NewCategory(name string, attrs []CategoryAttribute) *Category {
+	return &Category{
+		Name:       name,
+		Attributes: attrs,
+	}
 }

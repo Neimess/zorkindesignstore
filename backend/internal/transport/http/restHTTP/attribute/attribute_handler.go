@@ -155,7 +155,17 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 
-// ListAttributes handles GET /api/admin/category/{categoryID}/attribute
+// ListAttributes godoc
+// @Summary      Get all attributes for a category
+// @Description  Получить все атрибуты в категории
+// @Tags         categories
+// @Param        categoryID path int true "Category ID"
+// @Produce      json
+// @Success      200 {array} AttributeResponse
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      404 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /api/category/{categoryID}/attribute [get]
 func (h *Handler) ListAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	categoryID, ok := h.parseCategoryID(w, r)
@@ -181,7 +191,18 @@ func (h *Handler) ListAttributes(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
-// GetAttribute handles GET /api/admin/category/{categoryID}/attribute/{id}
+// GetAttribute godoc
+// @Summary      Get single attribute
+// @Description  Получить один атрибут по ID и категории
+// @Tags         categories
+// @Param        categoryID path int true "Category ID"
+// @Param        id path int true "Attribute ID"
+// @Produce      json
+// @Success      200 {object} AttributeResponse
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      404 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /api/category/{categoryID}/attribute/{id} [get]
 func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	categoryID, ok := h.parseCategoryID(w, r)
@@ -208,7 +229,20 @@ func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
-// UpdateAttribute handles PUT /api/admin/category/{categoryID}/attribute/{id}
+// UpdateAttribute godoc
+// @Summary      Update an attribute
+// @Description  Обновить атрибут по ID и категории
+// @Tags         categories
+// @Security     BearerAuth
+// @Accept       json
+// @Param        categoryID path int true "Category ID"
+// @Param        id path int true "Attribute ID"
+// @Param        data body UpdateAttributeReq true "Attribute update data"
+// @Success      204 "No Content"
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      422 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /api/admin/category/{categoryID}/attribute/{id} [put]
 func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	categoryID, ok := h.parseCategoryID(w, r)
@@ -248,7 +282,18 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// DeleteAttribute handles DELETE /api/admin/category/{categoryID}/attribute/{id}
+// DeleteAttribute godoc
+// @Summary      Delete an attribute
+// @Description  Удалить атрибут по ID
+// @Tags         categories
+// @Security     BearerAuth
+// @Param        categoryID path int true "Category ID"
+// @Param        id path int true "Attribute ID"
+// @Success      204 "No Content"
+// @Failure      400 {object} dto.ErrorResponse
+// @Failure      404 {object} dto.ErrorResponse
+// @Failure      500 {object} dto.ErrorResponse
+// @Router       /api/admin/category/{categoryID}/attribute/{id} [delete]
 func (h *Handler) DeleteAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, ok := h.parseAttributeID(w, r)

@@ -228,6 +228,15 @@ definitions:
     required:
     - name
     type: object
+  internal_transport_http_restHTTP_attribute.UpdateAttributeReq:
+    properties:
+      name:
+        type: string
+      unit:
+        type: string
+    required:
+    - name
+    type: object
   internal_transport_http_restHTTP_category.CategoryCreateRequest:
     properties:
       name:
@@ -367,6 +376,81 @@ paths:
       security:
       - BearerAuth: []
       summary: Create an attribute
+      tags:
+      - categories
+  /api/admin/category/{categoryID}/attribute/{id}:
+    delete:
+      description: Удалить атрибут по ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an attribute
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Обновить атрибут по ID и категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Attribute update data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_restHTTP_attribute.UpdateAttributeReq'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an attribute
       tags:
       - categories
   /api/admin/category/{categoryID}/attribute/batch:
@@ -666,6 +750,75 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
       summary: List categories
+      tags:
+      - categories
+  /api/category/{categoryID}/attribute:
+    get:
+      description: Получить все атрибуты в категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_transport_http_restHTTP_attribute.AttributeResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Get all attributes for a category
+      tags:
+      - categories
+  /api/category/{categoryID}/attribute/{id}:
+    get:
+      description: Получить один атрибут по ID и категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_transport_http_restHTTP_attribute.AttributeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      summary: Get single attribute
       tags:
       - categories
   /api/category/{id}:

@@ -90,12 +90,7 @@ func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*domain.
 	`
 
 	var attr domain.Attribute
-	type rawSQL struct {
-		ID         int64   `db:"attribute_id"`
-		Name       string  `db:"name"`
-		Unit       *string `db:"unit"`
-		CategoryID int64   `db:"category_id"`
-	}
+
 	var raw rawSQL
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.GetContext(ctx, &raw, query, id)
@@ -104,10 +99,7 @@ func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*domain.
 		return nil, e.MapPostgreSQLError(err)
 	}
 
-	attr.ID = raw.ID
-	attr.Name = raw.Name
-	attr.Unit = raw.Unit
-	attr.CategoryID = raw.CategoryID
+	attr = *raw.toDomain()
 	return &attr, nil
 }
 
@@ -119,15 +111,15 @@ func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID i
 	ORDER BY name
 	`
 
-	var attrs []*domain.Attribute
+	var raws []rawSQL
 	err := r.withQuery(ctx, query, func() error {
-		return r.db.SelectContext(ctx, &attrs, query, categoryID)
+		return r.db.SelectContext(ctx, &raws, query, categoryID)
 	})
 	if err != nil {
 		return nil, e.MapPostgreSQLError(err)
 	}
 
-	return attrs, nil
+	return rawListToDomain(raws), nil
 }
 
 func (r *PGAttributeRepository) Update(ctx context.Context, attr *domain.Attribute) error {

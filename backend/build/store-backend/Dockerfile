@@ -14,8 +14,7 @@ FROM alpine:3.19 AS runner
 WORKDIR /app
 
 COPY --from=builder /app/store-backend ./store-backend
-COPY configs/config.yaml /app/config.yaml
-
+COPY configs ./configs
 RUN apk add curl
  
 ENTRYPOINT ["./store-backend", "--config", "/app/config.yaml"]

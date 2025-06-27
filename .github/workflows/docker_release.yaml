@@ -12,8 +12,8 @@ on:
 env:
   MODULE_PATH: ./backend
   REGISTRY: docker.io
-  BACKEND_IMAGE: yourdockerhubuser/store-backend
-  MIGRATE_IMAGE: yourdockerhubuser/store-migrate
+  BACKEND_IMAGE: neimes/store-backend
+  MIGRATE_IMAGE: neimes/store-migrate
 
 jobs:
   build-and-push:

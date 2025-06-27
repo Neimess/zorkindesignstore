@@ -21,32 +21,49 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB}"]
       interval: 10s
-      timeout: 100s
+      timeout: 15s
       retries: 10
 
-  backend:
-    build:
-      dockerfile: ./Dockerfiles/Dockerfile.Store
-      context: .
-      target: runner          
-    container_name: store-backend
+  migrate:
+    image: neimes/store-migrate:latest
+    container_name: store-migrate
     networks: [ store-net ]
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    command: ["-up"]
+    restart: no
+  backend:
+    image: neimes/store-backend:latest
+    container_name: store-backend
+    networks: [ store-net ]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
       ENV: production
-      LOG_LEVEL: info
+      STORAGE_USER: ${POSTGRES_USER}
+      STORAGE_PASSWORD: ${POSTGRES_PASSWORD}
+      STORAGE_DBNAME: ${POSTGRES_DB}
+      STORAGE_PORT: 5432
+      STORAGE_HOST: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_CODE: ${ADMIN_CODE}
     volumes:
       - ./configs:/app/configs:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
-      interval: 100s
-      timeout: 30s
+      interval: 10s
+      timeout: 3s
       retries: 5
+    command: ["--config=/configs/dev.yaml"]
 
 
   nginx:
@@ -57,7 +74,7 @@ services:
         condition: service_healthy
     networks: [ store-net ]
     volumes:
-      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/nginx.docker.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
       - "443:443"

@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Product struct {
 	ID          int64              `db:"product_id"`

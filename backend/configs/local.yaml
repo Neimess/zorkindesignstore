@@ -24,5 +24,5 @@ jwt_config:
 swagger:
     enable: true
     host: your-domain
-    scheme: [https, http]
+    scheme: [http]
     version: 1.0.0

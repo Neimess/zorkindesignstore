@@ -1,7 +1,5 @@
 -- 1. Таблица, ссылающаяся на все остальные
 DROP TABLE IF EXISTS product_attributes CASCADE;
--- 2. Таблицы с внешними ключами на categories / attributes
-DROP TABLE IF EXISTS category_attributes CASCADE;
 -- 3. Товары (ссылается на categories)
 DROP TABLE IF EXISTS products CASCADE;
 -- 4. Справочник атрибутов

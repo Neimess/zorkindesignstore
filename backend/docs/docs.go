@@ -80,7 +80,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_transport_http_restHTTP_category.CreateCategoryReq"
+                            "$ref": "#/definitions/internal_transport_http_restHTTP_category.CategoryCreateRequest"
                         }
                     }
                 ],
@@ -96,6 +96,134 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/category/{categoryID}/attribute": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создать один атрибут в категории",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Create an attribute",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "categoryID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Attribute data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_restHTTP_attribute.CreateAttributeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_transport_http_restHTTP_attribute.AttributeResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/category/{categoryID}/attribute/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создать несколько атрибутов в одной категории",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Batch create attributes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "categoryID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Batch input",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_service_attribute.CreateAttributeInput"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
@@ -242,14 +370,14 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Preset created successfully",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
-                    "400": {
-                        "description": "Invalid JSON or validation error",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
@@ -501,10 +629,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_transport_http_restHTTP_category.CategoryResponseList"
-                            }
+                            "$ref": "#/definitions/internal_transport_http_restHTTP_category.CategoryResponseList"
                         }
                     },
                     "500": {
@@ -564,14 +689,13 @@ const docTemplate = `{
         },
         "/api/presets": {
             "get": {
-                "description": "Get a list of all presets with basic info (short version)",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Preset"
                 ],
-                "summary": "List presets with basic info",
+                "summary": "List presets basic info",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -593,14 +717,13 @@ const docTemplate = `{
         },
         "/api/presets/detailed": {
             "get": {
-                "description": "Get a list of all presets with their items",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Preset"
                 ],
-                "summary": "List presets with it's items",
+                "summary": "List presets with items",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -646,19 +769,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "invalid id",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "not found",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "internal error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse"
                         }
@@ -786,6 +909,28 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_Neimess_zorkin-store-project_internal_service_attribute.CreateAttributeInput": {
+            "type": "object",
+            "required": [
+                "categoryID",
+                "name"
+            ],
+            "properties": {
+                "categoryID": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 50
+                }
+            }
+        },
         "github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -944,16 +1089,9 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 2
                 },
-                "is_filterable": {
-                    "type": "boolean"
-                },
                 "name": {
                     "type": "string",
                     "example": "Объём"
-                },
-                "slug": {
-                    "type": "string",
-                    "example": "volume"
                 },
                 "unit": {
                     "type": "string",
@@ -1068,22 +1206,16 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_transport_http_restHTTP_category.AttributePayload": {
+        "internal_transport_http_restHTTP_attribute.AttributeResponse": {
             "type": "object",
             "properties": {
-                "is_filterable": {
-                    "type": "boolean"
-                },
-                "is_required": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "priority": {
+                "categoryID": {
                     "type": "integer"
                 },
-                "slug": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 },
                 "unit": {
@@ -1091,15 +1223,36 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_transport_http_restHTTP_attribute.CreateAttributeReq": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_transport_http_restHTTP_category.CategoryCreateRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 2,
+                    "example": "Плитка"
+                }
+            }
+        },
         "internal_transport_http_restHTTP_category.CategoryResponse": {
             "type": "object",
             "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_transport_http_restHTTP_category.AttributePayload"
-                    }
-                },
                 "id": {
                     "type": "integer",
                     "example": 3
@@ -1134,20 +1287,6 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 2,
                     "example": "Керамогранит"
-                }
-            }
-        },
-        "internal_transport_http_restHTTP_category.CreateCategoryReq": {
-            "type": "object",
-            "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_transport_http_restHTTP_category.AttributePayload"
-                    }
-                },
-                "name": {
-                    "type": "string"
                 }
             }
         }

@@ -37,12 +37,10 @@ type ProductResponse struct {
 
 //swagger:model ProductAttributeValueResponse
 type ProductAttributeValueResponse struct {
-	AttributeID  int64   `json:"attribute_id" example:"2"`
-	Name         string  `json:"name" example:"Объём"`
-	Slug         string  `json:"slug" example:"volume"`
-	Unit         *string `json:"unit,omitempty" example:"л"`
-	IsFilterable bool    `json:"is_filterable"`
-	Value        string  `json:"value" example:"1.25"`
+	AttributeID int64   `json:"attribute_id" example:"2"`
+	Name        string  `json:"name" example:"Объём"`
+	Unit        *string `json:"unit,omitempty" example:"л"`
+	Value       string  `json:"value" example:"1.25"`
 }
 
 //easyjson:json

@@ -61,9 +61,8 @@ func NewRouter(deps Deps) chi.Router {
 		}
 		registerBaseRoutes(r)
 		registerProductPublicRoutes(r, deps.Handlers.ProductHandler)
-		registerCategoryPublicRoutes(r, deps.Handlers.CategoryHandler)
+		registerCategoryWithAttrsPublicRoutes(r, deps.Handlers.CategoryHandler, deps.Handlers.AttributeHandler)
 		registerPresetPublicRoutes(r, deps.Handlers.PresetHandler)
-
 		// ── admin zone ──────────────────────────────────────────────────
 		r.Route("/admin", func(r chi.Router) {
 			// one‑time login link
@@ -78,7 +77,7 @@ func NewRouter(deps Deps) chi.Router {
 				r.Use(jwtMW.CheckJWT)
 
 				registerProductAdminRoutes(r, deps.Handlers.ProductHandler)
-				registerCategoryAdminRoutes(r, deps.Handlers.CategoryHandler)
+				registerCategoryWithAttrsAdminRoutes(r, deps.Handlers.CategoryHandler, deps.Handlers.AttributeHandler)
 				registerPresetAdminRoutes(r, deps.Handlers.PresetHandler)
 			})
 		})

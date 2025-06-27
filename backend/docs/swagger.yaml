@@ -1,4 +1,20 @@
 definitions:
+  github_com_Neimess_zorkin-store-project_internal_service_attribute.CreateAttributeInput:
+    properties:
+      categoryID:
+        minimum: 1
+        type: integer
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      unit:
+        maxLength: 50
+        type: string
+    required:
+    - categoryID
+    - name
+    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse:
     properties:
       message:
@@ -109,13 +125,8 @@ definitions:
       attribute_id:
         example: 2
         type: integer
-      is_filterable:
-        type: boolean
       name:
         example: Объём
-        type: string
-      slug:
-        example: volume
         type: string
       unit:
         example: л
@@ -197,27 +208,37 @@ definitions:
       token:
         type: string
     type: object
-  internal_transport_http_restHTTP_category.AttributePayload:
+  internal_transport_http_restHTTP_attribute.AttributeResponse:
     properties:
-      is_filterable:
-        type: boolean
-      is_required:
-        type: boolean
-      name:
-        type: string
-      priority:
+      categoryID:
         type: integer
-      slug:
+      id:
+        type: integer
+      name:
         type: string
       unit:
         type: string
     type: object
+  internal_transport_http_restHTTP_attribute.CreateAttributeReq:
+    properties:
+      name:
+        type: string
+      unit:
+        type: string
+    required:
+    - name
+    type: object
+  internal_transport_http_restHTTP_category.CategoryCreateRequest:
+    properties:
+      name:
+        example: Плитка
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
   internal_transport_http_restHTTP_category.CategoryResponse:
     properties:
-      attributes:
-        items:
-          $ref: '#/definitions/internal_transport_http_restHTTP_category.AttributePayload'
-        type: array
       id:
         example: 3
         type: integer
@@ -242,15 +263,6 @@ definitions:
         type: string
     required:
     - name
-    type: object
-  internal_transport_http_restHTTP_category.CreateCategoryReq:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/internal_transport_http_restHTTP_category.AttributePayload'
-        type: array
-      name:
-        type: string
     type: object
 info:
   contact: {}
@@ -293,7 +305,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/internal_transport_http_restHTTP_category.CreateCategoryReq'
+          $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryCreateRequest'
       produces:
       - application/json
       responses:
@@ -314,6 +326,88 @@ paths:
       security:
       - BearerAuth: []
       summary: Create category
+      tags:
+      - categories
+  /api/admin/category/{categoryID}/attribute:
+    post:
+      consumes:
+      - application/json
+      description: Создать один атрибут в категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Attribute data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_restHTTP_attribute.CreateAttributeReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_transport_http_restHTTP_attribute.AttributeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create an attribute
+      tags:
+      - categories
+  /api/admin/category/{categoryID}/attribute/batch:
+    post:
+      consumes:
+      - application/json
+      description: Создать несколько атрибутов в одной категории
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: integer
+      - description: Batch input
+        in: body
+        name: data
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_service_attribute.CreateAttributeInput'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Batch create attributes
       tags:
       - categories
   /api/admin/category/{id}:
@@ -396,12 +490,12 @@ paths:
         schema:
           $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetRequest'
       responses:
-        "201":
-          description: Preset created successfully
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.IDResponse'
         "400":
-          description: Invalid JSON or validation error
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "422":
@@ -566,9 +660,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryResponseList'
-            type: array
+            $ref: '#/definitions/internal_transport_http_restHTTP_category.CategoryResponseList'
         "500":
           description: Internal Server Error
           schema:
@@ -608,7 +700,6 @@ paths:
       - categories
   /api/presets:
     get:
-      description: Get a list of all presets with basic info (short version)
       produces:
       - application/json
       responses:
@@ -622,7 +713,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      summary: List presets with basic info
+      summary: List presets basic info
       tags:
       - Preset
   /api/presets/{id}:
@@ -641,15 +732,15 @@ paths:
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.PresetResponse'
         "400":
-          description: invalid id
+          description: Bad Request
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "404":
-          description: not found
+          description: Not Found
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
         "500":
-          description: internal error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
       summary: Get preset by ID
@@ -657,7 +748,6 @@ paths:
       - Preset
   /api/presets/detailed:
     get:
-      description: Get a list of all presets with their items
       produces:
       - application/json
       responses:
@@ -671,7 +761,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_dto.ErrorResponse'
-      summary: List presets with it's items
+      summary: List presets with items
       tags:
       - Preset
   /api/product/{id}:

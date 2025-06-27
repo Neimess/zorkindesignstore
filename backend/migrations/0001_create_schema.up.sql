@@ -6,9 +6,8 @@ CREATE TABLE categories (
 CREATE TABLE attributes (
     attribute_id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL,
     unit VARCHAR(50),
-    is_filterable BOOLEAN DEFAULT FALSE
+    category_id SMALLINT NOT NULL REFERENCES categories(category_id) ON DELETE CASCADE
 );
 CREATE TABLE products (
     product_id BIGSERIAL PRIMARY KEY,
@@ -27,16 +26,7 @@ CREATE TABLE product_attributes (
     value VARCHAR(100) NOT NULL,
     UNIQUE (product_id, attribute_id)
 );
-CREATE TABLE category_attributes (
-    category_attribute_id BIGSERIAL PRIMARY KEY,
-    category_id SMALLINT NOT NULL REFERENCES categories(category_id) ON DELETE CASCADE,
-    attribute_id BIGINT NOT NULL REFERENCES attributes(attribute_id) ON DELETE CASCADE,
-    is_required BOOLEAN NOT NULL DEFAULT FALSE,
-    priority SMALLINT NOT NULL CHECK (
-        priority BETWEEN 1 AND 10
-    ),
-    UNIQUE (category_id, attribute_id)
-);
+
 CREATE TABLE presets (
     preset_id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,

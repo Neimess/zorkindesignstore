@@ -1,23 +1,32 @@
 package httputils
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
-	"github.com/mailru/easyjson"
 )
 
-func WriteError(w http.ResponseWriter, statusCode int, msg string) (int, error) {
+// WriteError writes a JSON error response using the standard encoding/json package.
+func WriteError(w http.ResponseWriter, statusCode int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	return easyjson.MarshalToWriter(dto.ErrorResponse{
+	// dto.ErrorResponse is something like:
+	//   type ErrorResponse struct { Message string `json:"message"` }
+	if err := json.NewEncoder(w).Encode(dto.ErrorResponse{
 		Message: msg,
-	}, w)
+	}); err != nil {
+		http.Error(w, "failed to encode error response", http.StatusInternalServerError)
+		return
+	}
 }
 
-func WriteJSON(w http.ResponseWriter, statusCode int, data easyjson.Marshaler) (int, error) {
+// WriteJSON writes any data as JSON using the standard encoding/json package.
+func WriteJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-
-	return easyjson.MarshalToWriter(data, w)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, "failed to encode error response", http.StatusInternalServerError)
+		return
+	}
 }

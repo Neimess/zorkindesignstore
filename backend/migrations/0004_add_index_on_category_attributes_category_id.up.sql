@@ -1,1 +1,0 @@
-CREATE INDEX idx_catattr_category ON category_attributes(category_id);

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Neimess/zorkin-store-project/internal/config"
-	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/psql"
+	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure"
 	"github.com/Neimess/zorkin-store-project/internal/server/rest"
 	"github.com/Neimess/zorkin-store-project/internal/service"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
@@ -71,26 +71,38 @@ func NewApplication(dep *Deps) (*Application, error) {
 		Algorithm: dep.Config.JWTConfig.Algorithm,
 	})
 
-	services := service.New(
-		service.Deps{
-			Logger:             dep.Logger,
-			Config:             dep.Config,
-			ProductRepository:  repos.ProductRepository,
-			CategoryRepository: repos.CategoryRepository,
-			PresetRepository:   repos.PresetRepository,
-			JWTGenerator:       jwtGenerator,
-		},
+	services, err := service.New(
+		service.NewDeps(
+			repos.ProductRepository,
+			repos.CategoryRepository,
+			repos.PresetRepository,
+			repos.AttributeRepository,
+			jwtGenerator,
+		),
 	)
-	logNew.Debug("services wired")
+	if err == nil {
+		logNew.Debug("services wired")
+	} else {
+		log.Error("services initialization failed", slog.Any("error", err))
+		return nil, fmt.Errorf("application.services: %w", err)
+	}
 
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)
-	restHandlers := restHTTP.New(&restHTTP.Deps{
-		ProductService:  services.ProductService,
-		AuthService:     services.AuthService,
-		PresetService:   services.PresetService,
-		CategoryService: services.CategoryService,
-		Logger:          dep.Logger,
+	restHandlers, err := restHTTP.New(&restHTTP.Deps{
+		ProductService:   services.ProductService,
+		AuthService:      services.AuthService,
+		PresetService:    services.PresetService,
+		CategoryService:  services.CategoryService,
+		AttributeService: services.AttributeService,
+
+		Logger: dep.Logger,
 	})
+	if err == nil {
+		logNew.Debug("handlers initialized")
+	} else {
+		log.Error("handlers initialization failed", slog.Any("error", err))
+		return nil, fmt.Errorf("application.handlers: %w", err)
+	}
 	// 5. Сервер — HTTP-сервер
 	srv := rest.NewServer(rest.Deps{
 		Server:   dep.Config.HTTPServer,

@@ -15,8 +15,8 @@ import (
 )
 
 type AttributeService interface {
-	CreateAttributesBatch(ctx context.Context, input []attr.Attribute) error
-	CreateAttribute(ctx context.Context, in *attr.Attribute) (*attr.Attribute, error)
+	CreateAttributesBatch(ctx context.Context, category_id int64, input []attr.Attribute) error
+	CreateAttribute(ctx context.Context, category_id int64, in *attr.Attribute) (*attr.Attribute, error)
 	GetAttribute(ctx context.Context, categoryID, id int64) (*attr.Attribute, error)
 	ListAttributes(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
 	UpdateAttribute(ctx context.Context, attr *attr.Attribute) error
@@ -79,7 +79,6 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	req.CategoryID = categoryID
 	if err := h.val.StructCtx(ctx, &req); err != nil {
 		h.log.Warn("validation failed", slog.Any("error", err))
 		if ve, ok := err.(validator.ValidationErrors); ok {
@@ -91,7 +90,7 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 	}
 
 	attrs := req.MapToDomainBatch()
-	if err := h.srv.CreateAttributesBatch(ctx, attrs); err != nil {
+	if err := h.srv.CreateAttributesBatch(ctx, categoryID, attrs); err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
@@ -137,7 +136,7 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 	}
 	attr := req.MapToDomain()
 	attr.CategoryID = categoryID
-	attr, err := h.srv.CreateAttribute(ctx, attr)
+	attr, err := h.srv.CreateAttribute(ctx, categoryID, attr)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return

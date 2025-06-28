@@ -14,6 +14,7 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
 	"github.com/Neimess/zorkin-store-project/pkg/database/psql"
 	"github.com/Neimess/zorkin-store-project/pkg/secret/jwt"
+	"github.com/go-playground/validator/v10"
 
 	// httpDelivery "github.com/Neimess/zorkin-store-project/internal/delivery/http"
 
@@ -71,6 +72,8 @@ func NewApplication(dep *Deps) (*Application, error) {
 		Algorithm: dep.Config.JWTConfig.Algorithm,
 	})
 
+	
+
 	services, err := service.New(
 		service.NewDeps(
 			repos.ProductRepository,
@@ -87,15 +90,21 @@ func NewApplication(dep *Deps) (*Application, error) {
 		return nil, fmt.Errorf("application.services: %w", err)
 	}
 
+
+	// validator
+	val := validator.New()
+
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)
 	restHandlers, err := restHTTP.New(&restHTTP.Deps{
+		Logger: dep.Logger,
+		Validator: 	  val,
 		ProductService:   services.ProductService,
 		AuthService:      services.AuthService,
 		PresetService:    services.PresetService,
 		CategoryService:  services.CategoryService,
 		AttributeService: services.AttributeService,
-
-		Logger: dep.Logger,
+		
+		
 	})
 	if err == nil {
 		logNew.Debug("handlers initialized")

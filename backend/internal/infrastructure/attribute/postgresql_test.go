@@ -102,7 +102,7 @@ func TestPGAttributeRepository_SaveBatch(t *testing.T) {
 	t.Run("успешное сохранение батча атрибутов", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*attr.Attribute{
+		attrs := []attr.Attribute{
 			{Name: "Вес", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Количество", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Цвет", Unit: nil, CategoryID: categoryID},
@@ -123,14 +123,14 @@ func TestPGAttributeRepository_SaveBatch(t *testing.T) {
 	})
 
 	t.Run("пустой батч", func(t *testing.T) {
-		var attrs []*attr.Attribute
+		var attrs []attr.Attribute
 		err := repo.SaveBatch(ctx, attrs)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ошибка при дублировании имени в категории", func(t *testing.T) {
 		unit := "кг"
-		attrs := []*attr.Attribute{
+		attrs := []attr.Attribute{
 			{Name: "Дублированное имя", Unit: &unit, CategoryID: categoryID},
 			{Name: "Дублированное имя", Unit: &unit, CategoryID: categoryID},
 		}
@@ -233,7 +233,7 @@ func TestPGAttributeRepository_FindByCategory(t *testing.T) {
 	t.Run("получение атрибутов категории", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*attr.Attribute{
+		attrs := []attr.Attribute{
 			{Name: "Атрибут А", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Атрибут Б", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Атрибут В", Unit: nil, CategoryID: categoryID},
@@ -352,7 +352,7 @@ func TestPGAttributeRepository_Integration(t *testing.T) {
 	t.Run("полный жизненный цикл атрибутов", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*attr.Attribute{
+		attrs := []attr.Attribute{
 			{Name: "Вес", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Количество", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Цвет", Unit: nil, CategoryID: categoryID},
@@ -367,7 +367,7 @@ func TestPGAttributeRepository_Integration(t *testing.T) {
 
 		newUnit := "г"
 		attrs[0].Unit = &newUnit
-		err = repo.Update(ctx, attrs[0])
+		err = repo.Update(ctx, &attrs[0])
 		require.NoError(t, err)
 
 		updated, err := repo.GetByID(ctx, attrs[0].ID)

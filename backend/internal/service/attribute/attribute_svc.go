@@ -14,7 +14,7 @@ import (
 )
 
 type AttributeRepository interface {
-	SaveBatch(ctx context.Context, attrs []*attr.Attribute) error
+	SaveBatch(ctx context.Context, attrs []attr.Attribute) error
 	Save(ctx context.Context, attr *attr.Attribute) error
 	GetByID(ctx context.Context, id int64) (*attr.Attribute, error)
 	FindByCategory(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
@@ -53,17 +53,12 @@ func New(d *Deps) *Service {
 		log:      slog.Default().With("component", "AttributeService")}
 }
 
-func (s *Service) CreateAttributesBatch(ctx context.Context, input CreateAttributesBatchInput) error {
-	s.log.Debug("CreateAttributesBatch called", slog.Int("count", len(input)))
-	if len(input) == 0 {
+func (s *Service) CreateAttributesBatch(ctx context.Context, category_id int64, attrs []attr.Attribute) error {
+	if len(attrs) == 0 {
 		return der.ErrBadRequest
 	}
-	if err := s.ensureCategory(ctx, input[0].CategoryID); err != nil {
+	if err := s.ensureCategory(ctx, category_id); err != nil {
 		return err
-	}
-	attrs := make([]*attr.Attribute, len(input))
-	for i, a := range input {
-		attrs[i] = s.toDomain(a)
 	}
 	if err := s.repoAttr.SaveBatch(ctx, attrs); err != nil {
 		s.log.Error("SaveBatch failed",
@@ -74,10 +69,8 @@ func (s *Service) CreateAttributesBatch(ctx context.Context, input CreateAttribu
 	return nil
 }
 
-func (s *Service) CreateAttribute(ctx context.Context, attr *attr.Attribute) (*attr.Attribute, error) {
-	s.log.Debug("CreateAttribute called", slog.String("name", attr.Name), slog.Int64("categoryID", attr.CategoryID))
-
-	if err := s.ensureCategory(ctx, attr.CategoryID); err != nil {
+func (s *Service) CreateAttribute(ctx context.Context, category_id int64, attr *attr.Attribute) (*attr.Attribute, error) {
+	if err := s.ensureCategory(ctx, category_id); err != nil {
 		return nil, err
 	}
 

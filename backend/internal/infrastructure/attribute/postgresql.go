@@ -25,7 +25,7 @@ func NewPGAttributeRepository(db *sqlx.DB) *PGAttributeRepository {
 	return &PGAttributeRepository{db: db, log: slog.Default().With("component", "PGAttributeRepository")}
 }
 
-func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*attr.Attribute) error {
+func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []attr.Attribute) error {
 	const query = `
     INSERT INTO attributes (name, unit, category_id)
     SELECT * FROM UNNEST($1::text[], $2::text[], $3::bigint[])

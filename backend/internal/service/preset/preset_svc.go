@@ -7,7 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/preset"
+	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 )
 
 var (
@@ -57,17 +57,12 @@ func (ps *Service) Create(ctx context.Context, preset *domain.Preset) (int64, er
 
 	id, err := ps.repo.Create(ctx, preset)
 	if err != nil {
-		log.Error("repo failed", slog.Any("error", err))
+
 		switch {
-		case errors.Is(err, domain.ErrConflict):
+		case errors.Is(err, der.ErrConflict) || errors.Is(err, der.ErrValidation) || errors.Is(err, der.ErrBadRequest) || errors.Is(err, der.ErrNotFound):
 			return 0, ErrPresetAlreadyExists
-		case errors.Is(err, domain.ErrValidation):
-			return 0, ErrPresetInvalid
-		case errors.Is(err, domain.ErrBadRequest):
-			return 0, ErrPresetInvalid
-		case errors.Is(err, domain.ErrNotFound):
-			return 0, ErrPresetNotFound
 		default:
+			log.Error("repo failed", slog.Any("error", err))
 			return 0, fmt.Errorf("%s: %w", op, err)
 		}
 	}
@@ -82,10 +77,11 @@ func (ps *Service) Get(ctx context.Context, id int64) (*domain.Preset, error) {
 
 	preset, err := ps.repo.Get(ctx, id)
 	if err != nil {
-		log.Error("repo failed", slog.Int64("preset_id", id), slog.Any("error", err))
-		if errors.Is(err, domain.ErrNotFound) || errors.Is(err, repository.ErrPresetNotFound) {
-			return nil, ErrPresetNotFound
+
+		if errors.Is(err, der.ErrNotFound) {
+			return nil, der.ErrNotFound
 		}
+		log.Error("repo failed", slog.Int64("preset_id", id), slog.Any("error", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -100,8 +96,8 @@ func (ps *Service) Delete(ctx context.Context, id int64) error {
 	err := ps.repo.Delete(ctx, id)
 	if err != nil {
 		log.Error("repo failed", slog.Int64("preset_id", id), slog.Any("error", err))
-		if errors.Is(err, repository.ErrPresetNotFound) {
-			return ErrPresetNotFound
+		if errors.Is(err, der.ErrNotFound) {
+			return der.ErrNotFound
 		}
 		return fmt.Errorf("%s: %w", op, err)
 	}

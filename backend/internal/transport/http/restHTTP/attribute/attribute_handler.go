@@ -8,7 +8,7 @@ import (
 
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/service/attribute"
 	_ "github.com/Neimess/zorkin-store-project/internal/transport/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
@@ -18,10 +18,10 @@ import (
 
 type AttributeService interface {
 	CreateAttributesBatch(ctx context.Context, input attribute.CreateAttributesBatchInput) error
-	CreateAttribute(ctx context.Context, in *attribute.CreateAttributeInput) (*domain.Attribute, error)
-	GetAttribute(ctx context.Context, categoryID, id int64) (*domain.Attribute, error)
-	ListAttributes(ctx context.Context, categoryID int64) ([]*domain.Attribute, error)
-	UpdateAttribute(ctx context.Context, attr *domain.Attribute) error
+	CreateAttribute(ctx context.Context, in *attribute.CreateAttributeInput) (*attr.Attribute, error)
+	GetAttribute(ctx context.Context, categoryID, id int64) (*attr.Attribute, error)
+	ListAttributes(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
+	UpdateAttribute(ctx context.Context, attr *attr.Attribute) error
 	DeleteAttribute(ctx context.Context, id int64) error
 }
 
@@ -268,7 +268,7 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attr := &domain.Attribute{
+	attr := &attr.Attribute{
 		ID:         id,
 		Name:       req.Name,
 		Unit:       req.Unit,

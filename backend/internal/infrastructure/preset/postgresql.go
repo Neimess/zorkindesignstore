@@ -14,6 +14,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/Neimess/zorkin-store-project/pkg/database/tx"
@@ -163,7 +164,7 @@ func (r *PresetRepository) ListDetailed(ctx context.Context) ([]domain.Preset, e
 			ID:        row.PresetItemID,
 			PresetID:  row.PresetID,
 			ProductID: row.ProductID,
-			Product: &domain.ProductSummary{
+			Product: &product.ProductSummary{
 				ID:       row.ProductID,
 				Name:     row.Name,
 				Price:    row.Price,

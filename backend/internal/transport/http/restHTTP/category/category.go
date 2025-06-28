@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	_ "github.com/Neimess/zorkin-store-project/internal/transport/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	cv "github.com/Neimess/zorkin-store-project/pkg/validator"
@@ -90,7 +91,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, domain.ErrCategoryNameEmpty):
 			httputils.WriteError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, domain.ErrConflict):
+		case errors.Is(err, der.ErrConflict):
 			httputils.WriteError(w, http.StatusConflict, err.Error())
 		default:
 			log.Error("service CreateCategory failed", slog.Any("error", err))
@@ -209,7 +210,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 			httputils.WriteError(w, http.StatusBadRequest, err.Error())
 		case errors.Is(err, domain.ErrCategoryNotFound):
 			httputils.WriteError(w, http.StatusNotFound, err.Error())
-		case errors.Is(err, domain.ErrConflict):
+		case errors.Is(err, der.ErrConflict):
 			httputils.WriteError(w, http.StatusConflict, err.Error())
 		default:
 			log.Error("service UpdateCategory failed", slog.Any("error", err))
@@ -245,7 +246,7 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, domain.ErrCategoryNotFound):
 			httputils.WriteError(w, http.StatusNotFound, err.Error())
-		case errors.Is(err, domain.ErrConflict):
+		case errors.Is(err, der.ErrConflict):
 			httputils.WriteError(w, http.StatusConflict, err.Error())
 		default:
 			log.Error("service DeleteCategory failed", slog.Any("error", err))

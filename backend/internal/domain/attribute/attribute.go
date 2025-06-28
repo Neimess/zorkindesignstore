@@ -1,4 +1,4 @@
-package domain
+package attr
 
 type Attribute struct {
 	ID         int64

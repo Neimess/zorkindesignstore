@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	domain "github.com/Neimess/zorkin-store-project/internal/domain"
+	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
+	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/product"
 )
 
@@ -17,10 +18,10 @@ var (
 )
 
 type ProductRepository interface {
-	Create(ctx context.Context, p *domain.Product) (int64, error)
-	CreateWithAttrs(ctx context.Context, p *domain.Product) (int64, error)
-	GetWithAttrs(ctx context.Context, id int64) (*domain.Product, error)
-	ListByCategory(ctx context.Context, catID int64) ([]domain.Product, error)
+	Create(ctx context.Context, p *product.Product) (int64, error)
+	CreateWithAttrs(ctx context.Context, p *product.Product) (int64, error)
+	GetWithAttrs(ctx context.Context, id int64) (*product.Product, error)
+	ListByCategory(ctx context.Context, catID int64) ([]product.Product, error)
 }
 
 type Service struct {
@@ -45,16 +46,16 @@ func New(d *Deps) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, product *domain.Product) (int64, error) {
+func (s *Service) Create(ctx context.Context, product *product.Product) (int64, error) {
 	const op = "service.product.Create"
 	log := s.log.With("op", op)
 
 	id, err := s.repo.Create(ctx, product)
 	switch {
-	case errors.Is(err, domain.ErrNotFound), errors.Is(err, repository.ErrCategoryNotFound):
+	case errors.Is(err, der.ErrNotFound), errors.Is(err, repository.ErrCategoryNotFound):
 		log.Info("invalid category", slog.Int64("category_id", product.CategoryID), slog.Any("error", err))
 		return 0, ErrBadCategoryID
-	case errors.Is(err, domain.ErrValidation), errors.Is(err, domain.ErrBadRequest):
+	case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
 		log.Info("invalid attribute data", slog.Any("error", err))
 		return 0, ErrInvalidAttribute
 	case err != nil:
@@ -66,16 +67,16 @@ func (s *Service) Create(ctx context.Context, product *domain.Product) (int64, e
 	return id, nil
 }
 
-func (s *Service) CreateWithAttrs(ctx context.Context, product *domain.Product) (int64, error) {
+func (s *Service) CreateWithAttrs(ctx context.Context, product *product.Product) (int64, error) {
 	const op = "service.product.CreateWithAttributes"
 	log := s.log.With("op", op)
 
 	id, err := s.repo.CreateWithAttrs(ctx, product)
 	switch {
-	case errors.Is(err, domain.ErrNotFound), errors.Is(err, repository.ErrCategoryNotFound):
+	case errors.Is(err, der.ErrNotFound), errors.Is(err, repository.ErrCategoryNotFound):
 		log.Warn("invalid category", slog.Int64("category_id", product.CategoryID), slog.Any("error", err))
 		return 0, ErrBadCategoryID
-	case errors.Is(err, domain.ErrValidation), errors.Is(err, domain.ErrBadRequest):
+	case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
 		log.Warn("invalid attribute data", slog.Any("error", err))
 		return 0, ErrInvalidAttribute
 	case err != nil:
@@ -87,13 +88,13 @@ func (s *Service) CreateWithAttrs(ctx context.Context, product *domain.Product) 
 	return id, nil
 }
 
-func (s *Service) GetDetailed(ctx context.Context, id int64) (*domain.Product, error) {
+func (s *Service) GetDetailed(ctx context.Context, id int64) (*product.Product, error) {
 	const op = "service.product.GetDetailed"
 	log := s.log.With("op", op)
 
 	product, err := s.repo.GetWithAttrs(ctx, id)
 	switch {
-	case errors.Is(err, repository.ErrProductNotFound), errors.Is(err, domain.ErrNotFound):
+	case errors.Is(err, repository.ErrProductNotFound), errors.Is(err, der.ErrNotFound):
 		return nil, ErrProductNotFound
 	case err != nil:
 		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("error", err))
@@ -103,13 +104,13 @@ func (s *Service) GetDetailed(ctx context.Context, id int64) (*domain.Product, e
 	return product, nil
 }
 
-func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]domain.Product, error) {
+func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]product.Product, error) {
 	const op = "service.product.GetByCategoryID"
 	log := s.log.With("op", op)
 
 	products, err := s.repo.ListByCategory(ctx, catID)
 	switch {
-	case errors.Is(err, repository.ErrCategoryNotFound), errors.Is(err, domain.ErrNotFound):
+	case errors.Is(err, repository.ErrCategoryNotFound), errors.Is(err, der.ErrNotFound):
 		return nil, ErrBadCategoryID
 	case err != nil:
 		log.Error("repo error", slog.Any("error", err))

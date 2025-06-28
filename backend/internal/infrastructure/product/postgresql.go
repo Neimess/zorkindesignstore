@@ -13,7 +13,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	tx "github.com/Neimess/zorkin-store-project/pkg/database/tx"
@@ -40,7 +41,7 @@ func NewPGProductRepository(db *sqlx.DB, log *slog.Logger) *PGProductRepository 
 }
 
 // Create inserts a product and populates its ID and CreatedAt.
-func (r *PGProductRepository) Create(ctx context.Context, p *domain.Product) (int64, error) {
+func (r *PGProductRepository) Create(ctx context.Context, p *product.Product) (int64, error) {
 	const insertSQL = `
         INSERT INTO products(name, price, description, category_id, image_url)
         VALUES ($1,$2,$3,$4,$5)
@@ -65,7 +66,7 @@ func (r *PGProductRepository) Create(ctx context.Context, p *domain.Product) (in
 }
 
 // CreateWithAttrs inserts a product and its attributes in a transaction.
-func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *domain.Product) (int64, error) {
+func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *product.Product) (int64, error) {
 	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (int64, error) {
 		// insert main product
 		prodID, err := r.insertProductTx(ctx, tx, p)
@@ -86,7 +87,7 @@ func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *domain.Pro
 }
 
 // GetWithAttrs fetches product and its attributes; returns ErrProductNotFound if missing.
-func (r *PGProductRepository) GetWithAttrs(ctx context.Context, id int64) (*domain.Product, error) {
+func (r *PGProductRepository) GetWithAttrs(ctx context.Context, id int64) (*product.Product, error) {
 	prod, err := r.fetchProduct(ctx, id)
 	if err != nil {
 		return nil, err
@@ -101,12 +102,12 @@ func (r *PGProductRepository) GetWithAttrs(ctx context.Context, id int64) (*doma
 }
 
 // ListByCategory returns products in a category with their attributes.
-func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) ([]domain.Product, error) {
+func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) ([]product.Product, error) {
 	const listSQL = `
         SELECT product_id,name,price,description,category_id,image_url,created_at
         FROM products WHERE category_id=$1`
 
-	var products []domain.Product
+	var products []product.Product
 	err := r.withQuery(ctx, listSQL, func() error {
 		return r.db.SelectContext(ctx, &products, listSQL, catID)
 	})
@@ -128,15 +129,15 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 		return nil, err
 	}
 
-	byID := make(map[int64]*domain.Product, len(products))
+	byID := make(map[int64]*product.Product, len(products))
 	for i := range products {
 		byID[products[i].ID] = &products[i]
 	}
 	for _, row := range attrRows {
-		attr := domain.ProductAttribute{
+		attr := product.ProductAttribute{
 			AttributeID: row.AttributeID,
 			Value:       row.Value,
-			Attribute: domain.Attribute{
+			Attribute: attr.Attribute{
 				ID:   row.AttributeID,
 				Name: row.Name,
 				Unit: optionalString(row.Unit),
@@ -155,7 +156,7 @@ func (r *PGProductRepository) withQuery(ctx context.Context, sqlStr string, fn f
 	return database.WithQuery(ctx, slog.Default().With("component", "repo.product"), sqlStr, fn)
 }
 
-func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, p *domain.Product) (int64, error) {
+func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, p *product.Product) (int64, error) {
 	const sqlStr = `
         INSERT INTO products(name, price, description, category_id, image_url)
         VALUES ($1, $2, $3, $4, $5)
@@ -172,7 +173,7 @@ func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, 
 	return id, nil
 }
 
-func (r *PGProductRepository) insertAttributesTx(ctx context.Context, tx *sqlx.Tx, prodID int64, attrs []domain.ProductAttribute) error {
+func (r *PGProductRepository) insertAttributesTx(ctx context.Context, tx *sqlx.Tx, prodID int64, attrs []product.ProductAttribute) error {
 	builder := sq.Insert("product_attributes").Columns("product_id", "attribute_id", "value").PlaceholderFormat(sq.Dollar)
 	for _, a := range attrs {
 		builder = builder.Values(prodID, a.AttributeID, a.Value)
@@ -200,12 +201,12 @@ type attrRow struct {
 	IsFilterable bool           `db:"is_filterable"`
 }
 
-func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*domain.Product, error) {
+func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*product.Product, error) {
 	const sqlStr = `
         SELECT product_id, name, price, description, category_id, image_url, created_at
         FROM products WHERE product_id = $1`
 
-	var prod domain.Product
+	var prod product.Product
 	err := r.withQuery(ctx, sqlStr, func() error {
 		return r.db.GetContext(ctx, &prod, sqlStr, id)
 	})
@@ -218,7 +219,7 @@ func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*doma
 	return &prod, nil
 }
 
-func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64) ([]domain.ProductAttribute, error) {
+func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64) ([]product.ProductAttribute, error) {
 	const sqlStr = `
         SELECT pa.attribute_id, pa.value, a.name, a.slug, a.unit, a.is_filterable
         FROM product_attributes pa
@@ -235,16 +236,16 @@ func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64)
 		}
 	}()
 
-	var result []domain.ProductAttribute
+	var result []product.ProductAttribute
 	for rows.Next() {
 		var ar attrRow
 		if err := rows.StructScan(&ar); err != nil {
 			return nil, fmt.Errorf("scan attribute: %w", err)
 		}
-		attr := domain.ProductAttribute{
+		attr := product.ProductAttribute{
 			AttributeID: ar.AttributeID,
 			Value:       ar.Value,
-			Attribute: domain.Attribute{
+			Attribute: attr.Attribute{
 				ID:   ar.AttributeID,
 				Name: ar.Name,
 				Unit: optionalString(ar.Unit),

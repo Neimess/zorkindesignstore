@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -102,7 +102,7 @@ func TestPGAttributeRepository_SaveBatch(t *testing.T) {
 	t.Run("успешное сохранение батча атрибутов", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*domain.Attribute{
+		attrs := []*attr.Attribute{
 			{Name: "Вес", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Количество", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Цвет", Unit: nil, CategoryID: categoryID},
@@ -123,14 +123,14 @@ func TestPGAttributeRepository_SaveBatch(t *testing.T) {
 	})
 
 	t.Run("пустой батч", func(t *testing.T) {
-		var attrs []*domain.Attribute
+		var attrs []*attr.Attribute
 		err := repo.SaveBatch(ctx, attrs)
 		assert.NoError(t, err)
 	})
 
 	t.Run("ошибка при дублировании имени в категории", func(t *testing.T) {
 		unit := "кг"
-		attrs := []*domain.Attribute{
+		attrs := []*attr.Attribute{
 			{Name: "Дублированное имя", Unit: &unit, CategoryID: categoryID},
 			{Name: "Дублированное имя", Unit: &unit, CategoryID: categoryID},
 		}
@@ -151,7 +151,7 @@ func TestPGAttributeRepository_Save(t *testing.T) {
 
 	t.Run("успешное сохранение атрибута", func(t *testing.T) {
 		unit := "кг"
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			Name:       "Вес",
 			Unit:       &unit,
 			CategoryID: categoryID,
@@ -163,7 +163,7 @@ func TestPGAttributeRepository_Save(t *testing.T) {
 	})
 
 	t.Run("сохранение атрибута без единицы измерения", func(t *testing.T) {
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			Name:       "Цвет",
 			Unit:       nil,
 			CategoryID: categoryID,
@@ -176,7 +176,7 @@ func TestPGAttributeRepository_Save(t *testing.T) {
 
 	t.Run("ошибка при дублировании имени в категории", func(t *testing.T) {
 		unit := "см"
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			Name:       "Вес",
 			Unit:       &unit,
 			CategoryID: categoryID,
@@ -198,7 +198,7 @@ func TestPGAttributeRepository_GetByID(t *testing.T) {
 
 	t.Run("успешное получение атрибута", func(t *testing.T) {
 		unit := "кг"
-		original := &domain.Attribute{
+		original := &attr.Attribute{
 			Name:       "Тестовый атрибут",
 			Unit:       &unit,
 			CategoryID: categoryID,
@@ -233,7 +233,7 @@ func TestPGAttributeRepository_FindByCategory(t *testing.T) {
 	t.Run("получение атрибутов категории", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*domain.Attribute{
+		attrs := []*attr.Attribute{
 			{Name: "Атрибут А", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Атрибут Б", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Атрибут В", Unit: nil, CategoryID: categoryID},
@@ -272,7 +272,7 @@ func TestPGAttributeRepository_Update(t *testing.T) {
 
 	t.Run("успешное обновление атрибута", func(t *testing.T) {
 		unit := "кг"
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			Name:       "Исходное имя",
 			Unit:       &unit,
 			CategoryID: categoryID,
@@ -295,7 +295,7 @@ func TestPGAttributeRepository_Update(t *testing.T) {
 	})
 
 	t.Run("обновление несуществующего атрибута", func(t *testing.T) {
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			ID:         99999,
 			Name:       "Новое имя",
 			CategoryID: categoryID,
@@ -317,7 +317,7 @@ func TestPGAttributeRepository_Delete(t *testing.T) {
 
 	t.Run("успешное удаление атрибута", func(t *testing.T) {
 		unit := "кг"
-		attr := &domain.Attribute{
+		attr := &attr.Attribute{
 			Name:       "Удаляемый атрибут",
 			Unit:       &unit,
 			CategoryID: categoryID,
@@ -352,7 +352,7 @@ func TestPGAttributeRepository_Integration(t *testing.T) {
 	t.Run("полный жизненный цикл атрибутов", func(t *testing.T) {
 		unit1 := "кг"
 		unit2 := "шт"
-		attrs := []*domain.Attribute{
+		attrs := []*attr.Attribute{
 			{Name: "Вес", Unit: &unit1, CategoryID: categoryID},
 			{Name: "Количество", Unit: &unit2, CategoryID: categoryID},
 			{Name: "Цвет", Unit: nil, CategoryID: categoryID},

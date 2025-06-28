@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	e "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/jmoiron/sqlx"
@@ -23,7 +24,7 @@ func NewPGAttributeRepository(db *sqlx.DB) *PGAttributeRepository {
 	return &PGAttributeRepository{db: db}
 }
 
-func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*domain.Attribute) error {
+func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*attr.Attribute) error {
 	const query = `
     INSERT INTO attributes (name, unit, category_id)
     SELECT * FROM UNNEST($1::text[], $2::text[], $3::bigint[])
@@ -54,7 +55,7 @@ func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*domain.A
 	}
 
 	if len(returnedIDs) != len(attrs) {
-		return fmt.Errorf("%w: получили %d id, ожидали %d", domain.ErrInternal, len(returnedIDs), len(attrs))
+		return fmt.Errorf("%w: получили %d id, ожидали %d", der.ErrInternal, len(returnedIDs), len(attrs))
 	}
 
 	for i, id := range returnedIDs {
@@ -64,7 +65,7 @@ func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*domain.A
 	return nil
 }
 
-func (r *PGAttributeRepository) Save(ctx context.Context, attr *domain.Attribute) error {
+func (r *PGAttributeRepository) Save(ctx context.Context, attr *attr.Attribute) error {
 	const query = `
 	INSERT INTO attributes (name, unit, category_id)
 	VALUES ($1, $2, $3)
@@ -82,14 +83,14 @@ func (r *PGAttributeRepository) Save(ctx context.Context, attr *domain.Attribute
 	return nil
 }
 
-func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*domain.Attribute, error) {
+func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*attr.Attribute, error) {
 	const query = `
 	SELECT attribute_id, name, unit, category_id
 	FROM attributes
 	WHERE attribute_id = $1
 	`
 
-	var attr domain.Attribute
+	var attr attr.Attribute
 
 	var raw rawSQL
 	err := r.withQuery(ctx, query, func() error {
@@ -103,7 +104,7 @@ func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*domain.
 	return &attr, nil
 }
 
-func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID int64) ([]*domain.Attribute, error) {
+func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID int64) ([]attr.Attribute, error) {
 	const query = `
 	SELECT attribute_id, name, unit, category_id
 	FROM attributes
@@ -122,7 +123,7 @@ func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID i
 	return rawListToDomain(raws), nil
 }
 
-func (r *PGAttributeRepository) Update(ctx context.Context, attr *domain.Attribute) error {
+func (r *PGAttributeRepository) Update(ctx context.Context, attr *attr.Attribute) error {
 	const query = `
 	UPDATE attributes
 	SET name = $1, unit = $2, category_id = $3
@@ -139,7 +140,7 @@ func (r *PGAttributeRepository) Update(ctx context.Context, attr *domain.Attribu
 			return err
 		}
 		if rowsAffected == 0 {
-			return fmt.Errorf("%w: attribute with ID %d not found", domain.ErrNotFound, attr.ID)
+			return fmt.Errorf("%w: attribute with ID %d not found", der.ErrNotFound, attr.ID)
 		}
 		return nil
 	})
@@ -165,7 +166,7 @@ func (r *PGAttributeRepository) Delete(ctx context.Context, id int64) error {
 			return err
 		}
 		if rowsAffected == 0 {
-			return fmt.Errorf("%w: attribute with ID %d not found", domain.ErrNotFound, id)
+			return fmt.Errorf("%w: attribute with ID %d not found", der.ErrNotFound, id)
 		}
 		return nil
 	})

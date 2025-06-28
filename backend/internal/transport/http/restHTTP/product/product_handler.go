@@ -4,20 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
+	"net/http"
+
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	pSvc "github.com/Neimess/zorkin-store-project/internal/service/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
-	"log/slog"
-	"net/http"
 )
 
 type ProductService interface {
-	Create(ctx context.Context, product *domain.Product) (int64, error)
-	CreateWithAttrs(ctx context.Context, product *domain.Product) (int64, error)
-	GetDetailed(ctx context.Context, id int64) (*domain.Product, error)
-	GetByCategoryID(ctx context.Context, categoryID int64) ([]domain.Product, error)
+	Create(ctx context.Context, product *product.Product) (int64, error)
+	CreateWithAttrs(ctx context.Context, product *product.Product) (int64, error)
+	GetDetailed(ctx context.Context, id int64) (*product.Product, error)
+	GetByCategoryID(ctx context.Context, categoryID int64) ([]product.Product, error)
 }
 
 type Deps struct {
@@ -252,8 +254,8 @@ func (ph *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
-func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {
-	p := &domain.Product{
+func mapCreateReqToDomain(req *dto.ProductCreateRequest) *product.Product {
+	p := &product.Product{
 		Name:        req.Name,
 		Price:       *req.Price,
 		Description: req.Description,
@@ -261,7 +263,7 @@ func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {
 		ImageURL:    req.ImageURL,
 	}
 	for _, a := range req.Attributes {
-		p.Attributes = append(p.Attributes, domain.ProductAttribute{
+		p.Attributes = append(p.Attributes, product.ProductAttribute{
 			AttributeID: *a.AttributeID,
 			Value:       a.Value,
 		})
@@ -269,7 +271,7 @@ func mapCreateReqToDomain(req *dto.ProductCreateRequest) *domain.Product {
 	return p
 }
 
-func mapDomainToProductResponse(p *domain.Product) *dto.ProductResponse {
+func mapDomainToProductResponse(p *product.Product) *dto.ProductResponse {
 	resp := &dto.ProductResponse{
 		ProductID:   p.ID,
 		Name:        p.Name,

@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/Neimess/zorkin-store-project/internal/domain/product"
+)
 
 type Preset struct {
 	ID          int64        `json:"preset_id" db:"preset_id"`
@@ -13,8 +17,8 @@ type Preset struct {
 }
 
 type PresetItem struct {
-	ID        int64           `json:"id" db:"preset_item_id"`
-	PresetID  int64           `json:"preset_id" db:"preset_id"`
-	ProductID int64           `json:"product_id" db:"product_id"`
-	Product   *ProductSummary `json:"product,omitempty"`
+	ID        int64                   `json:"id" db:"preset_item_id"`
+	PresetID  int64                   `json:"preset_id" db:"preset_id"`
+	ProductID int64                   `json:"product_id" db:"product_id"`
+	Product  *product.ProductSummary `json:"product,omitempty"`
 }

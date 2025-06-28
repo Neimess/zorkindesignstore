@@ -1,7 +1,9 @@
-package domain
+package product
 
 import (
 	"time"
+
+	"github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 )
 
 type Product struct {
@@ -16,10 +18,10 @@ type Product struct {
 }
 
 type ProductAttribute struct {
-	ProductID   int64     `db:"product_id"`
-	AttributeID int64     `db:"attribute_id"`
-	Value       string    `db:"value"`
-	Attribute   Attribute `db:"-"`
+	ProductID   int64               `db:"product_id"`
+	AttributeID int64               `db:"attribute_id"`
+	Value       string              `db:"value"`
+	Attribute   attr.Attribute `db:"-"`
 }
 
 type PresetProduct struct {

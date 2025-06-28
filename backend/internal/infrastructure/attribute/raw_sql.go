@@ -1,6 +1,8 @@
 package attribute
 
-import "github.com/Neimess/zorkin-store-project/internal/domain"
+import (
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+)
 
 type rawSQL struct {
 	ID         int64   `db:"attribute_id"`
@@ -9,8 +11,8 @@ type rawSQL struct {
 	CategoryID int64   `db:"category_id"`
 }
 
-func (r rawSQL) toDomain() *domain.Attribute {
-	return &domain.Attribute{
+func (r rawSQL) toDomain() *attr.Attribute {
+	return &attr.Attribute{
 		ID:         r.ID,
 		Name:       r.Name,
 		Unit:       r.Unit,
@@ -18,10 +20,10 @@ func (r rawSQL) toDomain() *domain.Attribute {
 	}
 }
 
-func rawListToDomain(raws []rawSQL) []*domain.Attribute {
-	attrs := make([]*domain.Attribute, len(raws))
+func rawListToDomain(raws []rawSQL) []attr.Attribute {
+	attrs := make([]attr.Attribute, len(raws))
 	for i, r := range raws {
-		attrs[i] = r.toDomain()
+		attrs[i] = *r.toDomain()
 	}
 	return attrs
 }

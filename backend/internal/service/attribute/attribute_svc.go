@@ -6,18 +6,19 @@ import (
 	"fmt"
 
 	"log/slog"
-
 	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	"github.com/Neimess/zorkin-store-project/internal/service/category"
 	"github.com/Neimess/zorkin-store-project/pkg/validator"
 )
 
 type AttributeRepository interface {
-	SaveBatch(ctx context.Context, attrs []*domain.Attribute) error
-	Save(ctx context.Context, attr *domain.Attribute) error
-	GetByID(ctx context.Context, id int64) (*domain.Attribute, error)
-	FindByCategory(ctx context.Context, categoryID int64) ([]*domain.Attribute, error)
-	Update(ctx context.Context, attr *domain.Attribute) error
+	SaveBatch(ctx context.Context, attrs []*attr.Attribute) error
+	Save(ctx context.Context, attr *attr.Attribute) error
+	GetByID(ctx context.Context, id int64) (*attr.Attribute, error)
+	FindByCategory(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
+	Update(ctx context.Context, attr *attr.Attribute) error
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -55,18 +56,14 @@ func New(d *Deps) *Service {
 func (s *Service) CreateAttributesBatch(ctx context.Context, input CreateAttributesBatchInput) error {
 	s.log.Debug("CreateAttributesBatch called", slog.Int("count", len(input)))
 	if len(input) == 0 {
-		return domain.ErrBadRequest
+		return der.ErrBadRequest
 	}
 	if err := s.ensureCategory(ctx, input[0].CategoryID); err != nil {
 		return err
 	}
-	attrs := make([]*domain.Attribute, len(input))
+	attrs := make([]*attr.Attribute, len(input))
 	for i, a := range input {
-		attrs[i] = &domain.Attribute{
-			Name:       a.Name,
-			Unit:       a.Unit,
-			CategoryID: a.CategoryID,
-		}
+		attrs[i] = s.toDomain(a)
 	}
 	if err := s.repoAttr.SaveBatch(ctx, attrs); err != nil {
 		s.log.Error("SaveBatch failed",
@@ -77,7 +74,7 @@ func (s *Service) CreateAttributesBatch(ctx context.Context, input CreateAttribu
 	return nil
 }
 
-func (s *Service) CreateAttribute(ctx context.Context, in *CreateAttributeInput) (*domain.Attribute, error) {
+func (s *Service) CreateAttribute(ctx context.Context, in *CreateAttributeInput) (*attr.Attribute, error) {
 	s.log.Debug("CreateAttribute called", slog.String("name", in.Name), slog.Int64("categoryID", in.CategoryID))
 
 	if err := s.ensureCategory(ctx, in.CategoryID); err != nil {
@@ -100,7 +97,7 @@ func (s *Service) CreateAttribute(ctx context.Context, in *CreateAttributeInput)
 	return attr, nil
 }
 
-func (s *Service) GetAttribute(ctx context.Context, categoryID, id int64) (*domain.Attribute, error) {
+func (s *Service) GetAttribute(ctx context.Context, categoryID, id int64) (*attr.Attribute, error) {
 	s.log.Debug("GetAttribute", slog.Int64("categoryID", categoryID), slog.Int64("id", id))
 
 	if err := s.ensureCategory(ctx, categoryID); err != nil {
@@ -108,18 +105,18 @@ func (s *Service) GetAttribute(ctx context.Context, categoryID, id int64) (*doma
 	}
 	attr, err := s.repoAttr.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return nil, domain.ErrNotFound
+		if errors.Is(err, der.ErrNotFound) {
+			return nil, der.ErrNotFound
 		}
 		return nil, fmt.Errorf("get attribute: %w", err)
 	}
 	return attr, nil
 }
 
-func (s *Service) ListAttributes(ctx context.Context, categoryID int64) ([]*domain.Attribute, error) {
+func (s *Service) ListAttributes(ctx context.Context, categoryID int64) ([]attr.Attribute, error) {
 	s.log.Debug("ListAttributes called", slog.Int64("categoryID", categoryID))
 	if _, err := s.repoCat.GetByID(ctx, categoryID); err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
+		if errors.Is(err, der.ErrNotFound) {
 			return nil, domain.ErrCategoryNotFound
 		}
 		return nil, fmt.Errorf("failed to get category: %w", err)
@@ -133,17 +130,13 @@ func (s *Service) ListAttributes(ctx context.Context, categoryID int64) ([]*doma
 	return attrs, nil
 }
 
-func (s *Service) UpdateAttribute(ctx context.Context, attr *domain.Attribute) error {
+func (s *Service) UpdateAttribute(ctx context.Context, attr *attr.Attribute) error {
 	s.log.Debug("UpdateAttribute called", slog.Int64("id", attr.ID))
 	if _, err := s.repoCat.GetByID(ctx, attr.CategoryID); err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
+		if errors.Is(err, der.ErrNotFound) {
 			return domain.ErrCategoryNotFound
 		}
 		return fmt.Errorf("failed to get category: %w", err)
-	}
-	if attr.Name == "" {
-		s.log.Error("attribute name empty on update", slog.Int64("id", attr.ID))
-		return domain.ErrAttributeNameEmpty
 	}
 	if err := s.repoAttr.Update(ctx, attr); err != nil {
 		s.log.Error("Update failed", slog.String("error", err.Error()))

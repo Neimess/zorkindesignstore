@@ -33,12 +33,16 @@ type Deps struct {
 	val *validator.Validate
 }
 
-func NewDeps(svc CategoryService) (*Deps, error) {
+func NewDeps(svc CategoryService, val *validator.Validate) (*Deps, error) {
 	if svc == nil {
 		return nil, errors.New("category handler: missing CategoryService")
 	}
+if val == nil {
+ return nil, errors.New("category handler: missing validator")
+}
 	return &Deps{
 		svc: svc,
+  val: val
 	}, nil
 }
 

@@ -64,7 +64,6 @@ jobs:
     services:
       docker:
         image: docker:24.0.2-dind
-        privileged: true
         ports:
           - 2375:2375
         options: --privileged

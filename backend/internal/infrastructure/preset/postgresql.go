@@ -196,6 +196,21 @@ func (r *PGPresetRepository) ListDetailed(ctx context.Context) ([]preset.Preset,
 	return presets, nil
 }
 
+func (r *PGPresetRepository) ListShort(ctx context.Context) ([]preset.Preset, error) {
+	const q = `
+		SELECT preset_id, name, description, total_price, image_url, created_at
+		FROM presets
+	`
+	var raws []presetDB
+	if err := r.withQuery(ctx, q, func() error {
+		return r.db.SelectContext(ctx, &raws, q)
+	}); err != nil {
+		return nil, r.mapPostgreSQLError(err)
+	}
+
+	return rawPresetListToDomain(raws), nil
+}
+
 func (r *PGPresetRepository) Delete(ctx context.Context, id int64) error {
 	const q = `DELETE FROM presets WHERE preset_id = $1`
 	var res sql.Result

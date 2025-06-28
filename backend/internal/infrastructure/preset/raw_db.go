@@ -27,6 +27,12 @@ func (p presetDB) toDomain() *domain.Preset {
 	}
 }
 
+type presetItemDB struct {
+	ID        int64 `db:"preset_item_id"`
+	PresetID  int64 `db:"preset_id"`
+	ProductID int64 `db:"product_id"`
+}
+
 // rawPresetListToDomain массово преобразует список.
 func rawPresetListToDomain(raws []presetDB) []domain.Preset {
 	presets := make([]domain.Preset, len(raws))

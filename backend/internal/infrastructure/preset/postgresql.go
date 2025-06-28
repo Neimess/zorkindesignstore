@@ -112,12 +112,21 @@ func (r *PGPresetRepository) Get(ctx context.Context, id int64) (*preset.Preset,
 		SELECT preset_item_id, preset_id, product_id
 		FROM preset_items WHERE preset_id = $1
 	`
+
+	var raws []presetItemDB
+
 	if err := database.WithQuery(ctx, r.log, qItems, func() error {
-		return r.db.SelectContext(ctx, &p.Items, qItems, id)
+		return r.db.SelectContext(ctx, &raws, qItems, id)
 	}); err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-
+	for _, raw := range raws {
+		p.Items = append(p.Items, preset.PresetItem{
+			ID:        raw.ID,
+			PresetID:  raw.PresetID,
+			ProductID: raw.ProductID,
+		})
+	}
 	return p, nil
 }
 

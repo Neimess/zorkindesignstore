@@ -63,6 +63,6 @@ func MapPostgreSQLError(logger *slog.Logger, err error) error {
 	}
 
 	// Всё прочее — внутренняя ошибка хранилища
-	logger.Error("unexpected database error",  slog.String("error", err.Error()))
+	logger.Error("unexpected database error", slog.String("error", err.Error()))
 	return app_error.ErrInternal
 }

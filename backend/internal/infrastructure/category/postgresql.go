@@ -2,19 +2,15 @@ package category
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/jmoiron/sqlx"
 )
-
-type categoryDB struct {
-	ID   int64  `db:"category_id"`
-	Name string `db:"name"`
-}
 
 var (
 	ErrCategoryNotFound      = errors.New("category not found")
@@ -38,26 +34,24 @@ func NewPGCategoryRepository(db *sqlx.DB) *PGCategoryRepository {
 	}
 }
 
-func (r *PGCategoryRepository) Create(ctx context.Context, name string) (int64, error) {
-	if name == "" {
-		return 0, domain.ErrCategoryNameEmpty
-	}
+func (r *PGCategoryRepository) Create(ctx context.Context, cat *category.Category) (*category.Category, error) {
 	var id int64
 	const query = `INSERT INTO categories (name) VALUES ($1) RETURNING category_id`
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.QueryRowContext(ctx,
 			query,
-			name,
+			cat.Name,
 		).Scan(&id)
 	})
 	if err != nil {
-		return 0, r.mapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
-	return id, nil
+	cat.ID = id
+	return cat, nil
 }
 
-func (r *PGCategoryRepository) GetByID(ctx context.Context, id int64) (*domain.Category, error) {
-	var c domain.Category
+func (r *PGCategoryRepository) GetByID(ctx context.Context, id int64) (*category.Category, error) {
+	var c category.Category
 	const query = `SELECT category_id, name FROM categories WHERE category_id = $1`
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.QueryRowContext(ctx, query, id).
@@ -70,10 +64,17 @@ func (r *PGCategoryRepository) GetByID(ctx context.Context, id int64) (*domain.C
 }
 
 func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName string) error {
-	res, err := r.db.ExecContext(ctx,
-		`UPDATE categories SET name = $1 WHERE category_id = $2`,
-		newName, id,
-	)
+	const query = `UPDATE categories SET name = $1 WHERE category_id = $2`
+	var res sql.Result
+	err := r.withQuery(ctx, query, func() error {
+		var err error
+		res, err = r.db.ExecContext(ctx,
+			query,
+			newName, id,
+		)
+		return err
+	})
+
 	if err != nil {
 		return r.mapPostgreSQLError(err)
 	}
@@ -82,7 +83,7 @@ func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName str
 		return r.mapPostgreSQLError(err)
 	}
 	if rows == 0 {
-		return domain.ErrCategoryNotFound
+		return category.ErrCategoryNotFound
 	}
 	return nil
 }
@@ -100,12 +101,12 @@ func (r *PGCategoryRepository) Delete(ctx context.Context, id int64) error {
 		return r.mapPostgreSQLError(err)
 	}
 	if rows == 0 {
-		return domain.ErrCategoryNotFound
+		return category.ErrCategoryNotFound
 	}
 	return nil
 }
 
-func (r *PGCategoryRepository) List(ctx context.Context) ([]domain.Category, error) {
+func (r *PGCategoryRepository) List(ctx context.Context) ([]category.Category, error) {
 	var rows []categoryDB
 	const query = `SELECT category_id, name FROM categories ORDER BY name`
 	if err := r.withQuery(ctx, query, func() error {
@@ -114,9 +115,9 @@ func (r *PGCategoryRepository) List(ctx context.Context) ([]domain.Category, err
 		return nil, r.mapPostgreSQLError(err)
 	}
 
-	cats := make([]domain.Category, len(rows))
+	cats := make([]category.Category, len(rows))
 	for i, c := range rows {
-		cats[i] = domain.Category{ID: c.ID, Name: c.Name}
+		cats[i] = category.Category{ID: c.ID, Name: c.Name}
 	}
 	return cats, nil
 }

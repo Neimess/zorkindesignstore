@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 )
 
 type CategoryRepository interface {
-	Create(ctx context.Context, name string) (int64, error)
-	GetByID(ctx context.Context, id int64) (*domain.Category, error)
+	Create(ctx context.Context, cat *category.Category) (*category.Category, error)
+	GetByID(ctx context.Context, id int64) (*category.Category, error)
 	Update(ctx context.Context, id int64, newName string) error
 	Delete(ctx context.Context, id int64) error
-	List(ctx context.Context) ([]domain.Category, error)
+	List(ctx context.Context) ([]category.Category, error)
 }
 
 type Service struct {
@@ -37,27 +37,23 @@ func New(d *Deps) *Service {
 	return &Service{repo: d.repo, log: slog.Default().With("component", "service.category")}
 }
 
-func (s *Service) CreateCategory(ctx context.Context, name string) (*domain.Category, error) {
-	if name == "" {
-		return nil, domain.ErrCategoryNameEmpty
+func (s *Service) CreateCategory(ctx context.Context, cat *category.Category) (*category.Category, error) {
+	if err := cat.Validate(); err != nil {
+		return nil, err
 	}
 
-	id, err := s.repo.Create(ctx, name)
+	cat, err := s.repo.Create(ctx, cat)
 	if err != nil {
 		return nil, err
 	}
 
-	cat, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("service: failed to fetch created category: %w", err)
-	}
 	return cat, nil
 }
 
-func (s *Service) GetCategory(ctx context.Context, id int64) (*domain.Category, error) {
+func (s *Service) GetCategory(ctx context.Context, id int64) (*category.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) {
+		if errors.Is(err, category.ErrCategoryNotFound) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("service: failed to retrieve category: %w", err)
@@ -65,14 +61,14 @@ func (s *Service) GetCategory(ctx context.Context, id int64) (*domain.Category, 
 	return cat, nil
 }
 
-func (s *Service) UpdateCategory(ctx context.Context, id int64, newName string) error {
-	if newName == "" {
-		return domain.ErrCategoryNameEmpty
+func (s *Service) UpdateCategory(ctx context.Context, cat *category.Category) error {
+	if err := cat.Validate(); err != nil {
+		return err
 	}
 
-	err := s.repo.Update(ctx, id, newName)
+	err := s.repo.Update(ctx, cat.ID, cat.Name)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) {
+		if errors.Is(err, category.ErrCategoryNotFound) {
 			return err
 		}
 		return fmt.Errorf("service: failed to update category: %w", err)
@@ -83,7 +79,7 @@ func (s *Service) UpdateCategory(ctx context.Context, id int64, newName string) 
 func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) || errors.Is(err, domain.ErrCategoryInUse) {
+		if errors.Is(err, category.ErrCategoryNotFound) || errors.Is(err, category.ErrCategoryInUse) {
 			return err
 		}
 		return fmt.Errorf("service: failed to delete category: %w", err)
@@ -91,7 +87,7 @@ func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *Service) ListCategories(ctx context.Context) ([]domain.Category, error) {
+func (s *Service) ListCategories(ctx context.Context) ([]category.Category, error) {
 	cats, err := s.repo.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("service: failed to list categories: %w", err)

@@ -3,16 +3,74 @@ all: false
 log-level: info
 
 packages:
-  github.com/Neimess/zorkin-store-project/internal/service:
+  github.com/Neimess/zorkin-store-project/internal/service/attribute:
     config:
-      all: true
-      filename: service_mockery.go
-      dir: "{{.InterfaceDir}}/mocks"
-      formatter: goimports
-      structname: "{{.Mock}}{{.InterfaceName}}"
+      filename: attribute_service_mock.go
+      dir: "../mocks"
+      structname: MockAttributeService
       pkgname: mocks
-      recursive: false
-      require-template-schema-exists: true
+      formatter: goimports
       template: testify
-      template-schema: "{{.Template}}.schema.json"
-      force-file-write: true
+
+  github.com/Neimess/zorkin-store-project/internal/service/category:
+    config:
+      filename: category_service_mock.go
+      dir: "../mocks"
+      structname: MockCategoryService
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/service/preset:
+    config:
+      filename: preset_service_mock.go
+      dir: "../mocks"
+      structname: MockPresetService
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/service/product:
+    config:
+      filename: product_service_mock.go
+      dir: "../mocks"
+      structname: MockProductService
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product:
+    config:
+      filename: product_handler_mock.go
+      dir: "../mocks"
+      structname: MockProductHandler
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category:
+    config:
+      filename: category_handler_mock.go
+      dir: "../mocks"
+      structname: MockCategoryHandler
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset:
+    config:
+      filename: preset_handler_mock.go
+      dir: "../mocks"
+      structname: MockPresetHandler
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
+  github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute:
+    config:
+      filename: attribute_handler_mock.go
+      dir: "../mocks"
+      structname: MockAttributeHandler
+      pkgname: mocks
+      formatter: goimports
+      template: testify

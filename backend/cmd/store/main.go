@@ -36,12 +36,16 @@ func main() {
 	initSwagger(cfg.Swagger)
 	// 2. логгер (корневой + контекст op)
 	root := logger.MustInitLogger(cfg.Env)
+
 	logMain := root.With(slog.String("component", "cmd"),
 		slog.String("op", op),
 		slog.String("version", cfg.Version),
 		slog.String("env", cfg.Env),
 	)
 	slog.SetDefault(root)
+	if cfg.Env == config.EnvLocal || cfg.Env == config.EnvDev {
+		logMain.Debug("cmd.main started", slog.String("version", cfg.Version), slog.String("config", fmt.Sprintf("%+v", cfg)))
+	}
 	logMain.Info("main started")
 
 	// 4. DI, создание приложения

@@ -38,7 +38,8 @@ func NewRouter(deps Deps) chi.Router {
 			return req.Method == http.MethodPost && strings.HasPrefix(req.URL.Path, "/debug/")
 		},
 	}))
-	if deps.Config.HTTPServer.EnableCORS {
+	isDev := deps.Config.Env == config.EnvLocal || deps.Config.Env == config.EnvDev
+	if isDev && deps.Config.HTTPServer.EnableCORS {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   []string{"*"},
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -49,7 +50,6 @@ func NewRouter(deps Deps) chi.Router {
 	}
 
 	// ── profiler & swagger ───────────────────────────────────────────────
-	isDev := deps.Config.Env == config.EnvLocal || deps.Config.Env == config.EnvDev
 	if isDev && deps.Config.HTTPServer.EnablePProf {
 		r.Mount("/debug/pprof", profiler(deps.Config.Env))
 	}

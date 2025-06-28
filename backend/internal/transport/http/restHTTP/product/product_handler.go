@@ -7,10 +7,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	pSvc "github.com/Neimess/zorkin-store-project/internal/service/product"
-	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-playground/validator/v10"
 )
@@ -62,16 +62,16 @@ func New(d *Deps) *Handler {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
-// @Success      201      {object}  dto.IDResponse "Returns created product ID"
-// @Failure      400      {object}  dto.ErrorResponse "Bad request"
-// @Failure      401      {object}  dto.ErrorResponse "Unauthorized access"
-// @Failure      403      {object}  dto.ErrorResponse "Forbidden access"
-// @Failure      405	  {object}  dto.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      404      {object}  dto.ErrorResponse "Not found"
-// @Failure      409      {object}  dto.ErrorResponse "Conflict, e.g. duplicate product"
-// @Failure      422      {object}  dto.ErrorResponse "Unprocessable entity, e.g. validation error"
-// @Failure      429      {object}  dto.ErrorResponse "Too many requests, e.g. rate limiting"
-// @Failure      500      {object}  dto.ErrorResponse "Internal server error"
+// @Success      201
+// @Failure      400      {object}  httputils.ErrorResponse "Bad request"
+// @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
+// @Failure      403      {object}  httputils.ErrorResponse "Forbidden access"
+// @Failure      405	  {object}  httputils.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      404      {object}  httputils.ErrorResponse "Not found"
+// @Failure      409      {object}  httputils.ErrorResponse "Conflict, e.g. duplicate product"
+// @Failure      422      {object}  httputils.ErrorResponse "Unprocessable entity, e.g. validation error"
+// @Failure      429      {object}  httputils.ErrorResponse "Too many requests, e.g. rate limiting"
+// @Failure      500      {object}  httputils.ErrorResponse "Internal server error"
 // @Router       /api/admin/product [post]
 func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -97,20 +97,8 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	product := mapCreateReqToDomain(&input)
 
 	_, err := h.srv.Create(ctx, product)
-	switch {
-	case errors.Is(err, pSvc.ErrBadCategoryID):
-		log.Warn("invalid foreign key in product",
-			slog.Int64("category_id", product.CategoryID),
-			slog.String("name", product.Name),
-		)
-		httputils.WriteError(w, http.StatusBadRequest, "invalid foreign key in product")
-		return
-	case err != nil:
-		log.Error("unexpected service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
-	default:
-		log.Error("unexpected service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
+	if err != nil {
+		h.handleServiceError(w, err)
 		return
 	}
 
@@ -125,14 +113,14 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
-// @Success      201      {object}  dto.IDResponse  "Returns created product ID"
-// @Failure      400      {object}  dto.ErrorResponse "Bad request"
-// @Failure      401      {object}  dto.ErrorResponse "Unauthorized access"
-// @Failure      403      {object}  dto.ErrorResponse "Forbidden access"
-// @Failure      404      {object}  dto.ErrorResponse "Not found"
-// @Failure      405	  {object}  dto.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      409      {object}  dto.ErrorResponse "Conflict, e.g. duplicate product"
-// @Failure      500      {object}  dto.ErrorResponse "Internal server error"
+// @Success      201
+// @Failure      400      {object}  httputils.ErrorResponse "Bad request"
+// @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
+// @Failure      403      {object}  httputils.ErrorResponse "Forbidden access"
+// @Failure      404      {object}  httputils.ErrorResponse "Not found"
+// @Failure      405	  {object}  httputils.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      409      {object}  httputils.ErrorResponse "Conflict, e.g. duplicate product"
+// @Failure      500      {object}  httputils.ErrorResponse "Internal server error"
 // @Router       /api/admin/product/detailed [post]
 func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -179,9 +167,9 @@ func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id   path      int  true  "Product ID"
 // @Success      200  {object}  dto.ProductResponse  "Returns product details"
-// @Failure      400  {object}  dto.ErrorResponse  "Invalid ID"
-// @Failure      404  {object}  dto.ErrorResponse  "Not found"
-// @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
+// @Failure      400  {object}  httputils.ErrorResponse  "Invalid ID"
+// @Failure      404  {object}  httputils.ErrorResponse  "Not found"
+// @Failure      500  {object}  httputils.ErrorResponse  "Internal server error"
 // @Router       /api/product/{id} [get]
 func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -197,14 +185,8 @@ func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	product, err := h.srv.GetDetailed(ctx, id)
-	switch {
-	case errors.Is(err, pSvc.ErrProductNotFound):
-		log.Warn("product not found", slog.Int64("product_id", id))
-		httputils.WriteError(w, 404, "product not found")
-		return
-	case err != nil:
-		log.Error("unhandled service error", slog.Any("err", err))
-		httputils.WriteError(w, 500, "internal server error")
+	if err != nil {
+		h.handleServiceError(w, err)
 		return
 	}
 
@@ -220,12 +202,12 @@ func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id   path      int  true  "Category ID"
 // @Success      200  {array}   dto.ProductResponse  "List of products"
-// @Failure      400  {object}  dto.ErrorResponse    "Invalid ID"
-// @Failure      401  {object}  dto.ErrorResponse    "Unauthorized access"
-// @Failure      403  {object}  dto.ErrorResponse    "Forbidden access"
-// @Failure      404  {object}  dto.ErrorResponse    "Category not found"
-// @Failure      405  {object}  dto.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      500  {object}  dto.ErrorResponse    "Internal server error"
+// @Failure      400  {object}  httputils.ErrorResponse    "Invalid ID"
+// @Failure      401  {object}  httputils.ErrorResponse    "Unauthorized access"
+// @Failure      403  {object}  httputils.ErrorResponse    "Forbidden access"
+// @Failure      404  {object}  httputils.ErrorResponse    "Category not found"
+// @Failure      405  {object}  httputils.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      500  {object}  httputils.ErrorResponse    "Internal server error"
 // @Router       /api/product/category/{id} [get]
 func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -241,14 +223,8 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	products, err := h.srv.GetByCategoryID(ctx, categoryID)
-	switch {
-	case errors.Is(err, domain.ErrCategoryNotFound):
-		log.Warn("category not found", slog.Int64("category_id", categoryID))
-		httputils.WriteError(w, 404, "category not found")
-		return
-	case err != nil:
-		log.Error("unhandled service error", slog.Any("err", err))
-		httputils.WriteError(w, 500, "internal server error")
+	if err != nil {
+		h.handleServiceError(w, err)
 		return
 	}
 
@@ -297,4 +273,24 @@ func mapDomainToProductResponse(p *product.Product) *dto.ProductResponse {
 		})
 	}
 	return resp
+}
+
+func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, pSvc.ErrBadCategoryID) || errors.Is(err, catDom.ErrCategoryNotFound):
+		h.log.Warn("invalid category reference", slog.Any("error", err))
+		httputils.WriteError(w, http.StatusBadRequest, "invalid or missing category")
+
+	case errors.Is(err, pSvc.ErrInvalidAttribute):
+		h.log.Warn("invalid attribute reference", slog.Any("error", err))
+		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
+
+	case errors.Is(err, pSvc.ErrProductNotFound):
+		h.log.Warn("product not found", slog.Any("error", err))
+		httputils.WriteError(w, http.StatusNotFound, "product not found")
+
+	default:
+		h.log.Error("unhandled service error", slog.Any("error", err))
+		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
+	}
 }

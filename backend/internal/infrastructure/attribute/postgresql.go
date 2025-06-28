@@ -93,7 +93,7 @@ func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*attr.At
 
 	var attr attr.Attribute
 
-	var raw rawSQL
+	var raw attributeDB
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.GetContext(ctx, &raw, query, id)
 	})
@@ -113,7 +113,7 @@ func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID i
 	ORDER BY name
 	`
 
-	var raws []rawSQL
+	var raws []attributeDB
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.SelectContext(ctx, &raws, query, categoryID)
 	})

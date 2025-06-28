@@ -15,6 +15,7 @@ type PresetResponseID struct {
 	PresetID int64  `json:"preset_id" example:"1"`
 	Message  string `json:"message" example:"Preset created successfully"`
 }
+
 //swaggo:model PresetShortResponse
 type PresetShortResponse struct {
 	PresetID    int64   `json:"preset_id" example:"1"`

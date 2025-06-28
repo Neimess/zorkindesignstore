@@ -32,7 +32,7 @@ type HTTPServer struct {
 	WriteTimeout    time.Duration `yaml:"write_timeout" env:"HTTP_WRITE_TIMEOUT" env-default:"10s"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout" env:"HTTP_SHUTDOWN_TIMEOUT" env-default:"5s"`
 	IdleTimeout     time.Duration `yaml:"idle_timeout"  env:"HTTP_IDLE_TIMEOUT"   env-default:"60s"`
-	EnableCORS      bool          `yaml:"enable_cors" env:"HTTP_ENABLE_CORS" env-default:"true"`
+	EnableCORS      bool          `yaml:"enable_cors" env:"HTTP_ENABLE_CORS" env-default:"false"`
 	EnablePProf     bool          `yaml:"enable_pprof" env:"HTTP_ENABLE_PPROF" env-default:"false"`
 }
 

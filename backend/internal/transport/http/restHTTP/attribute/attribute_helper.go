@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
-	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
+	attrDom "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
 
@@ -30,22 +30,25 @@ func (h *Handler) parseAttributeID(w http.ResponseWriter, r *http.Request) (int6
 
 func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, domain.ErrAttributeNameEmpty):
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
-	case errors.Is(err, der.ErrNotFound):
-		httputils.WriteError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, der.ErrConflict):
-		httputils.WriteError(w, http.StatusConflict, err.Error())
-	case errors.Is(err, domain.ErrCategoryNotFound):
-		httputils.WriteError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, der.ErrInternal):
-		httputils.WriteError(w, http.StatusInternalServerError, "internal error")
-	case errors.Is(err, der.ErrBadRequest):
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
-	case errors.Is(err, der.ErrValidation):
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "validation error")
+	// атрибут не найден
+	case errors.Is(err, attrDom.ErrAttributeNotFound):
+		httputils.WriteError(w, http.StatusNotFound, "attribute not found")
+
+	// конфликт уникальности имени атрибута
+	case errors.Is(err, attrDom.ErrAttributeAlreadyExists):
+		httputils.WriteError(w, http.StatusConflict, "attribute already exists")
+
+	// категория не найдена
+	case errors.Is(err, catDom.ErrCategoryNotFound):
+		httputils.WriteError(w, http.StatusNotFound, "category not found")
+
+	// пустой батч
+	case errors.Is(err, attrDom.ErrBatchEmpty):
+		httputils.WriteError(w, http.StatusBadRequest, "no attributes provided for batch")
+
+	// всё прочее — 500
 	default:
 		h.log.Error("service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal error")
+		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
 	}
 }

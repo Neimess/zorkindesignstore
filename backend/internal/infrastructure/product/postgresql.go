@@ -154,7 +154,6 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 // Internal Helpers
 //----------------------
 
-
 func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, p *product.Product) (int64, error) {
 	const sqlStr = `
         INSERT INTO products(name, price, description, category_id, image_url)

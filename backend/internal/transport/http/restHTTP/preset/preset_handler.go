@@ -57,10 +57,10 @@ func New(d *Deps) *Handler {
 // @Accept json
 // @Security BearerAuth
 // @Param preset body dto.PresetRequest true "Preset data"// @Success 201 {object} dto.IDResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 409 {object} dto.ErrorResponse
-// @Failure 422 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Failure 400 {object} httputils.ErrorResponse
+// @Failure 409 {object} httputils.ErrorResponse
+// @Failure 422 {object} httputils.ErrorResponse
+// @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/admin/presets [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -126,9 +126,9 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Preset ID"
 // @Success 200 {object} dto.PresetResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Failure 400 {object} httputils.ErrorResponse
+// @Failure 404 {object} httputils.ErrorResponse
+// @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/presets/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -161,9 +161,9 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Param id path int true "Preset ID"
 // @Success 204
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 404 {object} dto.ErrorResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Failure 400 {object} httputils.ErrorResponse
+// @Failure 404 {object} httputils.ErrorResponse
+// @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/admin/presets/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -192,7 +192,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Tags Preset
 // @Produce json
 // @Success 200 {array} dto.PresetResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/presets/detailed [get]
 func (h *Handler) ListDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -217,7 +217,7 @@ func (h *Handler) ListDetailed(w http.ResponseWriter, r *http.Request) {
 // @Tags Preset
 // @Produce json
 // @Success 200 {array} dto.PresetShortResponse
-// @Failure 500 {object} dto.ErrorResponse
+// @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/presets [get]
 func (h *Handler) ListShort(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

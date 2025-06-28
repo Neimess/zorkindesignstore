@@ -26,7 +26,6 @@ func (r *PresetRequest) MapToPreset() *preset.Preset {
 	}
 }
 
-
 func (r *PresetRequest) mapToPresetItems() []preset.PresetItem {
 	items := make([]preset.PresetItem, len(r.Items))
 	for i, it := range r.Items {

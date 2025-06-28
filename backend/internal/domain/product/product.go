@@ -18,9 +18,9 @@ type Product struct {
 }
 
 type ProductAttribute struct {
-	ProductID   int64               `db:"product_id"`
-	AttributeID int64               `db:"attribute_id"`
-	Value       string              `db:"value"`
+	ProductID   int64          `db:"product_id"`
+	AttributeID int64          `db:"attribute_id"`
+	Value       string         `db:"value"`
 	Attribute   attr.Attribute `db:"-"`
 }
 

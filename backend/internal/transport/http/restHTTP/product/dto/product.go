@@ -3,7 +3,6 @@ package dto
 import "time"
 
 //swagger:model ProductCreateRequest
-//go:generate easyjson -all
 type ProductCreateRequest struct {
 	Name        string                         `json:"name" example:"Керамогранит" validate:"required,min=2"`
 	Price       *float64                       `json:"price" example:"3490" validate:"required,gt=0"`
@@ -13,16 +12,12 @@ type ProductCreateRequest struct {
 	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
 }
 
-// ProductAttributeValueRequest defines one attribute value in request.
-//
 //swagger:model ProductAttributeValueRequest
 type ProductAttributeValueRequest struct {
 	AttributeID *int64 `json:"attribute_id" example:"2" validate:"required,gt=1"`
 	Value       string `json:"value" example:"1.25" validate:"required"`
 }
 
-// ProductResponse describes the created or fetched product.
-//
 //swagger:model ProductResponse
 type ProductResponse struct {
 	ProductID   int64                           `json:"product_id" example:"10"`
@@ -43,5 +38,4 @@ type ProductAttributeValueResponse struct {
 	Value       string  `json:"value" example:"1.25"`
 }
 
-//easyjson:json
 type ProductListResponse []ProductResponse

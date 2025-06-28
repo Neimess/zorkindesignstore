@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
 
@@ -46,8 +46,8 @@ func New(d *Deps) *Handler {
 // @Produce      json
 // @Param        secret_admin_key  path      string  true  "Secret admin key for login, injected via route"
 // @Success      201  {object}  dto.TokenResponse  "Returns generated token"
-// @Failure      401  {object}  dto.ErrorResponse  "Unauthorized access"
-// @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
+// @Failure      401  {object}  httputils.ErrorResponse  "Unauthorized access"
+// @Failure      500  {object}  httputils.ErrorResponse  "Internal server error"
 // @Router       /api/admin/auth/{secret_admin_key} [get]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.auth.CreateToken"

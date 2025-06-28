@@ -29,9 +29,9 @@ const (
 
 type PGAttributeRepositorySuite struct {
 	suite.Suite
-	tc *testContainer
+	tc   *testContainer
 	repo *PGAttributeRepository
-	ctx context.Context
+	ctx  context.Context
 }
 
 type testContainer struct {

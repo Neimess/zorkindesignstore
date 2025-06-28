@@ -20,8 +20,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-
-
 type fakeValidator struct{ err error }
 
 func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error { return f.err }
@@ -35,7 +33,6 @@ func newHandler(mockSvc *mocks.MockAttributeService, valErr error) *Handler {
 	h.val = fakeValidator{err: valErr}
 	return h
 }
-
 
 func TestCreateAttributesBatch_Success(t *testing.T) {
 	mockSvc := mocks.NewMockAttributeService(t)

@@ -47,7 +47,7 @@ func (s *CategoryRepositorySuite) SetupSuite() {
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
-				WithStartupTimeout(2 * time.Minute),
+				WithStartupTimeout(2*time.Minute),
 		),
 	)
 	require.NoError(s.T(), err)

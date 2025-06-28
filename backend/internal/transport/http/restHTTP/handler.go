@@ -47,7 +47,7 @@ func New(deps *Deps) (*Handlers, error) {
 	prodHandler := product.New(prodDeps)
 
 	// category handler
-	catDeps, err := category.NewDeps(deps.CategoryService)
+	catDeps, err := category.NewDeps(deps.CategoryService, deps.Validator)
 	if err != nil {
 		return nil, fmt.Errorf("category handler init: %w", err)
 	}

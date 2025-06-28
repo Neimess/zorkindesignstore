@@ -42,7 +42,7 @@ if val == nil {
 }
 	return &Deps{
 		svc: svc,
-  val: val
+  val: val,
 	}, nil
 }
 

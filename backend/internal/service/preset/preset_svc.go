@@ -6,26 +6,16 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
-)
-
-var (
-	ErrPresetNotFound      = errors.New("preset not found")
-	ErrPresetAlreadyExists = errors.New("preset already exists")
-	ErrPresetInvalid       = errors.New("preset is invalid")
-	ErrPresetItemsEmpty    = errors.New("preset items cannot be empty")
-	ErrPresetItemsTooMany  = errors.New("preset items cannot exceed 100")
-	ErrPresetItemsInvalid  = errors.New("preset items are invalid")
-	ErrPresetNameTooLong   = errors.New("preset name is too long")
+	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
 type PresetRepository interface {
-	Create(ctx context.Context, p *domain.Preset) (int64, error)
-	Get(ctx context.Context, id int64) (*domain.Preset, error)
+	Create(ctx context.Context, p *preset.Preset) (int64, error)
+	Get(ctx context.Context, id int64) (*preset.Preset, error)
 	Delete(ctx context.Context, id int64) error
-	ListDetailed(ctx context.Context) ([]domain.Preset, error)
-	ListShort(ctx context.Context) ([]domain.Preset, error)
+	ListDetailed(ctx context.Context) ([]preset.Preset, error)
+	ListShort(ctx context.Context) ([]preset.Preset, error)
 }
 
 type Service struct {
@@ -34,71 +24,75 @@ type Service struct {
 }
 
 type Deps struct {
-	repo PresetRepository
+	Repo PresetRepository
 }
 
 func NewDeps(repo PresetRepository) (*Deps, error) {
 	if repo == nil {
 		return nil, errors.New("preset: missing PresetRepository")
 	}
-	return &Deps{repo: repo}, nil
+	return &Deps{Repo: repo}, nil
 }
 
 func New(d *Deps) *Service {
 	return &Service{
-		repo: d.repo,
+		repo: d.Repo,
 		log:  slog.Default().With("component", "service.preset"),
 	}
 }
 
-func (ps *Service) Create(ctx context.Context, preset *domain.Preset) (int64, error) {
+func (s *Service) Create(ctx context.Context, p *preset.Preset) (int64, error) {
 	const op = "service.preset.Create"
-	log := ps.log.With("op", op)
+	log := s.log.With("op", op)
 
-	id, err := ps.repo.Create(ctx, preset)
+	if err := p.Validate(); err != nil {
+		return 0, err
+	}
+
+	id, err := s.repo.Create(ctx, p)
 	if err != nil {
-
 		switch {
-		case errors.Is(err, der.ErrConflict) || errors.Is(err, der.ErrValidation) || errors.Is(err, der.ErrBadRequest) || errors.Is(err, der.ErrNotFound):
-			return 0, ErrPresetAlreadyExists
-		default:
-			log.Error("repo failed", slog.Any("error", err))
-			return 0, fmt.Errorf("%s: %w", op, err)
+		case errors.Is(err, der.ErrConflict):
+			return 0, preset.ErrPresetAlreadyExists
+		case errors.Is(err, der.ErrNotFound):
+			return 0, preset.ErrInvalidProductID
 		}
+
+		log.Error("repo.Create failed", slog.Any("err", err))
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	log.Info("preset created", slog.Int64("preset_id", id))
 	return id, nil
 }
 
-func (ps *Service) Get(ctx context.Context, id int64) (*domain.Preset, error) {
+func (s *Service) Get(ctx context.Context, id int64) (*preset.Preset, error) {
 	const op = "service.preset.Get"
-	log := ps.log.With("op", op)
+	log := s.log.With("op", op)
 
-	preset, err := ps.repo.Get(ctx, id)
+	p, err := s.repo.Get(ctx, id)
 	if err != nil {
-
 		if errors.Is(err, der.ErrNotFound) {
-			return nil, der.ErrNotFound
+			return nil, preset.ErrPresetNotFound
 		}
-		log.Error("repo failed", slog.Int64("preset_id", id), slog.Any("error", err))
+		log.Error("repo.Get failed", slog.Int64("preset_id", id), slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("preset retrieved", slog.Int64("preset_id", preset.ID))
-	return preset, nil
+	log.Info("preset retrieved", slog.Int64("preset_id", p.ID))
+	return p, nil
 }
 
-func (ps *Service) Delete(ctx context.Context, id int64) error {
+func (s *Service) Delete(ctx context.Context, id int64) error {
 	const op = "service.preset.Delete"
-	log := ps.log.With("op", op)
+	log := s.log.With("op", op)
 
-	err := ps.repo.Delete(ctx, id)
+	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		log.Error("repo failed", slog.Int64("preset_id", id), slog.Any("error", err))
 		if errors.Is(err, der.ErrNotFound) {
-			return der.ErrNotFound
+			return preset.ErrPresetNotFound
 		}
+		log.Error("repo.Delete failed", slog.Int64("preset_id", id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -106,30 +100,30 @@ func (ps *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (ps *Service) ListDetailed(ctx context.Context) ([]domain.Preset, error) {
-	const op = "service.preset.List"
-	log := ps.log.With("op", op)
+func (s *Service) ListDetailed(ctx context.Context) ([]preset.Preset, error) {
+	const op = "service.preset.ListDetailed"
+	log := s.log.With("op", op)
 
-	presets, err := ps.repo.ListDetailed(ctx)
+	list, err := s.repo.ListDetailed(ctx)
 	if err != nil {
-		log.Error("repo failed", slog.Any("error", err))
+		log.Error("repo.ListDetailed failed", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("preset list retrieved", slog.Int("count", len(presets)))
-	return presets, nil
+	log.Info("presets retrieved", slog.Int("count", len(list)))
+	return list, nil
 }
 
-func (ps *Service) ListShort(ctx context.Context) ([]domain.Preset, error) {
+func (s *Service) ListShort(ctx context.Context) ([]preset.Preset, error) {
 	const op = "service.preset.ListShort"
-	log := ps.log.With("op", op)
+	log := s.log.With("op", op)
 
-	presets, err := ps.repo.ListShort(ctx)
+	list, err := s.repo.ListShort(ctx)
 	if err != nil {
-		log.Error("repo failed", slog.Any("error", err))
+		log.Error("repo.ListShort failed", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("preset short list retrieved", slog.Int("count", len(presets)))
-	return presets, nil
+	log.Info("presets (short) retrieved", slog.Int("count", len(list)))
+	return list, nil
 }

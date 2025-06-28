@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repository "github.com/Neimess/zorkin-store-project/internal/infrastructure/product"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
 var (

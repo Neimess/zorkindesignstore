@@ -9,10 +9,12 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product"
+	"github.com/go-playground/validator/v10"
 )
 
 type Deps struct {
 	Logger           *slog.Logger
+	Validator        *validator.Validate
 	ProductService   product.ProductService
 	CategoryService  category.CategoryService
 	AuthService      auth.AuthService
@@ -38,7 +40,7 @@ func New(deps *Deps) (*Handlers, error) {
 	}
 
 	// product handler
-	prodDeps, err := product.NewDeps(deps.ProductService)
+	prodDeps, err := product.NewDeps(deps.ProductService, deps.Validator)
 	if err != nil {
 		return nil, fmt.Errorf("product handler init: %w", err)
 	}

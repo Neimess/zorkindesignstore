@@ -27,7 +27,8 @@ var (
 
 // PGProductRepository handles CRUD for products and their attributes.
 type PGProductRepository struct {
-	db *sqlx.DB
+	db  *sqlx.DB
+	log *slog.Logger
 }
 
 // NewProductRepository creates a new repo instance or panics if db is nil.
@@ -36,7 +37,8 @@ func NewPGProductRepository(db *sqlx.DB, log *slog.Logger) *PGProductRepository 
 		panic("NewProductRepository: db is nil")
 	}
 	return &PGProductRepository{
-		db: db,
+		db:  db,
+		log: log.With("component", "repo.product"),
 	}
 }
 
@@ -58,7 +60,7 @@ func (r *PGProductRepository) Create(ctx context.Context, p *product.Product) (i
 		).Scan(&id, &created)
 	})
 	if err != nil {
-		return 0, repoError.MapPostgreSQLError(err)
+		return 0, r.mapPostgreSQLError(err)
 	}
 
 	p.ID, p.CreatedAt = id, created
@@ -112,7 +114,7 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 		return r.db.SelectContext(ctx, &products, listSQL, catID)
 	})
 	if err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 
 	if len(products) == 0 {
@@ -152,9 +154,6 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 // Internal Helpers
 //----------------------
 
-func (r *PGProductRepository) withQuery(ctx context.Context, sqlStr string, fn func() error) error {
-	return database.WithQuery(ctx, slog.Default().With("component", "repo.product"), sqlStr, fn)
-}
 
 func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, p *product.Product) (int64, error) {
 	const sqlStr = `
@@ -168,7 +167,7 @@ func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, 
 			p.Name, p.Price, p.Description, p.CategoryID, p.ImageURL,
 		).Scan(&id)
 	}); err != nil {
-		return 0, repoError.MapPostgreSQLError(err)
+		return 0, r.mapPostgreSQLError(err)
 	}
 	return id, nil
 }
@@ -186,7 +185,7 @@ func (r *PGProductRepository) insertAttributesTx(ctx context.Context, tx *sqlx.T
 		_, execErr := tx.ExecContext(ctx, sqlStr, args...)
 		return execErr
 	}); err != nil {
-		return repoError.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 	return nil
 }
@@ -214,7 +213,7 @@ func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*prod
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrProductNotFound
 		}
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 	return &prod, nil
 }
@@ -228,7 +227,7 @@ func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64)
 
 	rows, err := r.db.QueryxContext(ctx, sqlStr, prodID)
 	if err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 	defer func() {
 		if cerr := rows.Close(); cerr != nil {
@@ -268,7 +267,7 @@ func (r *PGProductRepository) fetchAttributesBatch(ctx context.Context, ids []in
 	if err := r.withQuery(ctx, sqlStr, func() error {
 		return r.db.SelectContext(ctx, &rows, sqlStr, pq.Array(ids))
 	}); err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 	return rows, nil
 }
@@ -278,4 +277,12 @@ func optionalString(ns sql.NullString) *string {
 		return &ns.String
 	}
 	return nil
+}
+
+func (r *PGProductRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {
+	return database.WithQuery(ctx, r.log, query, fn, extras...)
+}
+
+func (r *PGProductRepository) mapPostgreSQLError(err error) error {
+	return repoError.MapPostgreSQLError(r.log, err)
 }

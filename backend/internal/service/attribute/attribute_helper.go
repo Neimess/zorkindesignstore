@@ -6,7 +6,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
 func (s *Service) ensureCategory(ctx context.Context, categoryID int64) error {

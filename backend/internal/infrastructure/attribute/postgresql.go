@@ -6,22 +6,23 @@ import (
 	"log/slog"
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	e "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
 type PGAttributeRepository struct {
-	db *sqlx.DB
+	db  *sqlx.DB
+	log *slog.Logger
 }
 
 func NewPGAttributeRepository(db *sqlx.DB) *PGAttributeRepository {
 	if db == nil {
 		panic("NewPGAttributeRepository: db is nil")
 	}
-	return &PGAttributeRepository{db: db}
+	return &PGAttributeRepository{db: db, log: slog.Default().With("component", "PGAttributeRepository")}
 }
 
 func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*attr.Attribute) error {
@@ -51,7 +52,7 @@ func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []*attr.Att
 		)
 	})
 	if err != nil {
-		return e.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 
 	if len(returnedIDs) != len(attrs) {
@@ -77,7 +78,7 @@ func (r *PGAttributeRepository) Save(ctx context.Context, attr *attr.Attribute) 
 		return r.db.QueryRowContext(ctx, query, attr.Name, attr.Unit, attr.CategoryID).Scan(&id)
 	})
 	if err != nil {
-		return e.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 	attr.ID = id
 	return nil
@@ -97,7 +98,7 @@ func (r *PGAttributeRepository) GetByID(ctx context.Context, id int64) (*attr.At
 		return r.db.GetContext(ctx, &raw, query, id)
 	})
 	if err != nil {
-		return nil, e.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 
 	attr = *raw.toDomain()
@@ -117,7 +118,7 @@ func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID i
 		return r.db.SelectContext(ctx, &raws, query, categoryID)
 	})
 	if err != nil {
-		return nil, e.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 
 	return rawListToDomain(raws), nil
@@ -145,7 +146,7 @@ func (r *PGAttributeRepository) Update(ctx context.Context, attr *attr.Attribute
 		return nil
 	})
 	if err != nil {
-		return e.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 
 	return nil
@@ -171,11 +172,15 @@ func (r *PGAttributeRepository) Delete(ctx context.Context, id int64) error {
 		return nil
 	})
 	if err != nil {
-		return e.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 	return nil
 }
 
 func (r *PGAttributeRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {
 	return database.WithQuery(ctx, slog.Default(), query, fn, extras...)
+}
+
+func (r *PGAttributeRepository) mapPostgreSQLError(err error) error {
+	return e.MapPostgreSQLError(r.log, err)
 }

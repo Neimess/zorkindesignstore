@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
 

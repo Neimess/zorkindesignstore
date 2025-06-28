@@ -13,7 +13,7 @@ import (
 
 	"log/slog"
 
-	"github.com/Neimess/zorkin-store-project/internal/domain"
+	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
 	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
@@ -21,19 +21,16 @@ import (
 	logger "github.com/Neimess/zorkin-store-project/pkg/log"
 )
 
-// domain.ErrPresetNotFound declared in domain layer; keep local alias for convenience
-var ErrPresetNotFound = errors.New("preset not found")
-
-type PresetRepository struct {
+type PGPresetRepository struct {
 	db  *sqlx.DB
 	log *slog.Logger
 }
 
-func NewPGPresetRepository(db *sqlx.DB, log *slog.Logger) *PresetRepository {
+func NewPGPresetRepository(db *sqlx.DB, log *slog.Logger) *PGPresetRepository {
 	if db == nil {
 		panic("NewPresetRepository: db is nil")
 	}
-	return &PresetRepository{
+	return &PGPresetRepository{
 		db:  db,
 		log: logger.WithComponent(log, "repo.preset"),
 	}
@@ -41,7 +38,7 @@ func NewPGPresetRepository(db *sqlx.DB, log *slog.Logger) *PresetRepository {
 
 // Create inserts preset and its items in one transaction.
 // Takes a fully‑formed *domain.Preset where Items contains product IDs.
-func (r *PresetRepository) Create(ctx context.Context, p *domain.Preset) (int64, error) {
+func (r *PGPresetRepository) Create(ctx context.Context, p *preset.Preset) (int64, error) {
 	r.log.Debug("Create preset", slog.String("op", "preset.postgresql.Create"), slog.String("preset_name", p.Name))
 	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (int64, error) {
 		const insertPreset = `INSERT INTO presets (name, description, total_price, image_url)
@@ -55,7 +52,7 @@ func (r *PresetRepository) Create(ctx context.Context, p *domain.Preset) (int64,
 				p.Name, p.Description, p.TotalPrice, p.ImageURL,
 			).Scan(&id, &created)
 		}); err != nil {
-			return 0, repoError.MapPostgreSQLError(err)
+			return 0, r.mapPostgreSQLError(err)
 		}
 
 		// Mass‑insert items if provided.
@@ -74,7 +71,7 @@ func (r *PresetRepository) Create(ctx context.Context, p *domain.Preset) (int64,
 				_, execErr := tx.ExecContext(ctx, sqlStr, args...)
 				return execErr
 			}); err != nil {
-				return 0, repoError.MapPostgreSQLError(err)
+				return 0, r.mapPostgreSQLError(err)
 			}
 		}
 		p.ID, p.CreatedAt = id, created
@@ -84,40 +81,40 @@ func (r *PresetRepository) Create(ctx context.Context, p *domain.Preset) (int64,
 }
 
 // Get returns preset with embedded Items slice.
-func (r *PresetRepository) Get(ctx context.Context, id int64) (*domain.Preset, error) {
+func (r *PGPresetRepository) Get(ctx context.Context, id int64) (*preset.Preset, error) {
 	const qPreset = `SELECT preset_id, name, description, total_price, image_url, created_at
                      FROM presets
                      WHERE preset_id = $1`
 
-	var preset domain.Preset
+	var p preset.Preset
 	if err := database.WithQuery(ctx, r.log, qPreset, func() error {
-		return r.db.GetContext(ctx, &preset, qPreset, id)
+		return r.db.GetContext(ctx, &p, qPreset, id)
 	}); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrPresetNotFound
+			return nil, preset.ErrPresetNotFound
 		}
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 
 	const qItems = `SELECT preset_item_id, preset_id, product_id
                     FROM preset_items WHERE preset_id = $1`
 	if err := database.WithQuery(ctx, r.log, qItems, func() error {
-		return r.db.SelectContext(ctx, &preset.Items, qItems, id)
+		return r.db.SelectContext(ctx, &p.Items, qItems, id)
 	}); err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
-	return &preset, nil
+	return &p, nil
 }
 
 // List fetches all presets with their items.
-func (r *PresetRepository) ListDetailed(ctx context.Context) ([]domain.Preset, error) {
+func (r *PGPresetRepository) ListDetailed(ctx context.Context) ([]preset.Preset, error) {
 	const qPresets = `SELECT preset_id, name, description, total_price, image_url, created_at
                       FROM presets`
-	var presets []domain.Preset
+	var presets []preset.Preset
 	if err := database.WithQuery(ctx, r.log, qPresets, func() error {
 		return r.db.SelectContext(ctx, &presets, qPresets)
 	}); err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 	if len(presets) == 0 {
 		return presets, nil
@@ -152,15 +149,15 @@ func (r *PresetRepository) ListDetailed(ctx context.Context) ([]domain.Preset, e
 	if err := database.WithQuery(ctx, r.log, qItems, func() error {
 		return r.db.SelectContext(ctx, &rows, qItems, pq.Array(ids))
 	}); err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 
-	byID := make(map[int64]*domain.Preset, len(presets))
+	byID := make(map[int64]*preset.Preset, len(presets))
 	for i := range presets {
 		byID[presets[i].ID] = &presets[i]
 	}
 	for _, row := range rows {
-		item := domain.PresetItem{
+		item := preset.PresetItem{
 			ID:        row.PresetItemID,
 			PresetID:  row.PresetID,
 			ProductID: row.ProductID,
@@ -176,35 +173,48 @@ func (r *PresetRepository) ListDetailed(ctx context.Context) ([]domain.Preset, e
 	return presets, nil
 }
 
-func (r *PresetRepository) ListShort(ctx context.Context) ([]domain.Preset, error) {
+func (r *PGPresetRepository) ListShort(ctx context.Context) ([]preset.Preset, error) {
 	const q = `SELECT preset_id, name, description, total_price, image_url, created_at
 			   FROM presets`
-	var presets []domain.Preset
-	if err := database.WithQuery(ctx, r.log, q, func() error {
+	var presets []preset.Preset
+	if err := r.withQuery(ctx, q, func() error {
 		return r.db.SelectContext(ctx, &presets, q)
 	}); err != nil {
-		return nil, repoError.MapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
 	return presets, nil
 }
 
 // Delete removes preset and its items (ON DELETE CASCADE in DB or explicit delete).
-func (r *PresetRepository) Delete(ctx context.Context, id int64) error {
+func (r *PGPresetRepository) Delete(ctx context.Context, id int64) error {
 	const q = `DELETE FROM presets WHERE preset_id = $1`
-	res, err := r.db.ExecContext(ctx, q, id)
+	var res sql.Result
+	err := r.withQuery(ctx, q, func() error {
+		var err error
+		res, err = r.db.ExecContext(ctx, q, id)
+		return err
+	})
 	if err != nil {
-		return repoError.MapPostgreSQLError(err)
+		return r.mapPostgreSQLError(err)
 	}
 	n, _ := res.RowsAffected()
 	if n == 0 {
-		return ErrPresetNotFound
+		return preset.ErrPresetNotFound
 	}
 	return nil
 }
 
-func (r *PresetRepository) optionalString(ns sql.NullString) *string {
+func (r *PGPresetRepository) optionalString(ns sql.NullString) *string {
 	if ns.Valid {
 		return &ns.String
 	}
 	return nil
+}
+
+func (r *PGPresetRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {
+	return database.WithQuery(ctx, r.log, query, fn, extras...)
+}
+
+func (r *PGPresetRepository) mapPostgreSQLError(err error) error {
+	return repoError.MapPostgreSQLError(r.log, err)
 }

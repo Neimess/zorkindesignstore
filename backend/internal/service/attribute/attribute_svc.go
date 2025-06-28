@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"log/slog"
+
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	"github.com/Neimess/zorkin-store-project/internal/domain/attribute"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/service/category"
-	"github.com/Neimess/zorkin-store-project/pkg/validator"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
 type AttributeRepository interface {
@@ -74,21 +74,13 @@ func (s *Service) CreateAttributesBatch(ctx context.Context, input CreateAttribu
 	return nil
 }
 
-func (s *Service) CreateAttribute(ctx context.Context, in *CreateAttributeInput) (*attr.Attribute, error) {
-	s.log.Debug("CreateAttribute called", slog.String("name", in.Name), slog.Int64("categoryID", in.CategoryID))
+func (s *Service) CreateAttribute(ctx context.Context, attr *attr.Attribute) (*attr.Attribute, error) {
+	s.log.Debug("CreateAttribute called", slog.String("name", attr.Name), slog.Int64("categoryID", attr.CategoryID))
 
-	if err := s.ensureCategory(ctx, in.CategoryID); err != nil {
+	if err := s.ensureCategory(ctx, attr.CategoryID); err != nil {
 		return nil, err
 	}
 
-	validator := validator.GetValidator()
-	err := validator.Struct(in)
-	if err != nil {
-		s.log.Error("validation failed",
-			slog.String("input", in.Name), slog.String("error", err.Error()))
-		return nil, fmt.Errorf("service: validation error: %w", err)
-	}
-	attr := s.toDomain(in)
 	if err := s.repoAttr.Save(ctx, attr); err != nil {
 		s.log.Error("Save failed", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("service: failed to save attribute: %w", err)
@@ -154,4 +146,36 @@ func (s *Service) DeleteAttribute(ctx context.Context, id int64) error {
 	}
 	s.log.Info("DeleteAttribute succeeded", slog.Int64("id", id))
 	return nil
+}
+
+func (s *Service) mapError(ctx context.Context, op string, err error) error {
+	if err == nil {
+		return nil
+	}
+	s.log.Debug("Mapping error", slog.String("op", op), slog.String("error", err.Error()))
+	switch {
+	case errors.Is(err, der.ErrNotFound):
+		return der.ErrNotFound
+
+	case errors.Is(err, der.ErrConflict):
+		return der.ErrConflict
+
+	case errors.Is(err, der.ErrValidation):
+		return der.ErrValidation
+
+	case errors.Is(err, der.ErrBadRequest):
+		return der.ErrBadRequest
+
+	case errors.Is(err, der.ErrCanceled):
+		return der.ErrCanceled
+
+	case errors.Is(err, der.ErrTimeout):
+		return der.ErrTimeout
+
+	default:
+		s.log.Error("unexpected service error",
+			slog.String("op", op),
+			slog.String("error", err.Error()))
+		return fmt.Errorf("%w: %s", der.ErrInternal, op)
+	}
 }

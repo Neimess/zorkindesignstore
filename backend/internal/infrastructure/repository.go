@@ -18,7 +18,7 @@ type Deps struct {
 type Repositories struct {
 	ProductRepository   *product.PGProductRepository
 	CategoryRepository  *category.PGCategoryRepository
-	PresetRepository    *preset.PresetRepository
+	PresetRepository    *preset.PGPresetRepository
 	AttributeRepository *attribute.PGAttributeRepository
 }
 

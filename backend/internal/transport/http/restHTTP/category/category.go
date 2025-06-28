@@ -8,10 +8,9 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain"
-	der "github.com/Neimess/zorkin-store-project/internal/domain/error"
 	_ "github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	cv "github.com/Neimess/zorkin-store-project/pkg/validator"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -24,13 +23,14 @@ type CategoryService interface {
 }
 
 type Handler struct {
-	log       *slog.Logger
-	srv       CategoryService
-	validator *validator.Validate
+	log *slog.Logger
+	srv CategoryService
+	val *validator.Validate
 }
 
 type Deps struct {
 	svc CategoryService
+	val *validator.Validate
 }
 
 func NewDeps(svc CategoryService) (*Deps, error) {
@@ -44,9 +44,9 @@ func NewDeps(svc CategoryService) (*Deps, error) {
 
 func New(deps *Deps) *Handler {
 	return &Handler{
-		srv:       deps.svc,
-		validator: cv.GetValidator(),
-		log:       slog.Default().With("component", "restHTTP.category"),
+		srv: deps.svc,
+		val: deps.val,
+		log: slog.Default().With("component", "restHTTP.category"),
 	}
 }
 
@@ -79,7 +79,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.validator.StructCtx(ctx, &input); err != nil {
+	if err := h.val.StructCtx(ctx, &input); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
 		return
@@ -200,7 +200,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.validator.StructCtx(ctx, &input); err != nil {
+	if err := h.val.StructCtx(ctx, &input); err != nil {
 		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid category data")
 		return
 	}

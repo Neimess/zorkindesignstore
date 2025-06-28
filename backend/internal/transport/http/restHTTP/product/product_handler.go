@@ -12,7 +12,7 @@ import (
 	pSvc "github.com/Neimess/zorkin-store-project/internal/service/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/Neimess/zorkin-store-project/pkg/validator"
+	"github.com/go-playground/validator/v10"
 )
 
 type ProductService interface {
@@ -24,26 +24,33 @@ type ProductService interface {
 
 type Deps struct {
 	pSvc ProductService
+	val  *validator.Validate
 }
 
-func NewDeps(srv ProductService) (*Deps, error) {
+func NewDeps(srv ProductService, val *validator.Validate) (*Deps, error) {
 	if srv == nil {
 		return nil, errors.New("product handler: missing ProductService")
 	}
+	if val == nil {
+		return nil, errors.New("product handler: missing validator")
+	}
 	return &Deps{
 		pSvc: srv,
+		val:  val,
 	}, nil
 }
 
 type Handler struct {
 	srv ProductService
 	log *slog.Logger
+	val *validator.Validate
 }
 
 func New(d *Deps) *Handler {
 	return &Handler{
 		srv: d.pSvc,
 		log: slog.Default().With("component", "transport.http.restHTTP.product"),
+		val: d.val,
 	}
 }
 
@@ -66,10 +73,9 @@ func New(d *Deps) *Handler {
 // @Failure      429      {object}  dto.ErrorResponse "Too many requests, e.g. rate limiting"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
 // @Router       /api/admin/product [post]
-func (ph Handler) Create(w http.ResponseWriter, r *http.Request) {
+func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ph.log.With("op", "transport.http.restHTTP.product.Create")
-	validator := validator.GetValidator()
+	log := h.log.With("op", "transport.http.restHTTP.product.Create")
 	defer func() {
 		if cerr := r.Body.Close(); cerr != nil {
 			log.Warn("body close failed", slog.Any("error", cerr))
@@ -83,14 +89,14 @@ func (ph Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validator.StructCtx(ctx, &input); err != nil {
+	if err := h.val.StructCtx(ctx, &input); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
 		return
 	}
 	product := mapCreateReqToDomain(&input)
 
-	_, err := ph.srv.Create(ctx, product)
+	_, err := h.srv.Create(ctx, product)
 	switch {
 	case errors.Is(err, pSvc.ErrBadCategoryID):
 		log.Warn("invalid foreign key in product",
@@ -128,9 +134,9 @@ func (ph Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure      409      {object}  dto.ErrorResponse "Conflict, e.g. duplicate product"
 // @Failure      500      {object}  dto.ErrorResponse "Internal server error"
 // @Router       /api/admin/product/detailed [post]
-func (ph *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ph.log.With("op", "transport.http.restHTTP.product.GetDetailed")
+	log := h.log.With("op", "transport.http.restHTTP.product.GetDetailed")
 	defer func() {
 		if cerr := r.Body.Close(); cerr != nil {
 			log.Warn("body close failed", slog.Any("error", cerr))
@@ -146,7 +152,7 @@ func (ph *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) 
 
 	domainProd := mapCreateReqToDomain(&req)
 
-	_, err := ph.srv.CreateWithAttrs(ctx, domainProd)
+	_, err := h.srv.CreateWithAttrs(ctx, domainProd)
 	if err != nil {
 		switch {
 		case errors.Is(err, pSvc.ErrInvalidAttribute):
@@ -177,9 +183,9 @@ func (ph *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) 
 // @Failure      404  {object}  dto.ErrorResponse  "Not found"
 // @Failure      500  {object}  dto.ErrorResponse  "Internal server error"
 // @Router       /api/product/{id} [get]
-func (ph *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ph.log.With("op", "transport.http.restHTTP.product.GetDetailed")
+	log := h.log.With("op", "transport.http.restHTTP.product.GetDetailed")
 	id, err := httputils.IDFromURL(r, "id")
 
 	if err != nil || id <= 0 {
@@ -190,7 +196,7 @@ func (ph *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := ph.srv.GetDetailed(ctx, id)
+	product, err := h.srv.GetDetailed(ctx, id)
 	switch {
 	case errors.Is(err, pSvc.ErrProductNotFound):
 		log.Warn("product not found", slog.Int64("product_id", id))
@@ -221,9 +227,9 @@ func (ph *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 // @Failure      405  {object}  dto.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
 // @Failure      500  {object}  dto.ErrorResponse    "Internal server error"
 // @Router       /api/product/category/{id} [get]
-func (ph *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := ph.log.With("op", "transport.http.restHTTP.product.GetByCategoryID")
+	log := h.log.With("op", "transport.http.restHTTP.product.GetByCategoryID")
 	categoryID, err := httputils.IDFromURL(r, "id")
 
 	if err != nil || categoryID <= 0 {
@@ -234,7 +240,7 @@ func (ph *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	products, err := ph.srv.GetByCategoryID(ctx, categoryID)
+	products, err := h.srv.GetByCategoryID(ctx, categoryID)
 	switch {
 	case errors.Is(err, domain.ErrCategoryNotFound):
 		log.Warn("category not found", slog.Int64("category_id", categoryID))

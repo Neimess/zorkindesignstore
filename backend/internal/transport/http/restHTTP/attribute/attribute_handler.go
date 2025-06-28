@@ -9,16 +9,14 @@ import (
 	"log/slog"
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
-	"github.com/Neimess/zorkin-store-project/internal/service/attribute"
-	_ "github.com/Neimess/zorkin-store-project/internal/transport/dto"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	cv "github.com/Neimess/zorkin-store-project/pkg/validator"
 	"github.com/go-playground/validator/v10"
 )
 
 type AttributeService interface {
-	CreateAttributesBatch(ctx context.Context, input attribute.CreateAttributesBatchInput) error
-	CreateAttribute(ctx context.Context, in *attribute.CreateAttributeInput) (*attr.Attribute, error)
+	CreateAttributesBatch(ctx context.Context, input []attr.Attribute) error
+	CreateAttribute(ctx context.Context, in *attr.Attribute) (*attr.Attribute, error)
 	GetAttribute(ctx context.Context, categoryID, id int64) (*attr.Attribute, error)
 	ListAttributes(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
 	UpdateAttribute(ctx context.Context, attr *attr.Attribute) error
@@ -27,6 +25,7 @@ type AttributeService interface {
 
 type Deps struct {
 	srv AttributeService
+	val *validator.Validate
 }
 
 func NewDeps(srv AttributeService) (*Deps, error) {
@@ -39,17 +38,17 @@ func NewDeps(srv AttributeService) (*Deps, error) {
 }
 
 type Handler struct {
-	srv      AttributeService
-	log      *slog.Logger
-	validate *validator.Validate
+	srv AttributeService
+	log *slog.Logger
+	val *validator.Validate
 }
 
 func New(d *Deps) *Handler {
 
 	return &Handler{
-		srv:      d.srv,
-		log:      slog.Default().With("component", "rest.attribute"),
-		validate: cv.GetValidator(),
+		srv: d.srv,
+		log: slog.Default().With("component", "rest.attribute"),
+		val: d.val,
 	}
 }
 
@@ -74,14 +73,14 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req attribute.CreateAttributesBatchInput
+	var req dto.CreateAttributesBatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	req[0].CategoryID = categoryID
-	if err := h.validate.StructCtx(ctx, &req); err != nil {
+	req.CategoryID = categoryID
+	if err := h.val.StructCtx(ctx, &req); err != nil {
 		h.log.Warn("validation failed", slog.Any("error", err))
 		if ve, ok := err.(validator.ValidationErrors); ok {
 			httputils.RespondValidationError(w, ve)
@@ -91,7 +90,8 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.srv.CreateAttributesBatch(ctx, req); err != nil {
+	attrs := req.MapToDomainBatch()
+	if err := h.srv.CreateAttributesBatch(ctx, attrs); err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
@@ -120,13 +120,13 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req CreateAttributeReq
+	var req dto.AttributeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.validate.StructCtx(ctx, &req); err != nil {
+	if err := h.val.StructCtx(ctx, &req); err != nil {
 		h.log.Warn("validation failed", slog.Any("error", err))
 		if ve, ok := err.(validator.ValidationErrors); ok {
 			httputils.RespondValidationError(w, ve)
@@ -135,12 +135,9 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
-	attr, err := h.srv.CreateAttribute(ctx, &attribute.CreateAttributeInput{
-		Name:       req.Name,
-		Unit:       req.Unit,
-		CategoryID: categoryID,
-	})
+	attr := req.MapToDomain()
+	attr.CategoryID = categoryID
+	attr, err := h.srv.CreateAttribute(ctx, attr)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
@@ -259,7 +256,7 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.validate.StructCtx(ctx, &req); err != nil {
+	if err := h.val.StructCtx(ctx, &req); err != nil {
 		if ve, ok := err.(validator.ValidationErrors); ok {
 			httputils.RespondValidationError(w, ve)
 		} else {

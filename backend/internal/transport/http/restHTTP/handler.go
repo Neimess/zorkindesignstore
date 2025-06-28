@@ -7,14 +7,14 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product"
-	"github.com/go-playground/validator/v10"
 )
 
 type Deps struct {
 	Logger           *slog.Logger
-	Validator        *validator.Validate
+	Validator        interfaces.Validator
 	ProductService   product.ProductService
 	CategoryService  category.CategoryService
 	AuthService      auth.AuthService
@@ -68,7 +68,7 @@ func New(deps *Deps) (*Handlers, error) {
 	presetHandler := preset.New(presetDeps)
 
 	// attribute handler
-	attrDeps, err := attribute.NewDeps(deps.AttributeService)
+	attrDeps, err := attribute.NewDeps(deps.AttributeService, deps.Validator)
 	if err != nil {
 		return nil, fmt.Errorf("attribute handler init: %w", err)
 	}

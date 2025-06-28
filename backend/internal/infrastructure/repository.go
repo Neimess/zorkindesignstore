@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/attribute"
@@ -22,16 +23,25 @@ type Repositories struct {
 	AttributeRepository *attribute.PGAttributeRepository
 }
 
-func New(deps Deps) *Repositories {
+func New(deps Deps) (*Repositories, error) {
+
+	depsCat, err := category.NewDeps(deps.DB, deps.Logger)
+	if err != nil {
+		return nil, fmt.Errorf("init category deps: %w", err)
+	}
+	depsAttr, err := attribute.NewDeps(deps.DB, deps.Logger)
+	if err != nil {
+		return nil, fmt.Errorf("init attribute deps: %w", err)
+	}
 	r := &Repositories{
 		ProductRepository:   product.NewPGProductRepository(deps.DB, deps.Logger),
-		CategoryRepository:  category.NewPGCategoryRepository(deps.DB),
+		CategoryRepository:  category.NewPGCategoryRepository(depsCat),
 		PresetRepository:    preset.NewPGPresetRepository(deps.DB, deps.Logger),
-		AttributeRepository: attribute.NewPGAttributeRepository(deps.DB),
+		AttributeRepository: attribute.NewPGAttributeRepository(depsAttr),
 	}
 
 	r.mustValidate()
-	return r
+	return r, nil
 }
 
 func (r *Repositories) mustValidate() {

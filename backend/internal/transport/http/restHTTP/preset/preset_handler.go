@@ -65,7 +65,11 @@ func New(d *Deps) *Handler {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "Create")
-	defer r.Body.Close()
+	defer func() {
+		if cerr := r.Body.Close(); cerr != nil {
+			log.Warn("body close failed", slog.Any("error", cerr))
+		}
+	}()
 
 	// 1) Decode
 	var in dto.PresetRequest

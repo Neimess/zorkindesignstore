@@ -54,10 +54,13 @@ func NewApplication(dep *Deps) (*Application, error) {
 	)
 
 	// 2. Репозитории — отвечают за доступ к данным
-	repos := repository.New(repository.Deps{
+	repos, err := repository.New(repository.Deps{
 		DB:     db,
 		Logger: dep.Logger,
 	})
+	if err != nil {
+		logNew.Error("repositories initialization failed", slog.Any("error", err))
+	}
 	logNew.Debug("repositories initialized")
 
 	// 3. Сервисы — бизнес-логика, используют репозиторий

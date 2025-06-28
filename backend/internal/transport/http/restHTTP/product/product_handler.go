@@ -10,9 +10,9 @@ import (
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	pSvc "github.com/Neimess/zorkin-store-project/internal/service/product"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
 type ProductService interface {
@@ -24,10 +24,10 @@ type ProductService interface {
 
 type Deps struct {
 	pSvc ProductService
-	val  *validator.Validate
+	val  interfaces.Validator
 }
 
-func NewDeps(srv ProductService, val *validator.Validate) (*Deps, error) {
+func NewDeps(srv ProductService, val interfaces.Validator) (*Deps, error) {
 	if srv == nil {
 		return nil, errors.New("product handler: missing ProductService")
 	}
@@ -43,7 +43,7 @@ func NewDeps(srv ProductService, val *validator.Validate) (*Deps, error) {
 type Handler struct {
 	srv ProductService
 	log *slog.Logger
-	val *validator.Validate
+	val interfaces.Validator
 }
 
 func New(d *Deps) *Handler {

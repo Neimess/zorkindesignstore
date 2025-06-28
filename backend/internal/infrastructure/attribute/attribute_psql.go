@@ -13,16 +13,31 @@ import (
 	"github.com/lib/pq"
 )
 
+type Deps struct {
+	db  *sqlx.DB
+	log *slog.Logger
+}
+
+func NewDeps(db *sqlx.DB, log *slog.Logger) (Deps, error) {
+	if db == nil {
+		return Deps{}, fmt.Errorf("attribute repository: missing database connection")
+	}
+	if log == nil {
+		return Deps{}, fmt.Errorf("attribute repository: missing logger")
+	}
+	return Deps{
+		db:  db,
+		log: log.With("component", "PGAttributeRepository"),
+	}, nil
+}
+
 type PGAttributeRepository struct {
 	db  *sqlx.DB
 	log *slog.Logger
 }
 
-func NewPGAttributeRepository(db *sqlx.DB) *PGAttributeRepository {
-	if db == nil {
-		panic("NewPGAttributeRepository: db is nil")
-	}
-	return &PGAttributeRepository{db: db, log: slog.Default().With("component", "PGAttributeRepository")}
+func NewPGAttributeRepository(deps Deps) *PGAttributeRepository {
+	return &PGAttributeRepository{db: deps.db, log: deps.log}
 }
 
 func (r *PGAttributeRepository) SaveBatch(ctx context.Context, attrs []attr.Attribute) error {

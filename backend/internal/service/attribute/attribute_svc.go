@@ -80,8 +80,6 @@ func (s *Service) CreateAttribute(ctx context.Context, categoryID int64, a *attr
 		switch {
 		case errors.Is(err, der.ErrConflict):
 			return nil, attrDom.ErrAttributeAlreadyExists
-		case errors.Is(err, der.ErrNotFound):
-			return nil, catDom.ErrCategoryNotFound
 		default:
 			return nil, fmt.Errorf("service: save attribute: %w", err)
 		}
@@ -153,5 +151,17 @@ func (s *Service) DeleteAttribute(ctx context.Context, id int64) error {
 		return fmt.Errorf("service: delete attribute: %w", err)
 	}
 	s.log.Info("DeleteAttribute succeeded", slog.Int64("id", id))
+	return nil
+}
+
+func (s *Service) ensureCategory(ctx context.Context, categoryID int64) error {
+	_, err := s.repoCat.GetByID(ctx, categoryID)
+	if err != nil {
+		if errors.Is(err, der.ErrNotFound) {
+			return catDom.ErrCategoryNotFound
+		}
+		s.log.Error("failed to fetch category", slog.Any("error", err))
+		return fmt.Errorf("service: fetch category: %w", err)
+	}
 	return nil
 }

@@ -190,11 +190,11 @@ func (r *PGProductRepository) insertAttributesTx(ctx context.Context, tx *sqlx.T
 }
 
 type attrRow struct {
-	ProductID    int64          `db:"product_id"`
-	AttributeID  int64          `db:"attribute_id"`
-	Value        string         `db:"value"`
-	Name         string         `db:"name"`
-	Unit         sql.NullString `db:"unit"`
+	ProductID   int64          `db:"product_id"`
+	AttributeID int64          `db:"attribute_id"`
+	Value       string         `db:"value"`
+	Name        string         `db:"name"`
+	Unit        sql.NullString `db:"unit"`
 }
 
 func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*product.Product, error) {

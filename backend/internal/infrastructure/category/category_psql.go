@@ -19,18 +19,33 @@ var (
 	ErrCategoryDuplicateName = errors.New("category already exists with this name")
 )
 
+type Deps struct {
+	db  *sqlx.DB
+	log *slog.Logger
+}
+
+func NewDeps(db *sqlx.DB, log *slog.Logger) (Deps, error) {
+	if db == nil {
+		return Deps{}, errors.New("category repository: missing database connection")
+	}
+	if log == nil {
+		return Deps{}, errors.New("category repository: missing logger")
+	}
+	return Deps{
+		db:  db,
+		log: log.With("component", "PGCategoryRepository"),
+	}, nil
+}
+
 type PGCategoryRepository struct {
 	db  *sqlx.DB
 	log *slog.Logger
 }
 
-func NewPGCategoryRepository(db *sqlx.DB) *PGCategoryRepository {
-	if db == nil {
-		panic("NewCategoryRepository: db is nil")
-	}
+func NewPGCategoryRepository(d Deps) *PGCategoryRepository {
 	return &PGCategoryRepository{
-		db:  db,
-		log: slog.Default().With("component", "CategoryRepository"),
+		db:  d.db,
+		log: d.log,
 	}
 }
 

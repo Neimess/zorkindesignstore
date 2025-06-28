@@ -9,9 +9,9 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
 type CategoryService interface {
@@ -25,24 +25,24 @@ type CategoryService interface {
 type Handler struct {
 	log *slog.Logger
 	srv CategoryService
-	val *validator.Validate
+	val interfaces.Validator
 }
 
 type Deps struct {
 	svc CategoryService
-	val *validator.Validate
+	val interfaces.Validator
 }
 
-func NewDeps(svc CategoryService, val *validator.Validate) (*Deps, error) {
+func NewDeps(svc CategoryService, val interfaces.Validator) (*Deps, error) {
 	if svc == nil {
 		return nil, errors.New("category handler: missing CategoryService")
 	}
-if val == nil {
- return nil, errors.New("category handler: missing validator")
-}
+	if val == nil {
+		return nil, errors.New("category handler: missing validator")
+	}
 	return &Deps{
 		svc: svc,
-  val: val,
+		val: val,
 	}, nil
 }
 

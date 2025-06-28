@@ -10,6 +10,7 @@ import (
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-playground/validator/v10"
 )
@@ -25,22 +26,26 @@ type AttributeService interface {
 
 type Deps struct {
 	srv AttributeService
-	val *validator.Validate
+	val interfaces.Validator
 }
 
-func NewDeps(srv AttributeService) (*Deps, error) {
+func NewDeps(srv AttributeService, val interfaces.Validator) (*Deps, error) {
 	if srv == nil {
 		return nil, errors.New("attribute handler: missing AttributeService")
 	}
+	if val == nil {
+		return nil, errors.New("attribute handler: missing Validator")
+	}
 	return &Deps{
 		srv: srv,
+		val: val,
 	}, nil
 }
 
 type Handler struct {
 	srv AttributeService
 	log *slog.Logger
-	val *validator.Validate
+	val interfaces.Validator
 }
 
 func New(d *Deps) *Handler {

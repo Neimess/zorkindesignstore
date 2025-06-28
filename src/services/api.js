@@ -1,4 +1,5 @@
 // Базовый URL API
+
 // Используем относительный путь, так как запросы будут проксироваться через локальный сервер
 const API_BASE_URL = 'https://dev.api.inspireforge.ru/api';
 const apiRequest = async (endpoint, options = {}) => {
@@ -21,8 +22,10 @@ const apiRequest = async (endpoint, options = {}) => {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      console.log('🔴 Подробный ответ сервера:', errorData);
       console.error(`[API ERROR] ${url} ➤ ${response.status}: ${errorData.message}`);
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      
     }
 
     // Для DELETE запросов может не быть тела ответа
@@ -31,9 +34,34 @@ const apiRequest = async (endpoint, options = {}) => {
       return null;
     }
 
-    const data = await response.json();
-    console.log('✓ Success:', data);
-    return data;
+    // 204 — «No Content» вы уже обработали,
+ // теперь добавим безопасный разбор для 201 (Created) и 200 (OK)
+
+ // Если статус 204 — по-прежнему возвращаем null
+ if (response.status === 204) {
+   console.log('✓ Success: No Content');
+   return null;
+ }
+
+ // Для остальных успешных статусов пробуем сначала text(),
+ // а JSON парсим только если тело не пустое
+ const raw = await response.text();
+ if (!raw) {
+   console.log('✓ Success: empty body');
+   return null;            // или return {} – как удобнее
+ }
+
+ // Если в теле всё-таки есть строка, пробуем распарсить
+ try {
+   const data = JSON.parse(raw);
+   console.log('✓ Success:', data);
+   return data;
+ } catch (e) {
+   console.warn('✓ Success (no-JSON body):', raw);
+  return raw;             // вернём просто строку
+ }
+
+
   } catch (error) {
     console.error('✗ Ошибка выполнения запроса:', error.message);
     throw error;
@@ -89,6 +117,7 @@ export const categoryAttributeAPI = {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' // 💥 обязательно!
       },
       body: JSON.stringify(attributeData),
     }),
@@ -99,6 +128,7 @@ export const categoryAttributeAPI = {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' // 💥 обязательно!
       },
       body: JSON.stringify(attributesArray),
     }),
@@ -109,6 +139,7 @@ export const categoryAttributeAPI = {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' // 💥 обязательно!
       },
       body: JSON.stringify(attributeData),
     }),
@@ -119,18 +150,17 @@ export const categoryAttributeAPI = {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json' // 💥 обязательно!
       },
     }),
 };
-
-
 
 
 // Функции для работы с товарами
 export const productAPI = {
   // Получить товар по ID
   getById: (id) => apiRequest(`/product/${id}`),
-  
+  getAll: () => apiRequest('/product'),
   // Получить товары по категории
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
   

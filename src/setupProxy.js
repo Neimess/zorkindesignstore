@@ -1,5 +1,5 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
-console.log('✅ setupProxy.js загружен');
+// console.log('✅ setupProxy.js загружен');
 
 module.exports = function(app) {
   app.use(

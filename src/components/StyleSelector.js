@@ -1,131 +1,212 @@
-import React from 'react';
 
-export default function StyleSelector({ styles, onSelect }) {
+import React, { useState } from 'react';
+
+
+/**
+ * Компонент для выбора стиля интерьера на главной странице
+ * 
+ * @param {Object} props - Свойства компонента
+ * @param {Array} props.styles - Список доступных стилей
+ * @param {Function} props.onSelect - Функция обработки выбора стиля
+ */
+function StyleSelector({ styles, onSelect }) {
+  // Описания стилей для отображения
+  const styleDescriptions = {
+    1: 'Светлые тона, натуральные материалы, функциональность и минимализм',
+    2: 'Индустриальный характер, открытые коммуникации, кирпич и металл',
+    3: 'Роскошь, изысканные материалы, классические элементы декора',
+    4: 'Яркие акценты, геометрические узоры, смелые цветовые решения',
+    5: 'Природные материалы, спокойные тона, экологичность и уют',
+    6: 'Плавные линии, яркие цвета, необычные формы и текстуры'
+  };
+  const [expandedStyleId, setExpandedStyleId] = useState(null);
+  // Стили для элементов интерфейса
+  const uiStyles = {
+    container: {
+      marginTop: 60,
+      marginBottom: 80,
+      padding: '0 20px'
+    },
+    title: {
+      fontSize: '2rem',
+      fontWeight: 700,
+      color: '#f8fafc',
+      marginBottom: '15px',
+      textAlign: 'center'
+    },
+    description: {
+      fontSize: '1.1rem',
+      color: '#94a3b8',
+      maxWidth: '700px',
+      margin: '0 auto 40px',
+      textAlign: 'center',
+      lineHeight: 1.6
+    },
+    stylesGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: '25px',
+      maxWidth: '1200px',
+      margin: '0 auto'
+    },
+    styleButton: {
+      position: 'relative',
+      padding: '30px 25px',
+      borderRadius: '16px',
+      border: '1px solid #334155',
+      background: 'rgba(30, 41, 59, 0.6)',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      overflow: 'hidden',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between'
+    },
+    styleButtonHover: {
+      transform: 'translateY(-5px)',
+      boxShadow: '0 15px 30px rgba(0, 0, 0, 0.2)',
+      borderColor: '#60a5fa'
+    },
+    styleName: {
+      fontSize: '1.4rem',
+      fontWeight: 600,
+      color: '#f1f5f9',
+      marginBottom: '15px',
+      position: 'relative',
+      zIndex: 1
+    },
+    styleDesc: {
+      fontSize: '1rem',
+      color: '#cbd5e1',
+      lineHeight: 1.6,
+      position: 'relative',
+      zIndex: 1
+    },
+    gradientOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: 0.15,
+      transition: 'opacity 0.3s ease',
+      zIndex: 0
+    },
+    decorBorder: {
+      position: 'absolute',
+      width: '60px',
+      height: '60px',
+      borderRadius: '30px',
+      transition: 'all 0.3s ease',
+      opacity: 0.6
+    }
+  };
+// console.log('styles:', styles);
   return (
-    <div className="Styles" style={{ 
-      marginBottom: 60,
-      padding: '30px 20px',
-      background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.9))',
-      borderRadius: 16,
-      boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-      border: '1px solid rgba(71, 85, 105, 0.3)'
-    }}>
-      <h2 style={{
-        fontSize: '1.8rem',
-        fontWeight: 700,
-        color: '#f8fafc',
-        textAlign: 'center',
-        marginBottom: 30,
-        position: 'relative',
-        paddingBottom: 15,
-        fontFamily: '"Montserrat", sans-serif'
-      }}>
-        Выберите стиль интерьера
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 80,
-          height: 3,
-          background: 'linear-gradient(90deg, #60a5fa, #3b82f6)',
-          borderRadius: 2
-        }}></div>
-      </h2>
-      <p style={{
-        textAlign: 'center',
-        color: '#cbd5e1',
-        marginBottom: 25,
-        fontSize: '1.1rem',
-        maxWidth: '700px',
-        margin: '0 auto 30px'
-      }}>
-        Выберите стиль, который лучше всего подходит для вашего помещения. Каждый стиль предлагает уникальное сочетание материалов и элементов дизайна.
+    <section style={uiStyles.container}>
+      <h2 style={uiStyles.title}>Популярные стили интерьера</h2>
+      <p style={uiStyles.description}>
+        Выберите один из готовых стилей, чтобы автоматически добавить рекомендуемые товары для ремонта.
+        Каждый стиль содержит тщательно подобранные материалы и элементы, которые хорошо сочетаются между собой.
       </p>
-      <div style={{ 
-        display: 'flex', 
-        gap: 20, 
-        flexWrap: 'wrap',
-        justifyContent: 'center' 
-      }}>
-        {styles.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => onSelect(s)}
-            style={{
-              padding: '18px 28px',
-              borderRadius: 14,
-              background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-              border: '1px solid #334155',
-              color: '#f8fafc',
-              cursor: 'pointer',
-              fontSize: '1.2rem',
-              fontWeight: 600,
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
-              position: 'relative',
-              overflow: 'hidden',
-              width: '220px',
-              height: '120px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              textAlign: 'center'
-            }}
+      
+      <div style={uiStyles.stylesGrid}>
+        {styles.map(style => (
+          <div
+            key={style.preset_id}
+            onClick={() => {
+  onSelect(style);
+  setExpandedStyleId(prev => prev === style.preset_id ? null : style.preset_id);
+}}
+            style={uiStyles.styleButton}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px) scale(1.03)';
-              e.currentTarget.style.boxShadow = '0 12px 25px rgba(0,0,0,0.2)';
-              e.currentTarget.style.borderColor = '#60a5fa';
+              // Добавляем эффекты при наведении
+              Object.assign(e.currentTarget.style, uiStyles.styleButtonHover);
+              // Увеличиваем яркость градиента
+              e.currentTarget.querySelector('.gradient-overlay').style.opacity = '0.3';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
+              // Удаляем эффекты при уходе курсора
+              e.currentTarget.style.transform = '';
+              e.currentTarget.style.boxShadow = '';
               e.currentTarget.style.borderColor = '#334155';
+              // Возвращаем исходную яркость градиента
+              e.currentTarget.querySelector('.gradient-overlay').style.opacity = '0.15';
             }}
           >
-            <span style={{ 
-              position: 'relative', 
-              zIndex: 2,
-              fontSize: '1.3rem',
-              marginBottom: '8px',
-              fontFamily: '"Montserrat", sans-serif'
-            }}>{s.name}</span>
-            <span style={{
-              fontSize: '0.85rem',
-              color: '#94a3b8',
-              zIndex: 2,
-              fontWeight: 400
-            }}>
-              {s.id === 1 && 'Светлые тона, натуральные материалы'}
-              {s.id === 2 && 'Индустриальный стиль, открытые коммуникации'}
-              {s.id === 3 && 'Простота форм, функциональность'}
-              {s.id === 4 && 'Изысканность, симметрия, роскошь'}
-              {s.id === 5 && 'Инновационные материалы, чистые линии'}
-              {s.id === 6 && 'Пастельные тона, винтажные элементы'}
-            </span>
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '6px',
-              height: '100%',
-              background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            {/* Декоративные элементы */}
+            <div
+              className="gradient-overlay"
+              style={{
+                ...uiStyles.gradientOverlay,
+                background: `linear-gradient(135deg, #3b82f6, #8b5cf6)`
+              }}
+            ></div>
+            <div
+              style={{
+                ...uiStyles.decorBorder,
+                top: '-20px',
+                right: '-20px',
+                border: '2px solid rgba(59, 130, 246, 0.3)'
+              }}
+            ></div>
+            <div
+              style={{
+                ...uiStyles.decorBorder,
+                bottom: '-30px',
+                left: '-30px',
+                border: '2px solid rgba(139, 92, 246, 0.3)',
+                width: '90px',
+                height: '90px',
+                borderRadius: '45px'
+              }}
+            ></div>
+            
+            {/* Содержимое */}
+            <div>
+              <h3 style={uiStyles.styleName}>{style.name}</h3>
+              <p style={uiStyles.styleDesc}>
+                {styleDescriptions[style.preset_id] || 'Уникальный стиль интерьера с подобранными товарами'}
+              </p>
+            </div>
+            
+            <div style={{ 
+              marginTop: '20px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              position: 'relative',
               zIndex: 1
-            }}></div>
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: '40%',
-              height: '4px',
-              background: 'linear-gradient(90deg, transparent, #3b82f6)',
-              zIndex: 1,
-              opacity: 0.7
-            }}></div>
-          </button>
+            }}>
+              {expandedStyleId === style.preset_id && (
+  <div style={{ marginTop: '15px', paddingTop: '10px', borderTop: '1px solid #334155' }}>
+    {(style.items || []).map((item, index) => (
+      <div key={index} style={{ marginBottom: '10px', color: '#cbd5e1' }}>
+        • {item.product?.name} — {(item.product?.price ?? 0).toLocaleString()} ₽
+      </div>
+    ))}
+  </div>
+)}
+              <span style={{ 
+                fontSize: '0.9rem', 
+                color: '#94a3b8' 
+              }}>
+                {style.items?.length || 0} товаров
+              </span>
+              <span style={{ 
+                fontSize: '0.9rem', 
+                color: '#60a5fa',
+                fontWeight: 500
+              }}>
+                Выбрать
+              </span>
+            </div>
+          </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
+
+export default StyleSelector;

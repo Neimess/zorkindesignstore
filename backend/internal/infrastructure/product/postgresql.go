@@ -194,9 +194,7 @@ type attrRow struct {
 	AttributeID  int64          `db:"attribute_id"`
 	Value        string         `db:"value"`
 	Name         string         `db:"name"`
-	Slug         string         `db:"slug"`
 	Unit         sql.NullString `db:"unit"`
-	IsFilterable bool           `db:"is_filterable"`
 }
 
 func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*product.Product, error) {
@@ -219,7 +217,7 @@ func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*prod
 
 func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64) ([]product.ProductAttribute, error) {
 	const sqlStr = `
-        SELECT pa.attribute_id, pa.value, a.name, a.slug, a.unit, a.is_filterable
+        SELECT pa.attribute_id, pa.value, a.name, a.unit
         FROM product_attributes pa
         JOIN attributes a ON a.attribute_id = pa.attribute_id
         WHERE pa.product_id = $1`
@@ -257,7 +255,7 @@ func (r *PGProductRepository) fetchAttributes(ctx context.Context, prodID int64)
 func (r *PGProductRepository) fetchAttributesBatch(ctx context.Context, ids []int64) ([]attrRow, error) {
 	const sqlStr = `
         SELECT pa.product_id, pa.attribute_id, pa.value,
-               a.name, a.slug, a.unit, a.is_filterable
+               a.name, a.unit
         FROM product_attributes pa
         JOIN attributes a USING(attribute_id)
         WHERE pa.product_id = ANY($1)`

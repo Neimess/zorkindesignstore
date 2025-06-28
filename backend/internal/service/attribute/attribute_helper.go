@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
@@ -21,12 +20,4 @@ func (s *Service) ensureCategory(ctx context.Context, categoryID int64) error {
 		return fmt.Errorf("service: fetch category: %w", err)
 	}
 	return nil
-}
-
-func (s *Service) toDomain(in *CreateAttributeInput) *attr.Attribute {
-	return &attr.Attribute{
-		Name:       in.Name,
-		Unit:       in.Unit,
-		CategoryID: in.CategoryID,
-	}
 }

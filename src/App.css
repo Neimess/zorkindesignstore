@@ -38,190 +38,444 @@
 }
 
 .Configurator {
-  max-width: 1100px;
+  max-width: 1280px;
   margin: 40px auto;
-  padding: 24px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
-  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 40px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border-radius: 24px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  color: #f1f5f9;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.Configurator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://i.imgur.com/JXgwTYs.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.Configurator > * {
+  position: relative;
+  z-index: 1;
 }
 
 h1 {
-  font-size: 2rem;
-  margin-bottom: 24px;
-  color: #222;
-  font-weight: 600;
+  font-size: 2.5rem;
+  margin-bottom: 35px;
+  color: #f8fafc;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  position: relative;
+  padding-bottom: 18px;
+  font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #38bdf8);
+  border-radius: 2px;
+}
+
+h1 span {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-top: 8px;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .Categories {
   display: flex;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: 15px;
+  margin-bottom: 45px;
   flex-wrap: wrap;
+  justify-content: center;
+  padding: 10px;
 }
 .Categories button {
-  background: #f5f5f5;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 1rem;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 14px 26px;
+  font-size: 1.05rem;
   cursor: pointer;
-  color: #333;
-  transition: background 0.2s;
+  color: #cbd5e1;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+.Categories button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.Categories button:hover {
+  background: #334155;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  border-color: #475569;
+}
+.Categories button:hover::before {
+  opacity: 1;
 }
 .Categories button.active {
-  background: #e0e7ff;
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
   font-weight: 600;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .MainContent {
   display: flex;
-  gap: 32px;
+  gap: 40px;
   align-items: flex-start;
 }
 .Products {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
   flex: 2;
 }
 .ProductCard {
   display: flex;
   align-items: flex-start;
-  background: #f9f9f9;
-  border-radius: 10px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  gap: 18px;
+  background: rgba(30, 41, 59, 0.9);
+  border-radius: 18px;
+  padding: 24px 28px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  gap: 28px;
+  transition: all 0.4s ease;
+  border: 1px solid #334155;
+  position: relative;
+  overflow: hidden;
+}
+.ProductCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  opacity: 0.8;
+}
+.ProductCard:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  border-color: #475569;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
 }
 .ProductImg {
-  width: 90px;
-  height: 90px;
+  width: 140px;
+  height: 140px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 14px;
   margin-right: 10px;
-  background: #eee;
+  background: #0f172a;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  transition: all 0.4s ease;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+.ProductCard:hover .ProductImg {
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 .ProductInfo {
   text-align: left;
   flex: 1;
 }
 .ProductName {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #222;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 8px;
+  font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+  position: relative;
+  display: inline-block;
+}
+.ProductName::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #3b82f6;
+  border-radius: 1px;
 }
 .ProductDesc {
-  font-size: 0.95rem;
-  color: #888;
-  margin: 4px 0 2px 0;
+  font-size: 1rem;
+  color: #94a3b8;
+  margin: 12px 0 14px 0;
+  line-height: 1.6;
 }
 .ProductAttrs {
-  margin: 4px 0 6px 0;
+  margin: 10px 0 12px 0;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 .Attr {
-  background: #e0e7ff;
-  color: #1d4ed8;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 0.92rem;
+  background: rgba(51, 65, 85, 0.8);
+  color: #60a5fa;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  transition: all 0.3s ease;
+}
+
+.Attr:hover {
+  background: rgba(51, 65, 85, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  color: #7dd3fc;
 }
 .ProductPrice {
-  font-size: 1rem;
-  color: #1d4ed8;
-  font-weight: 600;
-  margin-top: 4px;
+  font-size: 1.4rem;
+  color: #38bdf8;
+  font-weight: 800;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+}
+.ProductPrice::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  border-radius: 50%;
+  margin-right: 10px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 .ProductCard button {
-  background: #e0e7ff;
-  color: #1d4ed8;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
+  border-radius: 12px;
+  padding: 14px 28px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  margin-left: 16px;
+  transition: all 0.3s ease;
+  margin-left: 20px;
   align-self: center;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  position: relative;
+  overflow: hidden;
+}
+.ProductCard button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s ease;
+}
+.ProductCard button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.45);
+}
+.ProductCard button:hover::before {
+  left: 100%;
 }
 .ProductCard button.selected {
-  background: #1d4ed8;
-  color: #fff;
+  background: #334155;
+  color: #94a3b8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.ProductCard button.selected:hover::before {
+  left: -100%;
 }
 
 .AddedPanel {
   flex: 1;
-  background: #f5f7fa;
-  border-radius: 12px;
-  padding: 18px 16px;
-  min-width: 260px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
+  border-radius: 20px;
+  padding: 30px 25px;
+  min-width: 320px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
   margin-left: 0;
+  border: 1px solid rgba(71, 85, 105, 0.4);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.AddedPanel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #3b82f6, #38bdf8, #0ea5e9);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+.AddedPanel::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+  pointer-events: none;
 }
 .AddedPanel h2 {
-  font-size: 1.1rem;
-  margin-bottom: 12px;
-  color: #222;
-  font-weight: 600;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  color: #f1f5f9;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+  padding-bottom: 12px;
+}
+.AddedPanel h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: #60a5fa;
+  border-radius: 2px;
 }
 .AddedPanel ul {
   list-style: none;
   padding: 0;
-  margin: 0 0 12px 0;
+  margin: 0 0 20px 0;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #60a5fa #334155;
+}
+.AddedPanel ul::-webkit-scrollbar {
+  width: 6px;
+}
+.AddedPanel ul::-webkit-scrollbar-track {
+  background: #334155;
+  border-radius: 3px;
+}
+.AddedPanel ul::-webkit-scrollbar-thumb {
+  background-color: #60a5fa;
+  border-radius: 3px;
 }
 .AddedItem {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  background: #fff;
-  border-radius: 8px;
-  padding: 6px 8px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  gap: 12px;
+  margin-bottom: 12px;
+  background: #0f172a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #334155;
+}
+.AddedItem:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  border-color: #475569;
 }
 .AddedImg {
-  width: 38px;
-  height: 38px;
+  width: 50px;
+  height: 50px;
   object-fit: cover;
-  border-radius: 6px;
-  background: #eee;
+  border-radius: 10px;
+  background: #1e293b;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 .AddedName {
   font-size: 1rem;
-  color: #222;
+  color: #f1f5f9;
+  font-weight: 500;
 }
 .AddedPrice {
-  font-size: 0.95rem;
-  color: #1d4ed8;
+  font-size: 1rem;
+  color: #38bdf8;
+  font-weight: 600;
+  margin-top: 4px;
 }
 .AddedItem button {
   margin-left: auto;
-  background: #f87171;
+  background: #ef4444;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: 8px;
+  padding: 6px 14px;
   font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 .AddedItem button:hover {
   background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
 }
 .Empty {
-  color: #888;
-  font-size: 0.98rem;
-  margin-bottom: 10px;
+  color: #94a3b8;
+  font-size: 1rem;
+  margin: 30px 0;
+  text-align: center;
+  font-style: italic;
 }
 .TotalPanel {
-  font-size: 1.1rem;
-  text-align: right;
-  color: #222;
-  margin-top: 12px;
-  font-weight: 500;
+  font-size: 1.3rem;
+  text-align: center;
+  color: #f1f5f9;
+  margin-top: 20px;
+  font-weight: 700;
+  background: #0f172a;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid #334155;
+}
+.TotalPanel b {
+  color: #38bdf8;
+  font-size: 1.5rem;
+  margin-left: 10px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
 }

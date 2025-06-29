@@ -1,5 +1,4 @@
-name: zorkin_backend_ci
-description: CI for zorkin backend
+name: backend_ci
 
 on:
   push:
@@ -76,10 +75,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ 
-              hashFiles('${{ env.MODULE_PATH }}/go.sum','${{ env.MODULE_PATH }}/go.mod') 
-            }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 

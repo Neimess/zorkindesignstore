@@ -1,5 +1,4 @@
 name: docker-release
-description: Manual release to Docker Hub
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: zorkin_backend_release
+name: backend_release
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ on:
 
 env:
   GO_VERSION: '1.24'
-  MODULE_PATH: ./backend
+  MODULE_PATH: backend    # каталог с вашим go.mod
 
 jobs:
   release:
@@ -25,23 +25,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      
+
       - name: Cache Go modules & build cache
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ 
-              hashFiles('${{ env.MODULE_PATH }}/go.sum','${{ env.MODULE_PATH }}/go.mod') 
-            }}
+          # Заметьте: здесь мы хардкодим путь 'backend/go.sum'
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
@@ -54,7 +53,7 @@ jobs:
       - name: Build binary
         working-directory: ${{ env.MODULE_PATH }}
         env:
-          GOOS: ${{ github.event.inputs.goos }}
+          GOOS:   ${{ github.event.inputs.goos }}
           GOARCH: ${{ github.event.inputs.goarch }}
         run: |
           go build -ldflags "-s -w \
@@ -62,14 +61,13 @@ jobs:
             -X 'main.commit=${{ steps.meta.outputs.commit }}' \
             -X 'main.buildDate=${{ steps.meta.outputs.build_time }}'" \
             -o bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} \
-            ./cmd/backend
+            ./cmd/store
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.event.inputs.version }}
           name: Release ${{ github.event.inputs.version }}
-          artifacts: ${{ env.MODULE_PATH }}/bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+          artifacts: ${{ env.MODULE_PATH }}/bin/store-backend-${{ github.event.inputs.goos }}}-${{ github.event.inputs.goarch }}
           allowUpdates: true
           replacesArtifacts: true
-          

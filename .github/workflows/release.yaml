@@ -16,6 +16,7 @@ on:
         default: amd64
 
 env:
+  GO_VERSION: '1.24'
   MODULE_PATH: ./backend
 
 jobs:
@@ -26,9 +27,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Cache Go modules & build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
       - name: Set build metadata
         id: meta
@@ -46,7 +58,8 @@ jobs:
             -X 'main.version=${{ github.event.inputs.version }}' \
             -X 'main.commit=${{ steps.meta.outputs.commit }}' \
             -X 'main.buildDate=${{ steps.meta.outputs.build_time }}'" \
-            -o bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+            -o bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} \
+            ${{ env.MODULE_PATH }}/cmd/store-backend
 
       - name: Upload binary
         uses: actions/upload-artifact@v4

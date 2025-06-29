@@ -71,6 +71,6 @@ jobs:
         with:
           tag: ${{ github.event.inputs.version }}
           name: Release ${{ github.event.inputs.version }}
-          artifacts: ${{ env.MODULE_PATH }}/bin/store-backend-${{ github.event.inputs.goos }}}-${{ github.event.inputs.goarch }}
+          artifacts: ${{ env.MODULE_PATH }}/bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
           allowUpdates: true
           replacesArtifacts: true

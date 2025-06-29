@@ -52,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
             context: ${{ env.MODULE_PATH }}
-            file: ${{ env.MODULE_PATH }}/build/store-backend/Dockerfile
+            file: ${{ env.MODULE_PATH }}/build/backend/Dockerfile
             push: true
             tags: ${{ env.BACKEND_IMAGE }}:${{ github.event.inputs.tag }}
     
@@ -60,7 +60,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
             context: ${{ env.MODULE_PATH }}
-            file: ${{ env.MODULE_PATH }}/build/store-migrate/Dockerfile
+            file: ${{ env.MODULE_PATH }}/build/migrate/Dockerfile
             push: true
             tags: ${{ env.MIGRATE_IMAGE }}:${{ github.event.inputs.tag }}
 

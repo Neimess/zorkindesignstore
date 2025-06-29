@@ -47,7 +47,7 @@ func TestCreate_Success(t *testing.T) {
 	mockSvc := mocks.NewMockProductService(t)
 	h := newHandler(mockSvc, nil)
 
-	reqBody := dto.ProductCreateRequest{Name: "Product X"}
+	reqBody := dto.ProductCreateRequest{Name: "Product X", Price: 78.3, CategoryID: 1}
 	raw, _ := json.Marshal(reqBody)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/admin/product", bytes.NewReader(raw))

@@ -20,14 +20,18 @@ type productRow struct {
 
 func (r *productRow) toDomain(attrs []prodDom.ProductAttribute) *prodDom.Product {
 	d := &prodDom.Product{
-		ID:          r.ID,
-		Name:        r.Name,
-		Price:       r.Price,
-		Description: r.Description.String,
-		CategoryID:  r.CategoryID,
-		ImageURL:    r.ImageURL.String,
-		CreatedAt:   r.CreatedAt,
-		Attributes:  attrs,
+		ID:         r.ID,
+		Name:       r.Name,
+		Price:      r.Price,
+		CategoryID: r.CategoryID,
+		CreatedAt:  r.CreatedAt,
+		Attributes: attrs,
+	}
+	if r.Description.Valid {
+		d.Description = &r.Description.String
+	}
+	if r.ImageURL.Valid {
+		d.ImageURL = &r.ImageURL.String
 	}
 	return d
 }

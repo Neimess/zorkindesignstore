@@ -122,13 +122,12 @@ func (s *ProductRepositorySuite) Test_CreateGetDelete_ProductLifecycle() {
 	catID := s.createCategory("c1")
 	attr1 := s.createAttribute("A1", "u1", catID)
 	attr2 := s.createAttribute("A2", "u2", catID)
-
 	p := &prodDom.Product{
 		Name:        "P1",
 		Price:       9.99,
-		Description: "desc",
+		Description: strToPtr("This is a test product"),
 		CategoryID:  catID,
-		ImageURL:    "u",
+		ImageURL:    strToPtr("http://example.com/image.jpg"),
 		Attributes: []prodDom.ProductAttribute{
 			{AttributeID: attr1, Value: "v1"},
 			{AttributeID: attr2, Value: "v2"},
@@ -158,7 +157,7 @@ func (s *ProductRepositorySuite) Test_ListByCategory_UpdateWithAttrs() {
 	s.Assert().Empty(list)
 
 	attr1 := s.createAttribute("B1", "u", catID)
-	p := &prodDom.Product{Name: "PX", Price: 1.23, Description: "d", CategoryID: catID, ImageURL: "i",
+	p := &prodDom.Product{Name: "PX", Price: 1.23, Description: strToPtr("Test product description"), CategoryID: catID, ImageURL: strToPtr("http://example.com/image.jpg"),
 		Attributes: []prodDom.ProductAttribute{{AttributeID: attr1, Value: "val"}},
 	}
 	id, err := s.repo.CreateWithAttrs(s.ctx, p)
@@ -182,4 +181,11 @@ func (s *ProductRepositorySuite) Test_ListByCategory_UpdateWithAttrs() {
 
 func TestProductRepositorySuite(t *testing.T) {
 	suite.Run(t, new(ProductRepositorySuite))
+}
+
+func strToPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

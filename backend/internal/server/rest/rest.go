@@ -73,7 +73,7 @@ func (s *Server) Run() error {
 		slog.String("idle_timeout", s.httpServer.IdleTimeout.String()),
 	)
 
-	if err := http.ListenAndServe(s.httpServer.Addr, s.httpServer.Handler); err != nil {
+	if err := s.httpServer.ListenAndServe(); err != nil {
 		s.log.Error("http server error", slog.Any("error", err))
 		return err
 	}

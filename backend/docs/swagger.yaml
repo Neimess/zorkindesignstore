@@ -78,6 +78,15 @@ definitions:
     required:
     - name
     type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError:
+    properties:
+      field:
+        type: string
+      tag:
+        type: string
+      value:
+        type: string
+    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest:
     properties:
       description:
@@ -170,6 +179,15 @@ definitions:
       price:
         example: 499
         type: number
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError'
+        type: array
+      message:
+        type: string
     type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest:
     properties:
@@ -575,6 +593,10 @@ paths:
         schema:
           $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest'
       responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetResponse'
         "400":
           description: Bad Request
           schema:
@@ -622,6 +644,29 @@ paths:
       security:
       - BearerAuth: []
       summary: Delete preset
+      tags:
+      - Preset
+    put:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      summary: Update preset info
       tags:
       - Preset
   /api/admin/product:

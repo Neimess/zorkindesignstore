@@ -9,5 +9,6 @@ func registerPresetAdminRoutes(r chi.Router, h *preset.Handler) {
 	r.Route("/presets", func(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Delete("/{id}", h.Delete)
+		r.Put("/{id}", h.Update)
 	})
 }

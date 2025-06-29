@@ -11,9 +11,10 @@ import (
 )
 
 type PresetRepository interface {
-	Create(ctx context.Context, p *preset.Preset) (int64, error)
+	Create(ctx context.Context, p *preset.Preset) (*preset.Preset, error)
 	Get(ctx context.Context, id int64) (*preset.Preset, error)
 	Delete(ctx context.Context, id int64) error
+	Update(ctx context.Context, p *preset.Preset) (*preset.Preset, error)
 	ListDetailed(ctx context.Context) ([]preset.Preset, error)
 	ListShort(ctx context.Context) ([]preset.Preset, error)
 }
@@ -45,29 +46,29 @@ func New(d *Deps) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, p *preset.Preset) (int64, error) {
+func (s *Service) Create(ctx context.Context, p *preset.Preset) (*preset.Preset, error) {
 	const op = "service.preset.Create"
 	log := s.log.With("op", op)
 
 	if err := p.Validate(); err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	id, err := s.repo.Create(ctx, p)
+	p, err := s.repo.Create(ctx, p)
 	if err != nil {
 		switch {
 		case errors.Is(err, der.ErrConflict):
-			return 0, preset.ErrPresetAlreadyExists
+			return nil, preset.ErrPresetAlreadyExists
 		case errors.Is(err, der.ErrNotFound):
-			return 0, preset.ErrInvalidProductID
+			return nil, preset.ErrInvalidProductID
 		}
 
 		log.Error("repo.Create failed", slog.Any("err", err))
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("preset created", slog.Int64("preset_id", id))
-	return id, nil
+	log.Info("preset created", slog.Int64("preset_id", p.ID))
+	return p, nil
 }
 
 func (s *Service) Get(ctx context.Context, id int64) (*preset.Preset, error) {
@@ -93,9 +94,6 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, der.ErrNotFound) {
-			return preset.ErrPresetNotFound
-		}
 		log.Error("repo.Delete failed", slog.Int64("preset_id", id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -130,4 +128,26 @@ func (s *Service) ListShort(ctx context.Context) ([]preset.Preset, error) {
 
 	log.Info("presets (short) retrieved", slog.Int("count", len(list)))
 	return list, nil
+}
+
+func (s *Service) Update(ctx context.Context, p *preset.Preset) (*preset.Preset, error) {
+	const op = "service.preset.Update"
+	log := s.log.With("op", op)
+
+	res, err := s.repo.Update(ctx, p)
+	if err != nil {
+		// Маппим известные ошибки
+		switch {
+		case errors.Is(err, der.ErrConflict):
+			return nil, preset.ErrPresetAlreadyExists
+		case errors.Is(err, der.ErrNotFound):
+			return nil, preset.ErrPresetNotFound
+		default:
+			log.Error("repo.Update failed", slog.Int64("preset_id", p.ID), slog.Any("err", err))
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	log.Info("preset updated", slog.Int64("preset_id", res.ID))
+	return res, nil
 }

@@ -39,22 +39,24 @@ func (_m *MockPresetService) EXPECT() *MockPresetService_Expecter {
 }
 
 // Create provides a mock function for the type MockPresetService
-func (_mock *MockPresetService) Create(ctx context.Context, p *preset.Preset) (int64, error) {
+func (_mock *MockPresetService) Create(ctx context.Context, p *preset.Preset) (*preset.Preset, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 int64
+	var r0 *preset.Preset
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) (*preset.Preset, error)); ok {
 		return returnFunc(ctx, p)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) *preset.Preset); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*preset.Preset)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *preset.Preset) error); ok {
 		r1 = returnFunc(ctx, p)
@@ -94,12 +96,12 @@ func (_c *MockPresetService_Create_Call) Run(run func(ctx context.Context, p *pr
 	return _c
 }
 
-func (_c *MockPresetService_Create_Call) Return(n int64, err error) *MockPresetService_Create_Call {
-	_c.Call.Return(n, err)
+func (_c *MockPresetService_Create_Call) Return(preset1 *preset.Preset, err error) *MockPresetService_Create_Call {
+	_c.Call.Return(preset1, err)
 	return _c
 }
 
-func (_c *MockPresetService_Create_Call) RunAndReturn(run func(ctx context.Context, p *preset.Preset) (int64, error)) *MockPresetService_Create_Call {
+func (_c *MockPresetService_Create_Call) RunAndReturn(run func(ctx context.Context, p *preset.Preset) (*preset.Preset, error)) *MockPresetService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -349,6 +351,74 @@ func (_c *MockPresetService_ListShort_Call) Return(presets []preset.Preset, err 
 }
 
 func (_c *MockPresetService_ListShort_Call) RunAndReturn(run func(ctx context.Context) ([]preset.Preset, error)) *MockPresetService_ListShort_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function for the type MockPresetService
+func (_mock *MockPresetService) Update(ctx context.Context, p *preset.Preset) (*preset.Preset, error) {
+	ret := _mock.Called(ctx, p)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *preset.Preset
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) (*preset.Preset, error)); ok {
+		return returnFunc(ctx, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *preset.Preset) *preset.Preset); ok {
+		r0 = returnFunc(ctx, p)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*preset.Preset)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *preset.Preset) error); ok {
+		r1 = returnFunc(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockPresetService_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockPresetService_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - p *preset.Preset
+func (_e *MockPresetService_Expecter) Update(ctx interface{}, p interface{}) *MockPresetService_Update_Call {
+	return &MockPresetService_Update_Call{Call: _e.mock.On("Update", ctx, p)}
+}
+
+func (_c *MockPresetService_Update_Call) Run(run func(ctx context.Context, p *preset.Preset)) *MockPresetService_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *preset.Preset
+		if args[1] != nil {
+			arg1 = args[1].(*preset.Preset)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPresetService_Update_Call) Return(preset1 *preset.Preset, err error) *MockPresetService_Update_Call {
+	_c.Call.Return(preset1, err)
+	return _c
+}
+
+func (_c *MockPresetService_Update_Call) RunAndReturn(run func(ctx context.Context, p *preset.Preset) (*preset.Preset, error)) *MockPresetService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

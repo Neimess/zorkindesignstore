@@ -38,7 +38,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.mod','backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
@@ -59,11 +59,14 @@ jobs:
             -X 'main.commit=${{ steps.meta.outputs.commit }}' \
             -X 'main.buildDate=${{ steps.meta.outputs.build_time }}'" \
             -o bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }} \
-            ${{ env.MODULE_PATH }}/cmd/store-backend
+            ./cmd/backend
 
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
         with:
-          name: store-backend-${{ github.event.inputs.version }}
-          path: ${{ env.MODULE_PATH }}/bin/
-          retention-days: 7
+          tag: ${{ github.event.inputs.version }}
+          name: Release ${{ github.event.inputs.version }}
+          artifacts: ${{ env.MODULE_PATH }}/bin/store-backend-${{ github.event.inputs.goos }}-${{ github.event.inputs.goarch }}
+          allowUpdates: true
+          replacesArtifacts: true
+          

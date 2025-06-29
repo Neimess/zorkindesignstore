@@ -76,7 +76,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 
@@ -93,4 +93,6 @@ jobs:
 
       - name: Run tests with race detector
         working-directory: ${{ env.MODULE_PATH }}
-        run: go test -v -race -count=1 ./... | grep -v '\[no test files\]'
+        run: |
+          set -o pipefail
+          go test -v -race -count=1 ./... | grep -v '\[no test files\]'

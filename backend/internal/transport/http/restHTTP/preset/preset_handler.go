@@ -24,9 +24,9 @@ type PresetService interface {
 }
 
 type Deps struct {
-	pSrv      PresetService
-	validator interfaces.Validator
 	log       *slog.Logger
+	validator interfaces.Validator
+	pSrv      PresetService
 }
 
 func NewDeps(validator interfaces.Validator, log *slog.Logger, pSrv PresetService) (Deps, error) {

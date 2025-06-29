@@ -76,7 +76,10 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.mod','backend/go.sum') }}
+          key: |
+            ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ 
+              hashFiles('${{ env.MODULE_PATH }}/go.sum','${{ env.MODULE_PATH }}/go.mod') 
+            }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 

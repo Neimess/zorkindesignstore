@@ -364,8 +364,6 @@ paths:
       responses:
         "201":
           description: Created
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeResponse'
         "400":
           description: Bad Request
           schema:

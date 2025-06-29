@@ -13,7 +13,7 @@ http_server:
 storage:
     conn_max_timeout: 40s
 jwt_config:
-    issuer: zorkindev.ru
+    issuer: inputIssuer
     audience: admin_app
     algorithm: HS256
 swagger:

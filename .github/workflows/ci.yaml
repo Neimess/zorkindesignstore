@@ -44,7 +44,7 @@ jobs:
         run: |
           UNFORMATTED=$(gofmt -l .)
           if [ -n "$UNFORMATTED" ]; then
-            echo "❌ Found unformatted files:"
+            echo "Found unformatted files:"
             echo "$UNFORMATTED"
             exit 1
           fi
@@ -60,16 +60,6 @@ jobs:
     name: Unit Tests & Vet
     runs-on: ubuntu-latest
     needs: lint
-
-    services:
-      docker:
-        image: docker:24.0.2-dind
-        options: --privileged
-        ports:
-          - 2375:2375
-
-    env:
-      DOCKER_HOST: tcp://localhost:2375
 
     steps:
       - name: Checkout sources

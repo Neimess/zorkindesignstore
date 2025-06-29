@@ -8,6 +8,17 @@ on:
         description: 'Docker image tag (e.g. latest, v1.0.0)'
         required: true
         default: 'latest'
+      version:
+        description: 'Release version'
+        required: true
+      goos:
+        description: 'Target OS (e.g. linux, windows)'
+        required: true
+        default: linux
+      goarch:
+        description: 'Target ARCH (e.g. amd64, arm64)'
+        required: true
+        default: amd64
 
 env:
   MODULE_PATH: ./backend

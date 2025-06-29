@@ -200,7 +200,7 @@ func (s *PresetRepositorySuite) Test_UpdatePreset() {
 // Test_UpdateIdempotent проверяет идемпотентность Update
 func (s *PresetRepositorySuite) Test_UpdateIdempotent() {
 	prod := s.createProduct("Gamma", 20)
-	p := &domPreset.Preset{ Name: "Same", TotalPrice: 20, Items: []domPreset.PresetItem{{ProductID: prod}} }
+	p := &domPreset.Preset{Name: "Same", TotalPrice: 20, Items: []domPreset.PresetItem{{ProductID: prod}}}
 	pRes, err := s.repo.Create(s.ctx, p)
 	require.NoError(s.T(), err)
 

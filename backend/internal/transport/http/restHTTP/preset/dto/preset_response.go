@@ -11,7 +11,6 @@ type PresetResponse struct {
 	Items       []PresetResponseItem `json:"items"`
 }
 
-
 //swaggo:model PresetShortResponse
 type PresetShortResponse struct {
 	PresetID    int64   `json:"preset_id" example:"1"`

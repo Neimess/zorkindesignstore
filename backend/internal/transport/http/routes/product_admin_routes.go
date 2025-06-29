@@ -9,7 +9,7 @@ func registerProductAdminRoutes(r chi.Router, h *product.Handler) {
 	r.Route("/product", func(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Post("/detailed", h.CreateWithAttributes)
-		r.Put("/{id}",    h.Update)
+		r.Put("/{id}", h.Update)
 		r.Delete("/{id}", h.Delete)
 		r.Get("/category/{id}", h.ListByCategory)
 		r.Get("/{id}", h.GetDetailed)

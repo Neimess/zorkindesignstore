@@ -3,18 +3,14 @@ package preset
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"time"
 
-	sq "github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
-	"github.com/Neimess/zorkin-store-project/internal/domain/product"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/Neimess/zorkin-store-project/pkg/database/tx"
@@ -63,27 +59,27 @@ func (r *PGPresetRepository) Create(ctx context.Context, p *preset.Preset) (int6
 		}
 
 		if len(p.Items) > 0 {
-			builder := sq.Insert("preset_items").
-				Columns("preset_id", "product_id").
-				PlaceholderFormat(sq.Dollar)
+			n := len(p.Items)
+			presetIDs := make([]int64, n)
+			productIDs := make([]int64, n)
 
-			for _, it := range p.Items {
-				builder = builder.Values(id, it.ProductID)
+			for i, it := range p.Items {
+				presetIDs[i] = id
+				productIDs[i] = it.ProductID
 			}
 
-			sqlStr, args, buildErr := builder.ToSql()
-			if buildErr != nil {
-				return 0, fmt.Errorf("build insert items: %w", buildErr)
-			}
+			const insertItems = `
+				INSERT INTO preset_items (preset_id, product_id)
+				SELECT * FROM UNNEST($1::bigint[], $2::bigint[])
+			`
 
-			if err := database.WithQuery(ctx, r.log, sqlStr, func() error {
-				_, execErr := tx.ExecContext(ctx, sqlStr, args...)
+			if err := database.WithQuery(ctx, r.log, insertItems, func() error {
+				_, execErr := tx.ExecContext(ctx, insertItems, pq.Array(presetIDs), pq.Array(productIDs))
 				return execErr
 			}); err != nil {
 				return 0, r.mapPostgreSQLError(err)
 			}
 		}
-
 		p.ID, p.CreatedAt = id, created
 		return id, nil
 	})
@@ -100,32 +96,34 @@ func (r *PGPresetRepository) Get(ctx context.Context, id int64) (*preset.Preset,
 	if err := database.WithQuery(ctx, r.log, qPreset, func() error {
 		return r.db.GetContext(ctx, &raw, qPreset, id)
 	}); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, preset.ErrPresetNotFound
-		}
 		return nil, r.mapPostgreSQLError(err)
 	}
 
 	p := raw.toDomain()
 
 	const qItems = `
-		SELECT preset_item_id, preset_id, product_id
-		FROM preset_items WHERE preset_id = $1
+		SELECT
+			pi.preset_item_id,
+			pi.preset_id,
+			pi.product_id,
+			p.name  AS product_name,
+			p.price AS product_price,
+			p.image_url AS product_image_url
+		FROM preset_items pi
+		JOIN products p ON p.product_id = pi.product_id
+		WHERE pi.preset_id = $1
 	`
 
-	var raws []presetItemDB
+	var rows []presetItemDetailedDB
 
 	if err := database.WithQuery(ctx, r.log, qItems, func() error {
-		return r.db.SelectContext(ctx, &raws, qItems, id)
+		return r.db.SelectContext(ctx, &rows, qItems, id)
 	}); err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-	for _, raw := range raws {
-		p.Items = append(p.Items, preset.PresetItem{
-			ID:        raw.ID,
-			PresetID:  raw.PresetID,
-			ProductID: raw.ProductID,
-		})
+	for _, row := range rows {
+		item := row.toDomain()
+		p.Items = append(p.Items, item)
 	}
 	return p, nil
 }
@@ -166,16 +164,7 @@ func (r *PGPresetRepository) ListDetailed(ctx context.Context) ([]preset.Preset,
 		WHERE pi.preset_id = ANY($1)
 	`
 
-	type itemRow struct {
-		PresetItemID int64          `db:"preset_item_id"`
-		PresetID     int64          `db:"preset_id"`
-		ProductID    int64          `db:"product_id"`
-		Name         string         `db:"product_name"`
-		Price        float64        `db:"product_price"`
-		ImageURL     sql.NullString `db:"product_image_url"`
-	}
-
-	var rows []itemRow
+	var rows []presetItemDetailedDB
 	if err := database.WithQuery(ctx, r.log, qItems, func() error {
 		return r.db.SelectContext(ctx, &rows, qItems, pq.Array(ids))
 	}); err != nil {
@@ -188,17 +177,7 @@ func (r *PGPresetRepository) ListDetailed(ctx context.Context) ([]preset.Preset,
 	}
 
 	for _, row := range rows {
-		item := preset.PresetItem{
-			ID:        row.PresetItemID,
-			PresetID:  row.PresetID,
-			ProductID: row.ProductID,
-			Product: &product.ProductSummary{
-				ID:       row.ProductID,
-				Name:     row.Name,
-				Price:    row.Price,
-				ImageURL: optionalString(row.ImageURL),
-			},
-		}
+		item := row.toDomain()
 		byID[row.PresetID].Items = append(byID[row.PresetID].Items, item)
 	}
 
@@ -233,13 +212,6 @@ func (r *PGPresetRepository) Delete(ctx context.Context, id int64) error {
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return preset.ErrPresetNotFound
-	}
-	return nil
-}
-
-func optionalString(ns sql.NullString) *string {
-	if ns.Valid {
-		return &ns.String
 	}
 	return nil
 }

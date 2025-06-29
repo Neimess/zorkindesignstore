@@ -6,10 +6,12 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"sort"
 	"testing"
 	"time"
 
 	cat "github.com/Neimess/zorkin-store-project/internal/domain/category"
+	"github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -66,6 +68,10 @@ func (s *CategoryRepositorySuite) SetupSuite() {
 	s.repo = NewPGCategoryRepository(Deps{db: s.db, log: slog.New(slog.DiscardHandler)})
 }
 
+func (s *CategoryRepositorySuite) SetupTest() {
+	_, _ = s.db.Exec(`DELETE FROM categories`)
+}
+
 func (s *CategoryRepositorySuite) TearDownSuite() {
 	_ = s.db.Close()
 	_ = s.container.Terminate(s.ctx)
@@ -101,7 +107,7 @@ func (s *CategoryRepositorySuite) Test_CreateAndGetByID() {
 
 func (s *CategoryRepositorySuite) Test_GetByID_NotFound() {
 	_, err := s.repo.GetByID(s.ctx, 99999)
-	assert.ErrorIs(s.T(), err, cat.ErrCategoryNotFound)
+	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 
 func (s *CategoryRepositorySuite) Test_Update() {
@@ -117,7 +123,7 @@ func (s *CategoryRepositorySuite) Test_Update() {
 
 func (s *CategoryRepositorySuite) Test_Update_NotFound() {
 	err := s.repo.Update(s.ctx, 99999, "name")
-	assert.ErrorIs(s.T(), err, cat.ErrCategoryNotFound)
+	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 
 func (s *CategoryRepositorySuite) Test_Delete() {
@@ -127,12 +133,12 @@ func (s *CategoryRepositorySuite) Test_Delete() {
 	require.NoError(s.T(), err)
 
 	_, err = s.repo.GetByID(s.ctx, id)
-	assert.ErrorIs(s.T(), err, cat.ErrCategoryNotFound)
+	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 
 func (s *CategoryRepositorySuite) Test_Delete_NotFound() {
 	err := s.repo.Delete(s.ctx, 99999)
-	assert.ErrorIs(s.T(), err, cat.ErrCategoryNotFound)
+	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 
 func (s *CategoryRepositorySuite) Test_List() {
@@ -143,7 +149,9 @@ func (s *CategoryRepositorySuite) Test_List() {
 
 	listed, err := s.repo.List(s.ctx)
 	require.NoError(s.T(), err)
-
+	sort.Slice(listed, func(i, j int) bool {
+		return listed[i].Name < listed[j].Name
+	})
 	assert.Equal(s.T(), []string{"aaa", "bbb", "ccc"}, []string{listed[0].Name, listed[1].Name, listed[2].Name})
 }
 

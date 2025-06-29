@@ -24,17 +24,21 @@ type Service struct {
 
 type Deps struct {
 	repo CategoryRepository
+	log  *slog.Logger
 }
 
-func NewDeps(repo CategoryRepository) (*Deps, error) {
+func NewDeps(repo CategoryRepository, log *slog.Logger) (*Deps, error) {
 	if repo == nil {
 		return nil, errors.New("category: missing CategoryRepository")
 	}
-	return &Deps{repo: repo}, nil
+	if log == nil {
+		return nil, errors.New("category: missing logger")
+	}
+	return &Deps{repo: repo, log: log.With("component", "service.category")}, nil
 }
 
 func New(d *Deps) *Service {
-	return &Service{repo: d.repo, log: slog.Default().With("component", "service.category")}
+	return &Service{repo: d.repo, log: d.log}
 }
 
 func (s *Service) CreateCategory(ctx context.Context, cat *category.Category) (*category.Category, error) {

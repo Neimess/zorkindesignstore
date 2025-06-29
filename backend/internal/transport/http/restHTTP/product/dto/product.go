@@ -1,15 +1,27 @@
 package dto
 
-import "time"
+import (
+	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	"time"
+)
 
 //swagger:model ProductCreateRequest
 type ProductCreateRequest struct {
 	Name        string                         `json:"name" example:"Керамогранит" validate:"required,min=2"`
-	Price       *float64                       `json:"price" example:"3490" validate:"required,gt=0"`
+	Price       float64                        `json:"price" example:"3490" validate:"required,gt=0"`
 	Description *string                        `json:"description,omitempty" example:"Прочный плиточный материал"`
 	CategoryID  *int64                         `json:"category_id" example:"1" validate:"required,gt=0"`
 	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"url"`
 	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
+}
+
+type ProductUpdateRequest struct {
+	Name        string                         `json:"name"        validate:"required"`
+	Price       float64                        `json:"price"       validate:"required,gt=0"`
+	Description *string                        `json:"description,omitempty" validate:"omitempty"`
+	CategoryID  *int64                         `json:"category_id" validate:"required,gt=0"`
+	ImageURL    *string                        `json:"image_url,omitempty" validate:"omitempty,url"`
+	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"omitempty,dive"`
 }
 
 //swagger:model ProductAttributeValueRequest
@@ -38,4 +50,67 @@ type ProductAttributeValueResponse struct {
 	Value       string  `json:"value" example:"1.25"`
 }
 
-type ProductListResponse []ProductResponse
+func MapCreateReqToDomain(req *ProductCreateRequest) *prodDom.Product {
+	p := &prodDom.Product{
+		Name:        req.Name,
+		Price:       req.Price,
+		Description: *req.Description,
+		CategoryID:  *req.CategoryID,
+		ImageURL:    *req.ImageURL,
+	}
+	for _, a := range req.Attributes {
+		p.Attributes = append(p.Attributes, prodDom.ProductAttribute{
+			AttributeID: *a.AttributeID,
+			Value:       a.Value,
+		})
+	}
+	return p
+}
+
+func MapDomainToProductResponse(p *prodDom.Product) *ProductResponse {
+	resp := &ProductResponse{
+		ProductID:   p.ID,
+		Name:        p.Name,
+		Price:       p.Price,
+		Description: &p.Description,
+		CategoryID:  p.CategoryID,
+		ImageURL:    &p.ImageURL,
+		CreatedAt:   p.CreatedAt,
+	}
+	for _, pa := range p.Attributes {
+
+		resp.Attributes = append(resp.Attributes, ProductAttributeValueResponse{
+			AttributeID: pa.AttributeID,
+			Name:        pa.Attribute.Name,
+			Unit:        pa.Attribute.Unit,
+			Value:       pa.Value,
+		})
+	}
+	return resp
+}
+
+func MapUpdateReqToDomain(id int64, req *ProductUpdateRequest) *prodDom.Product {
+	p := &prodDom.Product{
+		ID:         id,
+		Name:       req.Name,
+		Price:      req.Price,
+		CategoryID: *req.CategoryID,
+	}
+	if req.Description != nil {
+		p.Description = *req.Description
+	}
+	if req.ImageURL != nil {
+		p.ImageURL = *req.ImageURL
+	}
+	if req.Attributes != nil {
+		for _, a := range req.Attributes {
+			if a.AttributeID != nil {
+				p.Attributes = append(p.Attributes, prodDom.ProductAttribute{
+					AttributeID: *a.AttributeID,
+					Value:       a.Value,
+				})
+			}
+		}
+	}
+	return p
+}

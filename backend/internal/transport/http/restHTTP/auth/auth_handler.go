@@ -15,14 +15,19 @@ type AuthService interface {
 
 type Deps struct {
 	srv AuthService
+	log *slog.Logger
 }
 
-func NewDeps(srv AuthService) (*Deps, error) {
+func NewDeps(log *slog.Logger, srv AuthService) (Deps, error) {
 	if srv == nil {
-		return nil, fmt.Errorf("auth: missing AuthService")
+		return Deps{}, fmt.Errorf("auth: missing AuthService")
 	}
-	return &Deps{
+	if log == nil {
+		return Deps{}, fmt.Errorf("auth: missing Logger")
+	}
+	return Deps{
 		srv: srv,
+		log: log.With("component", "restHTTP.auth"),
 	}, nil
 }
 
@@ -31,11 +36,11 @@ type Handler struct {
 	log *slog.Logger
 }
 
-func New(d *Deps) *Handler {
+func New(d Deps) *Handler {
 
 	return &Handler{
 		srv: d.srv,
-		log: slog.Default().With("component", "handler.auth"),
+		log: d.log,
 	}
 }
 

@@ -8,15 +8,9 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
+	"github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/jmoiron/sqlx"
-)
-
-var (
-	ErrCategoryNotFound      = errors.New("category not found")
-	ErrCategoryExists        = errors.New("category already exists with this name")
-	ErrCategoryInUse         = errors.New("category is in use and cannot be deleted")
-	ErrCategoryDuplicateName = errors.New("category already exists with this name")
 )
 
 type Deps struct {
@@ -98,7 +92,7 @@ func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName str
 		return r.mapPostgreSQLError(err)
 	}
 	if rows == 0 {
-		return catDom.ErrCategoryNotFound
+		return app_error.ErrNotFound
 	}
 	return nil
 }
@@ -116,7 +110,7 @@ func (r *PGCategoryRepository) Delete(ctx context.Context, id int64) error {
 		return r.mapPostgreSQLError(err)
 	}
 	if rows == 0 {
-		return catDom.ErrCategoryNotFound
+		return app_error.ErrNotFound
 	}
 	return nil
 }

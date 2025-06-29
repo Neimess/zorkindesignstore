@@ -170,6 +170,63 @@ func (_c *MockProductRepository_CreateWithAttrs_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// Delete provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) Delete(ctx context.Context, id int64) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockProductRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockProductRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id int64
+func (_e *MockProductRepository_Expecter) Delete(ctx interface{}, id interface{}) *MockProductRepository_Delete_Call {
+	return &MockProductRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+}
+
+func (_c *MockProductRepository_Delete_Call) Run(run func(ctx context.Context, id int64)) *MockProductRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductRepository_Delete_Call) Return(err error) *MockProductRepository_Delete_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockProductRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, id int64) error) *MockProductRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetWithAttrs provides a mock function for the type MockProductRepository
 func (_mock *MockProductRepository) GetWithAttrs(ctx context.Context, id int64) (*product.Product, error) {
 	ret := _mock.Called(ctx, id)
@@ -302,6 +359,63 @@ func (_c *MockProductRepository_ListByCategory_Call) Return(products []product.P
 }
 
 func (_c *MockProductRepository_ListByCategory_Call) RunAndReturn(run func(ctx context.Context, catID int64) ([]product.Product, error)) *MockProductRepository_ListByCategory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateWithAttrs provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) UpdateWithAttrs(ctx context.Context, p *product.Product) error {
+	ret := _mock.Called(ctx, p)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateWithAttrs")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) error); ok {
+		r0 = returnFunc(ctx, p)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockProductRepository_UpdateWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWithAttrs'
+type MockProductRepository_UpdateWithAttrs_Call struct {
+	*mock.Call
+}
+
+// UpdateWithAttrs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - p *product.Product
+func (_e *MockProductRepository_Expecter) UpdateWithAttrs(ctx interface{}, p interface{}) *MockProductRepository_UpdateWithAttrs_Call {
+	return &MockProductRepository_UpdateWithAttrs_Call{Call: _e.mock.On("UpdateWithAttrs", ctx, p)}
+}
+
+func (_c *MockProductRepository_UpdateWithAttrs_Call) Run(run func(ctx context.Context, p *product.Product)) *MockProductRepository_UpdateWithAttrs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *product.Product
+		if args[1] != nil {
+			arg1 = args[1].(*product.Product)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductRepository_UpdateWithAttrs_Call) Return(err error) *MockProductRepository_UpdateWithAttrs_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockProductRepository_UpdateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) error) *MockProductRepository_UpdateWithAttrs_Call {
 	_c.Call.Return(run)
 	return _c
 }

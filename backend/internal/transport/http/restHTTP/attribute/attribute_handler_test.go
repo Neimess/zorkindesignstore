@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,13 +26,21 @@ type fakeValidator struct{ err error }
 func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error { return f.err }
 
 func newHandler(mockSvc *mocks.MockAttributeService, valErr error) *Handler {
-	dep, err := NewDeps(mockSvc, validator.New())
+	dep, err := NewDeps(validator.New(), slog.New(slog.DiscardHandler), mockSvc)
 	if err != nil {
 		return nil
 	}
 	h := New(dep)
 	h.val = fakeValidator{err: valErr}
 	return h
+}
+
+func withChiParams(r *http.Request, params map[string]string) *http.Request {
+	chiCtx := chi.NewRouteContext()
+	for k, v := range params {
+		chiCtx.URLParams.Add(k, v)
+	}
+	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, chiCtx))
 }
 
 func TestCreateAttributesBatch_Success(t *testing.T) {
@@ -43,9 +52,7 @@ func TestCreateAttributesBatch_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "/batch", bytes.NewReader(body))
-	chiCtx := chi.NewRouteContext()
-	chiCtx.URLParams.Add("categoryID", "1")
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+	req = withChiParams(req, map[string]string{"categoryID": "1"})
 	w := httptest.NewRecorder()
 
 	mockSvc.
@@ -118,9 +125,7 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 			h := newHandler(mockSvc, nil)
 
 			req := httptest.NewRequest(http.MethodPost, "/batch", bytes.NewReader([]byte(tc.body)))
-			chiCtx := chi.NewRouteContext()
-			chiCtx.URLParams.Add("categoryID", tc.vars["categoryID"])
-			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+			req = withChiParams(req, tc.vars)
 			w := httptest.NewRecorder()
 
 			if tc.svcErr != nil {

@@ -40,35 +40,35 @@ func New(deps *Deps) (*Handlers, error) {
 	}
 
 	// product handler
-	prodDeps, err := product.NewDeps(deps.ProductService, deps.Validator)
+	prodDeps, err := product.NewDeps(deps.Validator, deps.Logger, deps.ProductService)
 	if err != nil {
 		return nil, fmt.Errorf("product handler init: %w", err)
 	}
 	prodHandler := product.New(prodDeps)
 
 	// category handler
-	catDeps, err := category.NewDeps(deps.CategoryService, deps.Validator)
+	catDeps, err := category.NewDeps(deps.Validator, deps.Logger, deps.CategoryService)
 	if err != nil {
 		return nil, fmt.Errorf("category handler init: %w", err)
 	}
 	catHandler := category.New(catDeps)
 
 	// auth handler
-	authDeps, err := auth.NewDeps(deps.AuthService)
+	authDeps, err := auth.NewDeps(deps.Logger, deps.AuthService)
 	if err != nil {
 		return nil, fmt.Errorf("auth handler init: %w", err)
 	}
 	authHandler := auth.New(authDeps)
 
 	// preset handler
-	presetDeps, err := preset.NewDeps(deps.PresetService)
+	presetDeps, err := preset.NewDeps(deps.Validator, deps.Logger, deps.PresetService)
 	if err != nil {
 		return nil, fmt.Errorf("preset handler init: %w", err)
 	}
 	presetHandler := preset.New(presetDeps)
 
 	// attribute handler
-	attrDeps, err := attribute.NewDeps(deps.AttributeService, deps.Validator)
+	attrDeps, err := attribute.NewDeps(deps.Validator, deps.Logger, deps.AttributeService)
 	if err != nil {
 		return nil, fmt.Errorf("attribute handler init: %w", err)
 	}

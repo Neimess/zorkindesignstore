@@ -170,6 +170,63 @@ func (_c *MockProductService_CreateWithAttrs_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// Delete provides a mock function for the type MockProductService
+func (_mock *MockProductService) Delete(ctx context.Context, id int64) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockProductService_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockProductService_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id int64
+func (_e *MockProductService_Expecter) Delete(ctx interface{}, id interface{}) *MockProductService_Delete_Call {
+	return &MockProductService_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+}
+
+func (_c *MockProductService_Delete_Call) Run(run func(ctx context.Context, id int64)) *MockProductService_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductService_Delete_Call) Return(err error) *MockProductService_Delete_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockProductService_Delete_Call) RunAndReturn(run func(ctx context.Context, id int64) error) *MockProductService_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByCategoryID provides a mock function for the type MockProductService
 func (_mock *MockProductService) GetByCategoryID(ctx context.Context, categoryID int64) ([]product.Product, error) {
 	ret := _mock.Called(ctx, categoryID)
@@ -302,6 +359,63 @@ func (_c *MockProductService_GetDetailed_Call) Return(product1 *product.Product,
 }
 
 func (_c *MockProductService_GetDetailed_Call) RunAndReturn(run func(ctx context.Context, id int64) (*product.Product, error)) *MockProductService_GetDetailed_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function for the type MockProductService
+func (_mock *MockProductService) Update(ctx context.Context, product1 *product.Product) error {
+	ret := _mock.Called(ctx, product1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) error); ok {
+		r0 = returnFunc(ctx, product1)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockProductService_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockProductService_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - product1 *product.Product
+func (_e *MockProductService_Expecter) Update(ctx interface{}, product1 interface{}) *MockProductService_Update_Call {
+	return &MockProductService_Update_Call{Call: _e.mock.On("Update", ctx, product1)}
+}
+
+func (_c *MockProductService_Update_Call) Run(run func(ctx context.Context, product1 *product.Product)) *MockProductService_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *product.Product
+		if args[1] != nil {
+			arg1 = args[1].(*product.Product)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockProductService_Update_Call) Return(err error) *MockProductService_Update_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockProductService_Update_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) error) *MockProductService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

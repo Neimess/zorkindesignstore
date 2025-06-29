@@ -4,6 +4,7 @@ package attribute
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 
 	attrDom "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
@@ -32,7 +33,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.repoAttr = new(mocks.MockAttributeRepository)
 	s.repoCat = new(catMocks.MockCategoryRepository)
 
-	deps, err := NewDeps(s.repoAttr, s.repoCat)
+	deps, err := NewDeps(s.repoAttr, s.repoCat, slog.New(slog.DiscardHandler))
 	s.Require().NoError(err)
 	s.svc = New(deps)
 }

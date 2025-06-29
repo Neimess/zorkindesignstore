@@ -16,13 +16,17 @@ type Service struct {
 
 type Deps struct {
 	jwtGen JWTGenerator
+	log    *slog.Logger
 }
 
-func NewDeps(jwtGen JWTGenerator) (*Deps, error) {
+func NewDeps(jwtGen JWTGenerator, log *slog.Logger) (*Deps, error) {
 	if jwtGen == nil {
 		return nil, fmt.Errorf("auth service: JWTGenerator is nil")
 	}
-	return &Deps{jwtGen: jwtGen}, nil
+	if log == nil {
+		return nil, fmt.Errorf("auth service: logger is nil")
+	}
+	return &Deps{jwtGen: jwtGen, log: log.With("component", "service.auth")}, nil
 }
 
 func New(deps *Deps) *Service {

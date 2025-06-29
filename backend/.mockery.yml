@@ -48,6 +48,15 @@ packages:
       formatter: goimports
       template: testify
 
+  github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth:
+    config:
+      filename: auth_handler_mock.go
+      dir: '{{.InterfaceDir}}/mocks'
+      structname: MockAuthService
+      pkgname: mocks
+      formatter: goimports
+      template: testify
+
   github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category:
     config:
       filename: category_handler_mock.go

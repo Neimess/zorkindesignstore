@@ -33,8 +33,12 @@ func New(deps Deps) (*Repositories, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init attribute deps: %w", err)
 	}
+	depsProduct, err := product.NewDeps(deps.DB, deps.Logger)
+	if err != nil {
+		return nil, fmt.Errorf("init product deps: %w", err)
+	}
 	r := &Repositories{
-		ProductRepository:   product.NewPGProductRepository(deps.DB, deps.Logger),
+		ProductRepository:   product.NewPGProductRepository(depsProduct),
 		CategoryRepository:  category.NewPGCategoryRepository(depsCat),
 		PresetRepository:    preset.NewPGPresetRepository(deps.DB, deps.Logger),
 		AttributeRepository: attribute.NewPGAttributeRepository(depsAttr),

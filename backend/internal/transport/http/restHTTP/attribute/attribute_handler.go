@@ -27,18 +27,23 @@ type AttributeService interface {
 type Deps struct {
 	srv AttributeService
 	val interfaces.Validator
+	log *slog.Logger
 }
 
-func NewDeps(srv AttributeService, val interfaces.Validator) (*Deps, error) {
+func NewDeps(val interfaces.Validator, log *slog.Logger, srv AttributeService) (Deps, error) {
 	if srv == nil {
-		return nil, errors.New("attribute handler: missing AttributeService")
+		return Deps{}, errors.New("attribute handler: missing AttributeService")
 	}
 	if val == nil {
-		return nil, errors.New("attribute handler: missing Validator")
+		return Deps{}, errors.New("attribute handler: missing Validator")
 	}
-	return &Deps{
+	if log == nil {
+		return Deps{}, errors.New("attribute handler: missing Logger")
+	}
+	return Deps{
 		srv: srv,
 		val: val,
+		log: log.With("component", "rest.attribute"),
 	}, nil
 }
 
@@ -48,11 +53,11 @@ type Handler struct {
 	val interfaces.Validator
 }
 
-func New(d *Deps) *Handler {
+func New(d Deps) *Handler {
 
 	return &Handler{
 		srv: d.srv,
-		log: slog.Default().With("component", "rest.attribute"),
+		log: d.log,
 		val: d.val,
 	}
 }
@@ -112,7 +117,7 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 // @Produce      json
 // @Param        categoryID path int true "Category ID"
 // @Param        data body dto.AttributeRequest true "Attribute data"
-// @Success      201 {object} dto.AttributeResponse
+// @Success      201 "Created"
 // @Failure      400 {object} httputils.ErrorResponse
 // @Failure      422 {object} httputils.ErrorResponse
 // @Failure      500 {object} httputils.ErrorResponse
@@ -141,19 +146,13 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 	}
 	attr := req.MapToDomain()
 	attr.CategoryID = categoryID
-	attr, err := h.srv.CreateAttribute(ctx, categoryID, attr)
+	_, err := h.srv.CreateAttribute(ctx, categoryID, attr)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
 
-	resp := dto.AttributeResponse{
-		ID:         attr.ID,
-		Name:       attr.Name,
-		Unit:       attr.Unit,
-		CategoryID: attr.CategoryID,
-	}
-	httputils.WriteJSON(w, http.StatusCreated, resp)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // ListAttributes godoc

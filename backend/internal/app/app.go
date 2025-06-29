@@ -75,11 +75,12 @@ func NewApplication(dep *Deps) (*Application, error) {
 
 	services, err := service.New(
 		service.NewDeps(
+			jwtGenerator,
+			dep.Logger,
 			repos.ProductRepository,
 			repos.CategoryRepository,
 			repos.PresetRepository,
 			repos.AttributeRepository,
-			jwtGenerator,
 		),
 	)
 	if err == nil {

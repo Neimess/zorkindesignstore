@@ -10,9 +10,9 @@ import (
 type Preset struct {
 	ID          int64
 	Name        string
-	Description string
+	Description *string
 	TotalPrice  float64
-	ImageURL    string
+	ImageURL    *string
 	CreatedAt   time.Time
 	Items       []PresetItem
 }
@@ -32,7 +32,7 @@ func (p *Preset) Validate() error {
 	if len(name) > 100 {
 		return ErrNameTooLong
 	}
-	if len(p.Description) > 500 {
+	if len(*p.Description) > 500 {
 		return ErrDescriptionTooLong
 	}
 	if len(p.Items) == 0 {

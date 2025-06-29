@@ -4,6 +4,7 @@ package service
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/service/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/service/auth"
@@ -18,14 +19,16 @@ type Deps struct {
 	PresetRepo    preset.PresetRepository
 	AttributeRepo attribute.AttributeRepository
 	JWTGenerator  auth.JWTGenerator
+	Logger        *slog.Logger
 }
 
 func NewDeps(
+	jwtGenerator auth.JWTGenerator,
+	logger *slog.Logger,
 	productRepo product.ProductRepository,
 	categoryRepo category.CategoryRepository,
 	presetRepo preset.PresetRepository,
 	attributeRepo attribute.AttributeRepository,
-	jwtGenerator auth.JWTGenerator,
 ) Deps {
 	return Deps{
 		ProductRepo:   productRepo,
@@ -33,6 +36,7 @@ func NewDeps(
 		PresetRepo:    presetRepo,
 		AttributeRepo: attributeRepo,
 		JWTGenerator:  jwtGenerator,
+		Logger:        logger,
 	}
 }
 
@@ -45,32 +49,31 @@ type Service struct {
 }
 
 func New(d Deps) (*Service, error) {
-	// Delegate dependency validation to service-specific NewDeps
-	prodDeps, err := product.NewDeps(d.ProductRepo)
+	prodDeps, err := product.NewDeps(d.ProductRepo, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("product service init: %w", err)
 	}
 	prodSvc := product.New(prodDeps)
 
-	catDeps, err := category.NewDeps(d.CategoryRepo)
+	catDeps, err := category.NewDeps(d.CategoryRepo, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("category service init: %w", err)
 	}
 	catSvc := category.New(catDeps)
 
-	authDeps, err := auth.NewDeps(d.JWTGenerator)
+	authDeps, err := auth.NewDeps(d.JWTGenerator, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("auth service init: %w", err)
 	}
 	authSvc := auth.New(authDeps)
 
-	presetDeps, err := preset.NewDeps(d.PresetRepo)
+	presetDeps, err := preset.NewDeps(d.PresetRepo, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("preset service init: %w", err)
 	}
 	presetSvc := preset.New(presetDeps)
 
-	attrDeps, err := attribute.NewDeps(d.AttributeRepo, d.CategoryRepo)
+	attrDeps, err := attribute.NewDeps(d.AttributeRepo, d.CategoryRepo, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("attribute service init: %w", err)
 	}

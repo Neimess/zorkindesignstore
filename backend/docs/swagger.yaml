@@ -251,6 +251,27 @@ definitions:
         example: 10
         type: integer
     type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest:
+    properties:
+      attributes:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest'
+        type: array
+      category_id:
+        type: integer
+      description:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+    required:
+    - category_id
+    - name
+    - price
+    type: object
   github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse:
     properties:
       message:
@@ -621,7 +642,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: No Content
         "400":
           description: Bad request
           schema:
@@ -663,6 +684,77 @@ paths:
       summary: Create product
       tags:
       - products
+  /api/admin/product/{id}:
+    delete:
+      description: Remove a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a product
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update an existing product (and its attributes if provided)
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Product data to update
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a product
+      tags:
+      - products
   /api/admin/product/detailed:
     post:
       consumes:
@@ -680,7 +772,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: No Content
         "400":
           description: Bad request
           schema:

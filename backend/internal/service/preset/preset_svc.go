@@ -25,19 +25,23 @@ type Service struct {
 
 type Deps struct {
 	Repo PresetRepository
+	log  *slog.Logger
 }
 
-func NewDeps(repo PresetRepository) (*Deps, error) {
+func NewDeps(repo PresetRepository, log *slog.Logger) (*Deps, error) {
 	if repo == nil {
 		return nil, errors.New("preset: missing PresetRepository")
 	}
-	return &Deps{Repo: repo}, nil
+	if log == nil {
+		return nil, errors.New("preset: missing logger")
+	}
+	return &Deps{Repo: repo, log: log.With("component", "service.preset")}, nil
 }
 
 func New(d *Deps) *Service {
 	return &Service{
 		repo: d.Repo,
-		log:  slog.Default().With("component", "service.preset"),
+		log:  d.log,
 	}
 }
 

@@ -22,18 +22,22 @@ type AttributeRepository interface {
 }
 
 type Deps struct {
-	RepoAttr AttributeRepository
-	RepoCat  category.CategoryRepository
+	repoAttr AttributeRepository
+	repoCat  category.CategoryRepository
+	log      *slog.Logger
 }
 
-func NewDeps(repoAttr AttributeRepository, repoCat category.CategoryRepository) (*Deps, error) {
+func NewDeps(repoAttr AttributeRepository, repoCat category.CategoryRepository, log *slog.Logger) (*Deps, error) {
 	if repoAttr == nil {
 		return nil, errors.New("attribute service: missing AttributeRepository")
 	}
 	if repoCat == nil {
 		return nil, errors.New("attribute service: missing CategoryRepository")
 	}
-	return &Deps{RepoAttr: repoAttr, RepoCat: repoCat}, nil
+	if log == nil {
+		return nil, errors.New("attribute service: missing logger")
+	}
+	return &Deps{repoAttr: repoAttr, repoCat: repoCat, log: log.With("component", "service.attribute")}, nil
 }
 
 type Service struct {
@@ -44,9 +48,9 @@ type Service struct {
 
 func New(d *Deps) *Service {
 	return &Service{
-		repoAttr: d.RepoAttr,
-		repoCat:  d.RepoCat,
-		log:      slog.Default().With("component", "AttributeService"),
+		repoAttr: d.repoAttr,
+		repoCat:  d.repoCat,
+		log:      d.log,
 	}
 }
 

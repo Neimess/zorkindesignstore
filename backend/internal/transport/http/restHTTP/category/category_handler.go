@@ -10,7 +10,6 @@ import (
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
-	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
 
@@ -31,26 +30,31 @@ type Handler struct {
 type Deps struct {
 	svc CategoryService
 	val interfaces.Validator
+	log *slog.Logger
 }
 
-func NewDeps(svc CategoryService, val interfaces.Validator) (*Deps, error) {
+func NewDeps(val interfaces.Validator, log *slog.Logger, svc CategoryService) (Deps, error) {
 	if svc == nil {
-		return nil, errors.New("category handler: missing CategoryService")
+		return Deps{}, errors.New("category handler: missing CategoryService")
 	}
 	if val == nil {
-		return nil, errors.New("category handler: missing validator")
+		return Deps{}, errors.New("category handler: missing validator")
 	}
-	return &Deps{
+	if log == nil {
+		return Deps{}, errors.New("category handler: missing logger")
+	}
+	return Deps{
 		svc: svc,
 		val: val,
+		log: log.With("component", "restHTTP.category"),
 	}, nil
 }
 
-func New(deps *Deps) *Handler {
+func New(deps Deps) *Handler {
 	return &Handler{
 		srv: deps.svc,
 		val: deps.val,
-		log: slog.Default().With("component", "restHTTP.category"),
+		log: deps.log,
 	}
 }
 
@@ -62,7 +66,7 @@ func New(deps *Deps) *Handler {
 //		@Produce		json
 //	 @Security       BearerAuth
 //		@Param			category	body		dto.CategoryCreateRequest	true	"Category to create"
-//		@Success		201
+//		@Success		201	 "Created"
 //		@Failure		400			{object}	httputils.ErrorResponse
 //		@Failure		409			{object}	httputils.ErrorResponse
 //		@Failure		500			{object}	httputils.ErrorResponse
@@ -90,22 +94,12 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cat := input.ToDomainCreate()
-	cat, err := h.srv.CreateCategory(ctx, cat)
-	log.Debug("service CreateCategory called", slog.Any("category", cat), slog.Any("error", err))
+	_, err := h.srv.CreateCategory(ctx, cat)
 	if err != nil {
-		switch {
-		case errors.Is(err, catDom.ErrCategoryNameEmpty):
-			httputils.WriteError(w, http.StatusBadRequest, err.Error())
-		case errors.Is(err, der.ErrConflict):
-			httputils.WriteError(w, http.StatusConflict, err.Error())
-		default:
-			log.Error("service CreateCategory failed", slog.Any("error", err))
-			httputils.WriteError(w, http.StatusInternalServerError, "internal error")
-		}
+		h.handleServiceError(w, err)
 		return
 	}
-	resp := dto.ToDTOResponse(cat)
-	httputils.WriteJSON(w, http.StatusCreated, resp)
+	w.WriteHeader(http.StatusCreated)
 }
 
 // -----------------------------------------------------------------------------
@@ -123,7 +117,6 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Router			/api/category/{id} [get]
 func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := h.log.With("op", "GetCategory")
 	id, err := httputils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
@@ -131,12 +124,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	}
 	cat, err := h.srv.GetCategory(ctx, id)
 	if err != nil {
-		if errors.Is(err, catDom.ErrCategoryNotFound) {
-			httputils.WriteError(w, http.StatusNotFound, err.Error())
-		} else {
-			log.Error("service GetCategory failed", slog.Any("error", err))
-			h.handleServiceError(w, err)
-		}
+		h.handleServiceError(w, err)
 		return
 	}
 	resp := dto.ToDTOResponse(cat)
@@ -154,10 +142,8 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 //	@Router			/api/category [get]
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	log := h.log.With("op", "ListCategories")
 	cats, err := h.srv.ListCategories(ctx)
 	if err != nil {
-		log.Error("service ListCategories failed", slog.Any("error", err))
 		h.handleServiceError(w, err)
 		return
 	}

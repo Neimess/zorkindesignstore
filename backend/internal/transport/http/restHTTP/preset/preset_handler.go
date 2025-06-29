@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-playground/validator/v10"
@@ -24,28 +25,37 @@ type PresetService interface {
 
 type Deps struct {
 	pSrv      PresetService
-	validator *validator.Validate
+	validator interfaces.Validator
+	log       *slog.Logger
 }
 
-func NewDeps(pSrv PresetService) (*Deps, error) {
+func NewDeps(validator interfaces.Validator, log *slog.Logger, pSrv PresetService) (Deps, error) {
 	if pSrv == nil {
-		return nil, errors.New("preset: missing PresetService")
+		return Deps{}, errors.New("preset: missing PresetService")
 	}
-	return &Deps{
-		pSrv: pSrv,
+	if validator == nil {
+		return Deps{}, errors.New("preset: missing validator")
+	}
+	if log == nil {
+		return Deps{}, errors.New("preset: missing logger")
+	}
+	return Deps{
+		pSrv:      pSrv,
+		validator: validator,
+		log:       log.With("component", "restHTTP.preset"),
 	}, nil
 }
 
 type Handler struct {
 	srv PresetService
 	log *slog.Logger
-	val *validator.Validate
+	val interfaces.Validator
 }
 
-func New(d *Deps) *Handler {
+func New(d Deps) *Handler {
 	return &Handler{
 		srv: d.pSrv,
-		log: slog.Default().With("component", "transport.http.restHTTP.preset"),
+		log: d.log,
 		val: d.validator,
 	}
 }
@@ -82,7 +92,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	// 2) Validate struct tags
 	if err := h.val.StructCtx(ctx, &in); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
-		// Распакуем каждый field validation error
+
 		var verrs = make([]dto.FieldError, 0)
 		for _, fe := range err.(validator.ValidationErrors) {
 			verrs = append(verrs, dto.FieldError{

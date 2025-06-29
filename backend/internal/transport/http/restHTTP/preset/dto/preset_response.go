@@ -4,9 +4,9 @@ package dto
 type PresetResponse struct {
 	PresetID    int64                `json:"preset_id" example:"1"`
 	Name        string               `json:"name" example:"Комплект для ванной"`
-	Description string               `json:"description,omitempty" example:"Полный комплект для ванной комнаты"`
+	Description *string              `json:"description,omitempty" example:"Полный комплект для ванной комнаты"`
 	TotalPrice  float64              `json:"total_price" example:"15000"`
-	ImageURL    string               `json:"image_url,omitempty" example:"https://example.com/image.png"`
+	ImageURL    *string              `json:"image_url,omitempty" example:"https://example.com/image.png"`
 	CreatedAt   string               `json:"created_at" example:"2025-06-20T15:00:00Z"`
 	Items       []PresetResponseItem `json:"items"`
 }
@@ -20,9 +20,9 @@ type PresetResponseID struct {
 type PresetShortResponse struct {
 	PresetID    int64   `json:"preset_id" example:"1"`
 	Name        string  `json:"name" example:"Комплект для ванной"`
-	Description string  `json:"description,omitempty" example:"Для ванной комнаты"`
+	Description *string `json:"description,omitempty" example:"Для ванной комнаты"`
 	TotalPrice  float64 `json:"total_price,omitempty" example:"15000"` // может быть опциональным
-	ImageURL    string  `json:"image_url,omitempty" example:"https://example.com/image.png"`
+	ImageURL    *string `json:"image_url,omitempty" example:"https://example.com/image.png"`
 	CreatedAt   string  `json:"created_at" example:"2025-06-20T15:00:00Z"`
 }
 

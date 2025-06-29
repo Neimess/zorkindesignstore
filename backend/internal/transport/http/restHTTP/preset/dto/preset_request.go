@@ -5,9 +5,9 @@ import "github.com/Neimess/zorkin-store-project/internal/domain/preset"
 //swaggo:model PresetRequest
 type PresetRequest struct {
 	Name        string              `json:"name" validate:"required,min=2"`
-	Description string              `json:"description,omitempty"`
+	Description *string             `json:"description,omitempty"`
 	TotalPrice  float64             `json:"total_price" validate:"gt=0"`
-	ImageURL    string              `json:"image_url,omitempty" validate:"omitempty,url"`
+	ImageURL    *string             `json:"image_url,omitempty" validate:"omitempty,url"`
 	Items       []PresetRequestItem `json:"items" validate:"dive,required"`
 }
 

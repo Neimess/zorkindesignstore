@@ -11,17 +11,13 @@ import (
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
-var (
-	ErrProductNotFound  = errors.New("product not found")
-	ErrBadCategoryID    = errors.New("bad category ID")
-	ErrInvalidAttribute = errors.New("invalid product attribute")
-)
-
 type ProductRepository interface {
 	Create(ctx context.Context, p *domProduct.Product) (int64, error)
 	CreateWithAttrs(ctx context.Context, p *domProduct.Product) (int64, error)
 	GetWithAttrs(ctx context.Context, id int64) (*domProduct.Product, error)
 	ListByCategory(ctx context.Context, catID int64) ([]domProduct.Product, error)
+	UpdateWithAttrs(ctx context.Context, p *domProduct.Product) error
+	Delete(ctx context.Context, id int64) error
 }
 
 type Service struct {
@@ -31,18 +27,22 @@ type Service struct {
 
 type Deps struct {
 	repo ProductRepository
+	log  *slog.Logger
 }
 
-func NewDeps(repo ProductRepository) (*Deps, error) {
+func NewDeps(repo ProductRepository, log *slog.Logger) (*Deps, error) {
 	if repo == nil {
 		return nil, errors.New("product service: missing ProductRepository")
 	}
-	return &Deps{repo: repo}, nil
+	if log == nil {
+		return nil, errors.New("product service: missing logger")
+	}
+	return &Deps{repo: repo, log: log.With("component", "service.product")}, nil
 }
 func New(d *Deps) *Service {
 	return &Service{
 		repo: d.repo,
-		log:  slog.Default().With("component", "service.product"),
+		log:  d.log,
 	}
 }
 
@@ -128,4 +128,45 @@ func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]domProduc
 
 	log.Info("products retrieved", slog.Int64("category_id", catID), slog.Int("count", len(products)))
 	return products, nil
+}
+
+func (s *Service) Update(ctx context.Context, p *domProduct.Product) error {
+	const op = "service.product.Update"
+	log := s.log.With("op", op)
+
+	if err := s.repo.UpdateWithAttrs(ctx, p); err != nil {
+		switch {
+		case errors.Is(err, der.ErrNotFound), errors.Is(err, domProduct.ErrProductNotFound):
+			log.Warn("product not found", slog.Int64("product_id", p.ID))
+			return domProduct.ErrProductNotFound
+
+		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
+			log.Warn("invalid attribute data", slog.Any("error", err))
+			return domProduct.ErrInvalidAttribute
+
+		default:
+			log.Error("repo failed", slog.Any("error", err))
+			return fmt.Errorf("%s: %w", op, err)
+		}
+	}
+
+	log.Info("product updated with attributes", slog.Int64("product_id", p.ID))
+	return nil
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	const op = "service.product.Delete"
+	log := s.log.With("op", op)
+
+	if err := s.repo.Delete(ctx, id); err != nil {
+		if errors.Is(err, der.ErrNotFound) || errors.Is(err, domProduct.ErrProductNotFound) {
+			log.Warn("product not found", slog.Int64("product_id", id))
+			return domProduct.ErrProductNotFound
+		}
+		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("error", err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("product deleted", slog.Int64("product_id", id))
+	return nil
 }

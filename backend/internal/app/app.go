@@ -93,16 +93,21 @@ func NewApplication(dep *Deps) (*Application, error) {
 	// validator
 	val := validator.New()
 
+	handlersDeps, err := restHTTP.NewDeps(
+		dep.Logger,
+		val,
+		services.ProductService,
+		services.CategoryService,
+		services.AuthService,
+		services.PresetService,
+		services.AttributeService,
+	)
+	if err != nil {
+		logNew.Error("handlers dependencies initialization failed", slog.Any("error", err))
+		return nil, fmt.Errorf("application.handlersdeps: %w", err)
+	}
 	// 4. Хендлеры — принимают интерфейсы сервисов (Interface Segregation)
-	restHandlers, err := restHTTP.New(&restHTTP.Deps{
-		Logger:           dep.Logger,
-		Validator:        val,
-		ProductService:   services.ProductService,
-		AuthService:      services.AuthService,
-		PresetService:    services.PresetService,
-		CategoryService:  services.CategoryService,
-		AttributeService: services.AttributeService,
-	})
+	restHandlers, err := restHTTP.New(handlersDeps)
 	if err == nil {
 		logNew.Debug("handlers initialized")
 	} else {
@@ -110,11 +115,21 @@ func NewApplication(dep *Deps) (*Application, error) {
 		return nil, fmt.Errorf("application.handlers: %w", err)
 	}
 	// 5. Сервер — HTTP-сервер
-	srv := rest.NewServer(rest.Deps{
-		Server:   dep.Config.HTTPServer,
-		Config:   dep.Config,
-		Handlers: restHandlers,
-	})
+	depsServer, err := rest.NewDeps(
+		dep.Config,
+		restHandlers,
+		dep.Logger,
+	)
+	if err != nil {
+		logNew.Error("server dependencies initialization failed", slog.Any("error", err))
+		return nil, fmt.Errorf("application.serverdeps: %w", err)
+	}
+	srv, err := rest.NewServer(depsServer)
+	if err != nil {
+		logNew.Error("server initialization failed", slog.Any("error", err))
+		return nil, fmt.Errorf("application.server: %w", err)
+	}
+
 	logNew.Info("http server constructed",
 		slog.String("addr", dep.Config.HTTPServer.Address),
 	)

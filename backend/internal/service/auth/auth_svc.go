@@ -19,19 +19,19 @@ type Deps struct {
 	log    *slog.Logger
 }
 
-func NewDeps(jwtGen JWTGenerator, log *slog.Logger) (*Deps, error) {
+func NewDeps(jwtGen JWTGenerator, log *slog.Logger) (Deps, error) {
 	if jwtGen == nil {
-		return nil, fmt.Errorf("auth service: JWTGenerator is nil")
+		return Deps{}, fmt.Errorf("auth service: JWTGenerator is nil")
 	}
 	if log == nil {
-		return nil, fmt.Errorf("auth service: logger is nil")
+		return Deps{}, fmt.Errorf("auth service: logger is nil")
 	}
-	return &Deps{jwtGen: jwtGen, log: log.With("component", "service.auth")}, nil
+	return Deps{jwtGen: jwtGen, log: log.With("component", "service.auth")}, nil
 }
 
-func New(deps *Deps) *Service {
+func New(deps Deps) *Service {
 	return &Service{
-		log: slog.Default().With("component", "service.auth"),
+		log: deps.log,
 		gen: deps.jwtGen,
 	}
 }

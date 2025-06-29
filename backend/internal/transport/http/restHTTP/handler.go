@@ -22,6 +22,47 @@ type Deps struct {
 	AttributeService attribute.AttributeService
 }
 
+func NewDeps(
+	Logger *slog.Logger,
+	Validator interfaces.Validator,
+	ProductService product.ProductService,
+	CategoryService category.CategoryService,
+	AuthService auth.AuthService,
+	PresetService preset.PresetService,
+	AttributeService attribute.AttributeService,
+) (*Deps, error) {
+	if ProductService == nil {
+		return nil, fmt.Errorf("missing ProductService dependency")
+	}
+	if CategoryService == nil {
+		return nil, fmt.Errorf("missing CategoryService dependency")
+	}
+	if AuthService == nil {
+		return nil, fmt.Errorf("missing AuthService dependency")
+	}
+	if PresetService == nil {
+		return nil, fmt.Errorf("missing PresetService dependency")
+	}
+	if AttributeService == nil {
+		return nil, fmt.Errorf("missing AttributeService dependency")
+	}
+	if Validator == nil {
+		return nil, fmt.Errorf("missing Validator dependency")
+	}
+	if Logger == nil {
+		return nil, fmt.Errorf("missing Logger dependency")
+	}
+	return &Deps{
+		Logger:           Logger,
+		Validator:        Validator,
+		ProductService:   ProductService,
+		CategoryService:  CategoryService,
+		AuthService:      AuthService,
+		PresetService:    PresetService,
+		AttributeService: AttributeService,
+	}, nil
+}
+
 type Handlers struct {
 	ProductHandler   *product.Handler
 	CategoryHandler  *category.Handler
@@ -33,10 +74,6 @@ type Handlers struct {
 func New(deps *Deps) (*Handlers, error) {
 	if deps == nil {
 		return nil, fmt.Errorf("missing deps for handlers")
-	}
-	// ensure logger
-	if deps.Logger == nil {
-		deps.Logger = slog.Default()
 	}
 
 	// product handler

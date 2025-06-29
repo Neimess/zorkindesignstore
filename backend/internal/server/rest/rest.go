@@ -2,6 +2,8 @@ package rest
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -12,9 +14,20 @@ import (
 )
 
 type Deps struct {
-	Server   config.HTTPServer
-	Config   *config.Config
-	Handlers *restHTTP.Handlers
+	cfg      *config.Config
+	handlers *restHTTP.Handlers
+	log      *slog.Logger
+}
+
+func NewDeps(cfg *config.Config, handlers *restHTTP.Handlers, logger *slog.Logger) (Deps, error) {
+	if cfg == nil || handlers == nil || logger == nil {
+		return Deps{}, errors.New("invalid dependencies")
+	}
+	return Deps{
+		cfg:      cfg,
+		handlers: handlers,
+		log:      logger,
+	}, nil
 }
 
 type Server struct {
@@ -22,28 +35,34 @@ type Server struct {
 	log        *slog.Logger
 }
 
-func NewServer(dep Deps) *Server {
+func NewServer(dep Deps) (*Server, error) {
 
 	r := chi.NewRouter()
-	route.NewRouter(route.Deps{
-		Router:   r,
-		Handlers: dep.Handlers,
-		Config:   dep.Config,
-	})
+	deps, err := route.NewDeps(
+		dep.cfg,
+		dep.log.With("component", "restHTTP.routes"),
+		r,
+		dep.handlers,
+	)
+	if err != nil {
+		dep.log.Error("failed to create routes dependencies", slog.Any("error", err))
+		return nil, fmt.Errorf("failed to create routes dependencies: %w", err)
+	}
+	route.NewRouter(deps)
 	srv := &http.Server{
 		Handler:           r,
-		Addr:              dep.Server.Address,
-		ReadTimeout:       dep.Server.ReadTimeout,
-		ReadHeaderTimeout: dep.Server.ReadTimeout,
-		WriteTimeout:      dep.Server.WriteTimeout,
-		IdleTimeout:       dep.Server.IdleTimeout,
-		MaxHeaderBytes:    dep.Server.MaxHeaderBytes,
+		Addr:              dep.cfg.HTTPServer.Address,
+		ReadTimeout:       dep.cfg.HTTPServer.ReadTimeout,
+		ReadHeaderTimeout: dep.cfg.HTTPServer.ReadTimeout,
+		WriteTimeout:      dep.cfg.HTTPServer.WriteTimeout,
+		IdleTimeout:       dep.cfg.HTTPServer.IdleTimeout,
+		MaxHeaderBytes:    dep.cfg.HTTPServer.MaxHeaderBytes,
 	}
 
 	return &Server{
 		httpServer: srv,
-		log:        slog.Default().With("component", "rest.server", "address", dep.Server.Address),
-	}
+		log:        dep.log,
+	}, nil
 }
 
 func (s *Server) Run() error {

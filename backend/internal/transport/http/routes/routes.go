@@ -18,19 +18,31 @@ import (
 )
 
 type Deps struct {
-	Router   chi.Router
-	Logger   *slog.Logger
-	Handlers *restHTTP.Handlers
-	Config   *config.Config
+	config   *config.Config
+	logger   *slog.Logger
+	router   chi.Router
+	handlers *restHTTP.Handlers
+}
+
+func NewDeps(cfg *config.Config, logger *slog.Logger, router chi.Router, handlers *restHTTP.Handlers) (Deps, error) {
+	if cfg == nil || logger == nil || handlers == nil {
+		return Deps{}, fmt.Errorf("invalid dependencies")
+	}
+	return Deps{
+		config:   cfg,
+		logger:   logger,
+		router:   router,
+		handlers: handlers,
+	}, nil
 }
 
 func NewRouter(deps Deps) chi.Router {
-	r := deps.Router
+	r := deps.router
 
 	// ── global middleware ────────────────────────────────────────────────
 	r.Use(middleware.RequestID, middleware.RealIP, middleware.Recoverer)
 	r.Use(middleware.Timeout(30*time.Second), middleware.Compress(5))
-	r.Use(httplog.RequestLogger(slog.Default(), &httplog.Options{
+	r.Use(httplog.RequestLogger(deps.logger.With("component", "http"), &httplog.Options{
 		RecoverPanics:      true,
 		LogRequestHeaders:  []string{"Origin", "User-Agent", "Accept", "Content-Type", "X-Request-ID"},
 		LogResponseHeaders: []string{"Content-Type", "Content-Length", "X-Request-ID"},
@@ -38,8 +50,8 @@ func NewRouter(deps Deps) chi.Router {
 			return req.Method == http.MethodPost && strings.HasPrefix(req.URL.Path, "/debug/")
 		},
 	}))
-	isDev := deps.Config.Env == config.EnvLocal || deps.Config.Env == config.EnvDev
-	if isDev && deps.Config.HTTPServer.EnableCORS {
+	isDev := deps.config.Env == config.EnvLocal || deps.config.Env == config.EnvDev
+	if isDev && deps.config.HTTPServer.EnableCORS {
 		r.Use(cors.Handler(cors.Options{
 			AllowedOrigins:   []string{"*"},
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -50,35 +62,35 @@ func NewRouter(deps Deps) chi.Router {
 	}
 
 	// ── profiler & swagger ───────────────────────────────────────────────
-	if isDev && deps.Config.HTTPServer.EnablePProf {
-		r.Mount("/debug/pprof", profiler(deps.Config.Env))
+	if isDev && deps.config.HTTPServer.EnablePProf {
+		r.Mount("/debug/pprof", profiler(deps.config.Env))
 	}
 
 	// ── public API ───────────────────────────────────────────────────────
 	r.Route("/api", func(r chi.Router) {
-		if isDev && deps.Config.Swagger.Enabled {
+		if isDev && deps.config.Swagger.Enabled {
 			registerSwaggerRoutes(r)
 		}
 		registerBaseRoutes(r)
-		registerProductPublicRoutes(r, deps.Handlers.ProductHandler)
-		registerCategoryWithAttrsPublicRoutes(r, deps.Handlers.CategoryHandler, deps.Handlers.AttributeHandler)
-		registerPresetPublicRoutes(r, deps.Handlers.PresetHandler)
+		registerProductPublicRoutes(r, deps.handlers.ProductHandler)
+		registerCategoryWithAttrsPublicRoutes(r, deps.handlers.CategoryHandler, deps.handlers.AttributeHandler)
+		registerPresetPublicRoutes(r, deps.handlers.PresetHandler)
 		// ── admin zone ──────────────────────────────────────────────────
 		r.Route("/admin", func(r chi.Router) {
 			// one‑time login link
-			r.Get(fmt.Sprintf("/auth/%s", deps.Config.AdminCode), deps.Handlers.AuthHandler.Login)
+			r.Get(fmt.Sprintf("/auth/%s", deps.config.AdminCode), deps.handlers.AuthHandler.Login)
 
 			// JWT‑protected block
-			cfg := deps.Config.JWTConfig
+			cfg := deps.config.JWTConfig
 			jwtMW, _ := customMiddlewares.NewJWTMiddleware(customMiddlewares.JWTCfg{
 				Secret: []byte(cfg.JWTSecret), Algorithm: cfg.Algorithm, Issuer: cfg.Issuer, Audience: cfg.Audience,
 			})
 			r.Group(func(r chi.Router) {
 				r.Use(jwtMW.CheckJWT)
 
-				registerProductAdminRoutes(r, deps.Handlers.ProductHandler)
-				registerCategoryWithAttrsAdminRoutes(r, deps.Handlers.CategoryHandler, deps.Handlers.AttributeHandler)
-				registerPresetAdminRoutes(r, deps.Handlers.PresetHandler)
+				registerProductAdminRoutes(r, deps.handlers.ProductHandler)
+				registerCategoryWithAttrsAdminRoutes(r, deps.handlers.CategoryHandler, deps.handlers.AttributeHandler)
+				registerPresetAdminRoutes(r, deps.handlers.PresetHandler)
 			})
 		})
 	})

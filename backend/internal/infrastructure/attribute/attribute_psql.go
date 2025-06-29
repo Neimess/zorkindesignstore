@@ -193,7 +193,7 @@ func (r *PGAttributeRepository) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *PGAttributeRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {
-	return database.WithQuery(ctx, slog.Default(), query, fn, extras...)
+	return database.WithQuery(ctx, r.log, query, fn, extras...)
 }
 
 func (r *PGAttributeRepository) mapPostgreSQLError(err error) error {

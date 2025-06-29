@@ -51,7 +51,7 @@ func TestLogin(t *testing.T) {
 			mockSvc := new(mocks.MockAuthService)
 			handler := New(Deps{
 				srv: mockSvc,
-				log: slog.Default(),
+				log: slog.New(slog.DiscardHandler),
 			})
 
 			mockSvc.

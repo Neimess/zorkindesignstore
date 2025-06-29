@@ -49,7 +49,7 @@ func (f fakeFieldError) Error() string                     { return "Name is req
 
 func newHandler(mockSvc *mocks.MockPresetService, valErr error) *Handler {
 	val := fakeValidator{err: valErr}
-	deps, err := NewDeps(val, slog.Default(), mockSvc)
+	deps, err := NewDeps(val, slog.New(slog.DiscardHandler), mockSvc)
 	if err != nil {
 		panic("failed to construct deps: " + err.Error())
 	}

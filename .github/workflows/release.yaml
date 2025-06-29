@@ -42,7 +42,6 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          # Заметьте: здесь мы хардкодим путь 'backend/go.sum'
           key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-

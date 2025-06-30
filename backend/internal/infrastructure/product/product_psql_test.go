@@ -134,19 +134,19 @@ func (s *ProductRepositorySuite) Test_CreateGetDelete_ProductLifecycle() {
 		},
 	}
 
-	id, err := s.repo.CreateWithAttrs(s.ctx, p)
+	pRes, err := s.repo.CreateWithAttrs(s.ctx, p)
 	s.Require().NoError(err)
-	s.Assert().Equal(id, p.ID)
+	s.Assert().Equal(*p, *pRes)
 
-	got, err := s.repo.GetWithAttrs(s.ctx, id)
+	got, err := s.repo.GetWithAttrs(s.ctx, pRes.ID)
 	s.Require().NoError(err)
 	s.Assert().Equal("P1", got.Name)
 	s.Assert().Len(got.Attributes, 2)
 
-	err = s.repo.Delete(s.ctx, id)
+	err = s.repo.Delete(s.ctx, pRes.CategoryID)
 	s.Require().NoError(err)
 
-	_, err = s.repo.GetWithAttrs(s.ctx, id)
+	_, err = s.repo.GetWithAttrs(s.ctx, pRes.CategoryID)
 	s.Assert().ErrorIs(err, app_error.ErrNotFound)
 }
 
@@ -160,7 +160,7 @@ func (s *ProductRepositorySuite) Test_ListByCategory_UpdateWithAttrs() {
 	p := &prodDom.Product{Name: "PX", Price: 1.23, Description: strToPtr("Test product description"), CategoryID: catID, ImageURL: strToPtr("http://example.com/image.jpg"),
 		Attributes: []prodDom.ProductAttribute{{AttributeID: attr1, Value: "val"}},
 	}
-	id, err := s.repo.CreateWithAttrs(s.ctx, p)
+	pRes, err := s.repo.CreateWithAttrs(s.ctx, p)
 	s.Require().NoError(err)
 
 	list, err = s.repo.ListByCategory(s.ctx, catID)
@@ -168,12 +168,13 @@ func (s *ProductRepositorySuite) Test_ListByCategory_UpdateWithAttrs() {
 	s.Assert().Len(list, 1)
 
 	attr2 := s.createAttribute("B2", "u2", catID)
-	p.ID = id
+	p.ID = pRes.ID
 	p.Attributes = []prodDom.ProductAttribute{{AttributeID: attr2, Value: "v2"}}
-	err = s.repo.UpdateWithAttrs(s.ctx, p)
+	prodRes, err := s.repo.UpdateWithAttrs(s.ctx, p)
 	s.Require().NoError(err)
+	s.Equal(*p, *prodRes)
 
-	got, err := s.repo.GetWithAttrs(s.ctx, id)
+	got, err := s.repo.GetWithAttrs(s.ctx, pRes.ID)
 	s.Require().NoError(err)
 	s.Assert().Len(got.Attributes, 1)
 	s.Assert().Equal(attr2, got.Attributes[0].AttributeID)

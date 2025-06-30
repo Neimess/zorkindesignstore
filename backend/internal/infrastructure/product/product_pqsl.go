@@ -45,7 +45,7 @@ func NewPGProductRepository(d Deps) *PGProductRepository {
 }
 
 // Create inserts a product and sets its ID and CreatedAt
-func (r *PGProductRepository) Create(ctx context.Context, p *prodDom.Product) (int64, error) {
+func (r *PGProductRepository) Create(ctx context.Context, p *prodDom.Product) (*prodDom.Product, error) {
 	const query = `INSERT INTO products(name, price, description, category_id, image_url)
 		VALUES ($1,$2,$3,$4,$5) RETURNING product_id, created_at`
 
@@ -57,26 +57,26 @@ func (r *PGProductRepository) Create(ctx context.Context, p *prodDom.Product) (i
 		).Scan(&id, &created)
 	})
 	if err := r.mapPostgreSQLError(err); err != nil {
-		return 0, err
+		return nil, err
 	}
 	p.ID, p.CreatedAt = id, created
-	return id, nil
+	return p, nil
 }
 
 // CreateWithAttrs runs product and attribute insert in one transaction
-func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *prodDom.Product) (int64, error) {
-	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (int64, error) {
+func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *prodDom.Product) (*prodDom.Product, error) {
+	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (*prodDom.Product, error) {
 		id, err := r.insertProductTx(ctx, tx, p)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 		if len(p.Attributes) > 0 {
 			if err := r.insertAttributesTx(ctx, tx, id, p.Attributes); err != nil {
-				return 0, err
+				return nil, err
 			}
 		}
 		p.ID = id
-		return id, nil
+		return p, nil
 	})
 }
 
@@ -146,39 +146,56 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 }
 
 // UpdateWithAttrs updates product fields and replaces attributes
-func (r *PGProductRepository) UpdateWithAttrs(ctx context.Context, p *prodDom.Product) error {
-	return tx.RunInTxAction(ctx, r.db, func(tx *sqlx.Tx) error {
-		const upd = `UPDATE products SET name=$1, price=$2, description=$3, category_id=$4, image_url=$5 WHERE product_id=$6`
+func (r *PGProductRepository) UpdateWithAttrs(ctx context.Context, p *prodDom.Product) (*prodDom.Product, error) {
+	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (*prodDom.Product, error) {
+		const upd = `
+			UPDATE products
+			SET name = $1,
+				price = $2,
+				description = $3,
+				category_id = $4,
+				image_url = $5
+			WHERE product_id = $6
+		`
 		res, err := tx.ExecContext(ctx, upd, p.Name, p.Price, p.Description, p.CategoryID, p.ImageURL, p.ID)
 		if err != nil {
-			return r.mapPostgreSQLError(err)
+			return nil, r.mapPostgreSQLError(err)
 		}
+
 		rows, err := res.RowsAffected()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if rows == 0 {
-			return prodDom.ErrProductNotFound
+			return nil, prodDom.ErrProductNotFound
 		}
-		if len(p.Attributes) == 0 {
-			return nil
+
+		// Чистим старые атрибуты
+		if _, err := tx.ExecContext(ctx,
+			`DELETE FROM product_attributes WHERE product_id = $1`, p.ID); err != nil {
+			return nil, r.mapPostgreSQLError(err)
 		}
-		if _, err := tx.ExecContext(ctx, `DELETE FROM product_attributes WHERE product_id=$1`, p.ID); err != nil {
-			return r.mapPostgreSQLError(err)
+
+		// Если есть новые — вставляем
+		if len(p.Attributes) > 0 {
+			ids := make([]int64, len(p.Attributes))
+			aids := make([]int64, len(p.Attributes))
+			vals := make([]string, len(p.Attributes))
+			for i, a := range p.Attributes {
+				ids[i], aids[i], vals[i] = p.ID, a.AttributeID, a.Value
+			}
+
+			const ins = `
+				INSERT INTO product_attributes (product_id, attribute_id, value)
+				SELECT * FROM UNNEST($1::bigint[], $2::bigint[], $3::text[])
+			`
+			if _, err := tx.ExecContext(ctx, ins,
+				pq.Array(ids), pq.Array(aids), pq.Array(vals)); err != nil {
+				return nil, r.mapPostgreSQLError(err)
+			}
 		}
-		// bulk insert
-		n := len(p.Attributes)
-		ids := make([]int64, n)
-		aids := make([]int64, n)
-		vals := make([]string, n)
-		for i, a := range p.Attributes {
-			ids[i], aids[i], vals[i] = p.ID, a.AttributeID, a.Value
-		}
-		const ins = `INSERT INTO product_attributes(product_id,attribute_id,value) SELECT * FROM UNNEST($1::bigint[],$2::bigint[],$3::text[])`
-		if _, err := tx.ExecContext(ctx, ins, pq.Array(ids), pq.Array(aids), pq.Array(vals)); err != nil {
-			return r.mapPostgreSQLError(err)
-		}
-		return nil
+
+		return p, nil
 	})
 }
 

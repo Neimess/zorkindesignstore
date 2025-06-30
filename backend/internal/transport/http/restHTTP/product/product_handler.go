@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -15,11 +16,11 @@ import (
 )
 
 type ProductService interface {
-	Create(ctx context.Context, product *prodDom.Product) (int64, error)
-	CreateWithAttrs(ctx context.Context, product *prodDom.Product) (int64, error)
+	Create(ctx context.Context, product *prodDom.Product) (*prodDom.Product, error)
+	CreateWithAttrs(ctx context.Context, product *prodDom.Product) (*prodDom.Product, error)
 	GetDetailed(ctx context.Context, id int64) (*prodDom.Product, error)
 	GetByCategoryID(ctx context.Context, categoryID int64) ([]prodDom.Product, error)
-	Update(ctx context.Context, product *prodDom.Product) error
+	Update(ctx context.Context, product *prodDom.Product) (*prodDom.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -65,7 +66,7 @@ func New(d Deps) *Handler {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
-// @Success      201	"No Content"
+// @Success      201	  {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse "Bad request"
 // @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
 // @Failure      403      {object}  httputils.ErrorResponse "Forbidden access"
@@ -99,13 +100,14 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	product := dto.MapCreateReqToDomain(&input)
 
-	_, err := h.srv.Create(ctx, product)
+	product, err := h.srv.Create(ctx, product)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
+	resp := dto.MapDomainToProductResponse(product)
+	w.Header().Set("Location", fmt.Sprintf("/api/admin/product/%d", resp.ProductID))
+	httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 
 // CreateWithAttributes godoc
@@ -248,7 +250,7 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Param        id       path      int                         true  "Product ID"
 // @Param        product  body      dto.ProductUpdateRequest    true  "Product data to update"
-// @Success      204      "No Content"
+// @Success      200      {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse   "Bad request"
 // @Failure      404      {object}  httputils.ErrorResponse   "Not found"
 // @Failure      422      {object}  httputils.ErrorResponse   "Validation error"
@@ -290,12 +292,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	p := dto.MapUpdateReqToDomain(id, &req)
 
 	// 5) execute service
-	if err := h.srv.Update(ctx, p); err != nil {
+	prodRes, err := h.srv.Update(ctx, p)
+	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	resp := dto.MapDomainToProductResponse(prodRes)
+	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Delete godoc

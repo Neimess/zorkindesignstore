@@ -12,11 +12,11 @@ import (
 )
 
 type ProductRepository interface {
-	Create(ctx context.Context, p *domProduct.Product) (int64, error)
-	CreateWithAttrs(ctx context.Context, p *domProduct.Product) (int64, error)
+	Create(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
+	CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
 	GetWithAttrs(ctx context.Context, id int64) (*domProduct.Product, error)
 	ListByCategory(ctx context.Context, catID int64) ([]domProduct.Product, error)
-	UpdateWithAttrs(ctx context.Context, p *domProduct.Product) error
+	UpdateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -46,54 +46,54 @@ func New(d *Deps) *Service {
 	}
 }
 
-func (s *Service) Create(ctx context.Context, p *domProduct.Product) (int64, error) {
+func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error) {
 	const op = "service.product.Create"
 	log := s.log.With("op", op)
 
-	id, err := s.repo.Create(ctx, p)
+	prod, err := s.repo.Create(ctx, p)
 	if err != nil {
 		switch {
 		case errors.Is(err, der.ErrNotFound), errors.Is(err, category.ErrCategoryNotFound):
-			log.Info("invalid category", slog.Int64("category_id", p.CategoryID))
-			return 0, domProduct.ErrBadCategoryID
+			log.Info("invalid category", slog.Any("category_id", p.CategoryID))
+			return nil, domProduct.ErrBadCategoryID
 
 		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
 			log.Info("invalid attribute data", slog.Any("error", err))
-			return 0, domProduct.ErrInvalidAttribute
+			return nil, domProduct.ErrInvalidAttribute
 
 		default:
 			log.Error("repo failed", slog.Any("error", err))
-			return 0, fmt.Errorf("%s: %w", op, err)
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 	}
 
-	log.Info("product created", slog.Int64("product_id", id))
-	return id, nil
+	log.Info("product created", slog.Int64("product_id", p.ID))
+	return prod, nil
 }
 
-func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (int64, error) {
+func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error) {
 	const op = "service.product.CreateWithAttrs"
 	log := s.log.With("op", op)
 
-	id, err := s.repo.CreateWithAttrs(ctx, p)
+	prod, err := s.repo.CreateWithAttrs(ctx, p)
 	if err != nil {
 		switch {
 		case errors.Is(err, der.ErrNotFound), errors.Is(err, category.ErrCategoryNotFound):
 			log.Warn("invalid category", slog.Int64("category_id", p.CategoryID))
-			return 0, domProduct.ErrBadCategoryID
+			return nil, domProduct.ErrBadCategoryID
 
 		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
 			log.Warn("invalid attribute data", slog.Any("error", err))
-			return 0, domProduct.ErrInvalidAttribute
+			return nil, domProduct.ErrInvalidAttribute
 
 		default:
 			log.Error("repo failed", slog.Any("error", err))
-			return 0, fmt.Errorf("%s: %w", op, err)
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 	}
 
-	log.Info("product with attributes created", slog.Int64("product_id", id))
-	return id, nil
+	log.Info("product with attributes created", slog.Int64("product_id", prod.ID))
+	return prod, nil
 }
 
 func (s *Service) GetDetailed(ctx context.Context, id int64) (*domProduct.Product, error) {
@@ -130,28 +130,29 @@ func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]domProduc
 	return products, nil
 }
 
-func (s *Service) Update(ctx context.Context, p *domProduct.Product) error {
+func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error) {
 	const op = "service.product.Update"
 	log := s.log.With("op", op)
 
-	if err := s.repo.UpdateWithAttrs(ctx, p); err != nil {
+	prod, err := s.repo.UpdateWithAttrs(ctx, p)
+	if err != nil {
 		switch {
 		case errors.Is(err, der.ErrNotFound), errors.Is(err, domProduct.ErrProductNotFound):
 			log.Warn("product not found", slog.Int64("product_id", p.ID))
-			return domProduct.ErrProductNotFound
+			return nil, domProduct.ErrProductNotFound
 
 		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
 			log.Warn("invalid attribute data", slog.Any("error", err))
-			return domProduct.ErrInvalidAttribute
+			return nil, domProduct.ErrInvalidAttribute
 
 		default:
 			log.Error("repo failed", slog.Any("error", err))
-			return fmt.Errorf("%s: %w", op, err)
+			return nil, fmt.Errorf("%s: %w", op, err)
 		}
 	}
 
 	log.Info("product updated with attributes", slog.Int64("product_id", p.ID))
-	return nil
+	return prod, nil
 }
 
 func (s *Service) Delete(ctx context.Context, id int64) error {

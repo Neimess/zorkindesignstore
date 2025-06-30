@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 // === Helpers ===
@@ -46,13 +47,19 @@ func (f fakeFieldError) Type() reflect.Type                { return reflect.Type
 func (f fakeFieldError) Translate(ut ut.Translator) string { return f.Error() }
 func (f fakeFieldError) Error() string                     { return "Name is required" }
 
-func newHandler(mockSvc *mocks.MockPresetService, valErr error) *Handler {
-	val := fakeValidator{err: valErr}
-	deps, err := NewDeps(val, slog.New(slog.DiscardHandler), mockSvc)
-	if err != nil {
-		panic("failed to construct deps: " + err.Error())
-	}
-	return New(deps)
+type PresetHandlerSuite struct {
+	suite.Suite
+	h       *Handler
+	mockSvc *mocks.MockPresetService
+	valErr  error
+}
+
+func (s *PresetHandlerSuite) SetupTest() {
+	s.mockSvc = new(mocks.MockPresetService)
+	val := fakeValidator{err: s.valErr}
+	deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
+	s.Require().NoError(err)
+	s.h = New(deps)
 }
 
 func withChiParam(r *http.Request, key, val string) *http.Request {
@@ -63,7 +70,7 @@ func withChiParam(r *http.Request, key, val string) *http.Request {
 
 // === TestCreatePreset ===
 
-func TestCreatePreset(t *testing.T) {
+func (s *PresetHandlerSuite) TestCreatePreset() {
 	validBody := map[string]interface{}{
 		"name":        "MyPreset",
 		"total_price": 42.5,
@@ -77,7 +84,8 @@ func TestCreatePreset(t *testing.T) {
 		p   *domPreset.Preset
 		err error
 	}
-	cases := []struct {
+
+	tests := []struct {
 		name           string
 		validatorError error
 		svcReturn      svcResult
@@ -105,20 +113,20 @@ func TestCreatePreset(t *testing.T) {
 		{
 			name:           "invalid JSON",
 			validatorError: nil,
-			svcReturn:      svcResult{}, // сервис не вызывается
+			svcReturn:      svcResult{},
 			wantStatus:     http.StatusBadRequest,
 		},
 		{
 			name:           "validation error",
 			validatorError: validator.ValidationErrors{fakeFieldError{}},
-			svcReturn:      svcResult{}, // сервис не вызывается
+			svcReturn:      svcResult{},
 			wantStatus:     http.StatusUnprocessableEntity,
 		},
 		{
 			name:           "domain errors → 4xx",
 			validatorError: nil,
 			svcReturn:      svcResult{p: nil, err: domPreset.ErrPresetAlreadyExists},
-			wantStatus:     http.StatusConflict, // в зависимости от error mapping
+			wantStatus:     http.StatusConflict,
 		},
 		{
 			name:           "internal service error",
@@ -128,11 +136,14 @@ func TestCreatePreset(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		tc := tc // capture
-		t.Run(tc.name, func(t *testing.T) {
-			mockSvc := new(mocks.MockPresetService)
-			h := newHandler(mockSvc, tc.validatorError)
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			s.valErr = tc.validatorError
+			val := fakeValidator{err: tc.validatorError}
+			deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
+			s.Require().NoError(err)
+			s.h = New(deps)
 
 			reqBody := bytes.NewReader(bs)
 			if tc.name == "invalid JSON" {
@@ -142,29 +153,29 @@ func TestCreatePreset(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			if tc.name == "success" || tc.name == "domain errors → 4xx" || tc.name == "internal service error" {
-				mockSvc.
+				s.mockSvc.
 					On("Create", mock.Anything, mock.Anything).
 					Return(tc.svcReturn.p, tc.svcReturn.err).
 					Once()
 			}
 
-			h.Create(w, req)
-			assert.Equal(t, tc.wantStatus, w.Code)
+			s.h.Create(w, req)
+			assert.Equal(s.T(), tc.wantStatus, w.Code)
 
 			if tc.wantLocation {
 				loc := w.Header().Get("Location")
 				id := strconv.Itoa(int(tc.svcReturn.p.ID))
-				assert.Equal(t, "/api/admin/presets/"+id, loc)
+				assert.Equal(s.T(), "/api/admin/presets/"+id, loc)
 			}
 
-			mockSvc.AssertExpectations(t)
+			s.mockSvc.AssertExpectations(s.T())
 		})
 	}
 }
 
 // === TestGetPreset ===
 
-func TestGetPreset(t *testing.T) {
+func (s *PresetHandlerSuite) TestGetPreset() {
 	sample := &domPreset.Preset{
 		ID:         5,
 		Name:       "X",
@@ -175,7 +186,7 @@ func TestGetPreset(t *testing.T) {
 		},
 	}
 
-	cases := []struct {
+	tests := []struct {
 		name       string
 		param      string
 		svcReturn  *domPreset.Preset
@@ -188,17 +199,14 @@ func TestGetPreset(t *testing.T) {
 		{"service error", "8", nil, errors.New("fail"), http.StatusInternalServerError},
 	}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			mockSvc := new(mocks.MockPresetService)
-			h := newHandler(mockSvc, nil)
-
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
 			req := withChiParam(httptest.NewRequest(http.MethodGet, "/api/presets/"+tc.param, nil), "id", tc.param)
 			w := httptest.NewRecorder()
 
 			if tc.name == "success" || tc.name == "not found" || tc.name == "service error" {
-				mockSvc.
+				s.mockSvc.
 					On("Get", mock.Anything, mock.MatchedBy(func(id int64) bool {
 						i, _ := strconv.ParseInt(tc.param, 10, 64)
 						return id == i
@@ -207,17 +215,17 @@ func TestGetPreset(t *testing.T) {
 					Once()
 			}
 
-			h.Get(w, req)
-			assert.Equal(t, tc.wantStatus, w.Code)
-			mockSvc.AssertExpectations(t)
+			s.h.Get(w, req)
+			assert.Equal(s.T(), tc.wantStatus, w.Code)
+			s.mockSvc.AssertExpectations(s.T())
 		})
 	}
 }
 
 // === TestDeletePreset ===
 
-func TestDeletePreset(t *testing.T) {
-	cases := []struct {
+func (s *PresetHandlerSuite) TestDeletePreset() {
+	tests := []struct {
 		name            string
 		param           string
 		svcErr          error
@@ -231,18 +239,15 @@ func TestDeletePreset(t *testing.T) {
 		{"idempotent retry", "100", nil, http.StatusNoContent, true},
 	}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			mockSvc := new(mocks.MockPresetService)
-			h := newHandler(mockSvc, nil)
-
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
 			req := withChiParam(httptest.NewRequest(http.MethodDelete, "/api/admin/presets/"+tc.param, nil), "id", tc.param)
 			w := httptest.NewRecorder()
 
 			if tc.wantStatus != http.StatusBadRequest {
 				for i := 0; i < 1+boolToInt(tc.checkIdempotent); i++ {
-					mockSvc.
+					s.mockSvc.
 						On("Delete", mock.Anything, mock.MatchedBy(func(id int64) bool {
 							i, _ := strconv.ParseInt(tc.param, 10, 64)
 							return id == i
@@ -252,16 +257,16 @@ func TestDeletePreset(t *testing.T) {
 				}
 			}
 
-			h.Delete(w, req)
-			assert.Equal(t, tc.wantStatus, w.Code)
+			s.h.Delete(w, req)
+			assert.Equal(s.T(), tc.wantStatus, w.Code)
 
 			if tc.checkIdempotent {
 				w2 := httptest.NewRecorder()
-				h.Delete(w2, req)
-				assert.Equal(t, tc.wantStatus, w2.Code)
+				s.h.Delete(w2, req)
+				assert.Equal(s.T(), tc.wantStatus, w2.Code)
 			}
 
-			mockSvc.AssertExpectations(t)
+			s.mockSvc.AssertExpectations(s.T())
 		})
 	}
 }
@@ -275,11 +280,11 @@ func boolToInt(b bool) int {
 
 // === TestListDetailed and ListShort ===
 
-func TestListPresetEndpoints(t *testing.T) {
+func (s *PresetHandlerSuite) TestListPresetEndpoints() {
 	p1 := domPreset.Preset{ID: 1, Name: "A"}
 	p2 := domPreset.Preset{ID: 2, Name: "B"}
 
-	cases := []struct {
+	tests := []struct {
 		name        string
 		method      string
 		target      string
@@ -295,18 +300,14 @@ func TestListPresetEndpoints(t *testing.T) {
 		{"ListShort Err", http.MethodGet, "/api/presets", "ListShort", nil, errors.New("fail"), http.StatusInternalServerError, 0},
 	}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			mockSvc := new(mocks.MockPresetService)
-			h := newHandler(mockSvc, nil)
-
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
 			req := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
 
-			// на некритичных кейсах настраиваем мок
 			if tc.wantStatus == http.StatusOK || tc.wantStatus == http.StatusInternalServerError {
-				mockSvc.
+				s.mockSvc.
 					On(tc.mockMethod, mock.Anything).
 					Return(tc.svcReturn, tc.svcErr).
 					Once()
@@ -314,24 +315,24 @@ func TestListPresetEndpoints(t *testing.T) {
 
 			switch tc.mockMethod {
 			case "ListDetailed":
-				h.ListDetailed(w, req)
+				s.h.ListDetailed(w, req)
 			case "ListShort":
-				h.ListShort(w, req)
+				s.h.ListShort(w, req)
 			}
 
-			assert.Equal(t, tc.wantStatus, w.Code)
+			assert.Equal(s.T(), tc.wantStatus, w.Code)
 			if tc.wantStatus == http.StatusOK {
 				var arr []interface{}
-				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &arr))
-				assert.Len(t, arr, tc.wantPayload)
+				require.NoError(s.T(), json.Unmarshal(w.Body.Bytes(), &arr))
+				assert.Len(s.T(), arr, tc.wantPayload)
 			}
 
-			mockSvc.AssertExpectations(t)
+			s.mockSvc.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestUpdatePreset(t *testing.T) {
+func (s *PresetHandlerSuite) TestUpdatePreset() {
 	validBody := map[string]interface{}{
 		"name":        "UpdatedPreset",
 		"total_price": 99.99,
@@ -347,7 +348,7 @@ func TestUpdatePreset(t *testing.T) {
 		err error
 	}
 
-	cases := []struct {
+	tests := []struct {
 		name       string
 		idParam    string
 		validator  error
@@ -409,11 +410,14 @@ func TestUpdatePreset(t *testing.T) {
 		},
 	}
 
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			mockSvc := new(mocks.MockPresetService)
-			h := newHandler(mockSvc, tc.validator)
+	for _, tc := range tests {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			s.valErr = tc.validator
+			val := fakeValidator{err: tc.validator}
+			deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
+			s.Require().NoError(err)
+			s.h = New(deps)
 
 			var reqBody *bytes.Reader
 			if tc.name == "invalid JSON" {
@@ -429,16 +433,20 @@ func TestUpdatePreset(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			if tc.name == "success" || tc.name == "not found" || tc.name == "internal error" {
-				mockSvc.
+				s.mockSvc.
 					On("Update", mock.Anything, mock.Anything).
 					Return(tc.svcReturn.p, tc.svcReturn.err).
 					Once()
 			}
 
-			h.Update(w, req)
+			s.h.Update(w, req)
 
-			assert.Equal(t, tc.wantStatus, w.Code)
-			mockSvc.AssertExpectations(t)
+			assert.Equal(s.T(), tc.wantStatus, w.Code)
+			s.mockSvc.AssertExpectations(s.T())
 		})
 	}
+}
+
+func TestPresetHandlerSuite(t *testing.T) {
+	suite.Run(t, new(PresetHandlerSuite))
 }

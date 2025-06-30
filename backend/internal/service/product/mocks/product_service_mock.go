@@ -39,22 +39,24 @@ func (_m *MockProductRepository) EXPECT() *MockProductRepository_Expecter {
 }
 
 // Create provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) Create(ctx context.Context, p *product.Product) (int64, error) {
+func (_mock *MockProductRepository) Create(ctx context.Context, p *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 int64
+	var r0 *product.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
 		return returnFunc(ctx, p)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
 		r1 = returnFunc(ctx, p)
@@ -94,33 +96,35 @@ func (_c *MockProductRepository_Create_Call) Run(run func(ctx context.Context, p
 	return _c
 }
 
-func (_c *MockProductRepository_Create_Call) Return(n int64, err error) *MockProductRepository_Create_Call {
-	_c.Call.Return(n, err)
+func (_c *MockProductRepository_Create_Call) Return(product1 *product.Product, err error) *MockProductRepository_Create_Call {
+	_c.Call.Return(product1, err)
 	return _c
 }
 
-func (_c *MockProductRepository_Create_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) (int64, error)) *MockProductRepository_Create_Call {
+func (_c *MockProductRepository_Create_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) (*product.Product, error)) *MockProductRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateWithAttrs provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) CreateWithAttrs(ctx context.Context, p *product.Product) (int64, error) {
+func (_mock *MockProductRepository) CreateWithAttrs(ctx context.Context, p *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateWithAttrs")
 	}
 
-	var r0 int64
+	var r0 *product.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
 		return returnFunc(ctx, p)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
 		r1 = returnFunc(ctx, p)
@@ -160,12 +164,12 @@ func (_c *MockProductRepository_CreateWithAttrs_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockProductRepository_CreateWithAttrs_Call) Return(n int64, err error) *MockProductRepository_CreateWithAttrs_Call {
-	_c.Call.Return(n, err)
+func (_c *MockProductRepository_CreateWithAttrs_Call) Return(product1 *product.Product, err error) *MockProductRepository_CreateWithAttrs_Call {
+	_c.Call.Return(product1, err)
 	return _c
 }
 
-func (_c *MockProductRepository_CreateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) (int64, error)) *MockProductRepository_CreateWithAttrs_Call {
+func (_c *MockProductRepository_CreateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) (*product.Product, error)) *MockProductRepository_CreateWithAttrs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -364,20 +368,31 @@ func (_c *MockProductRepository_ListByCategory_Call) RunAndReturn(run func(ctx c
 }
 
 // UpdateWithAttrs provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) UpdateWithAttrs(ctx context.Context, p *product.Product) error {
+func (_mock *MockProductRepository) UpdateWithAttrs(ctx context.Context, p *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateWithAttrs")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) error); ok {
+	var r0 *product.Product
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
+		return returnFunc(ctx, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
+		r1 = returnFunc(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockProductRepository_UpdateWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWithAttrs'
@@ -410,12 +425,12 @@ func (_c *MockProductRepository_UpdateWithAttrs_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockProductRepository_UpdateWithAttrs_Call) Return(err error) *MockProductRepository_UpdateWithAttrs_Call {
-	_c.Call.Return(err)
+func (_c *MockProductRepository_UpdateWithAttrs_Call) Return(product1 *product.Product, err error) *MockProductRepository_UpdateWithAttrs_Call {
+	_c.Call.Return(product1, err)
 	return _c
 }
 
-func (_c *MockProductRepository_UpdateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) error) *MockProductRepository_UpdateWithAttrs_Call {
+func (_c *MockProductRepository_UpdateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, p *product.Product) (*product.Product, error)) *MockProductRepository_UpdateWithAttrs_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -39,22 +39,24 @@ func (_m *MockProductService) EXPECT() *MockProductService_Expecter {
 }
 
 // Create provides a mock function for the type MockProductService
-func (_mock *MockProductService) Create(ctx context.Context, product1 *product.Product) (int64, error) {
+func (_mock *MockProductService) Create(ctx context.Context, product1 *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, product1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 int64
+	var r0 *product.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
 		return returnFunc(ctx, product1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, product1)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
 		r1 = returnFunc(ctx, product1)
@@ -94,33 +96,35 @@ func (_c *MockProductService_Create_Call) Run(run func(ctx context.Context, prod
 	return _c
 }
 
-func (_c *MockProductService_Create_Call) Return(n int64, err error) *MockProductService_Create_Call {
-	_c.Call.Return(n, err)
+func (_c *MockProductService_Create_Call) Return(product11 *product.Product, err error) *MockProductService_Create_Call {
+	_c.Call.Return(product11, err)
 	return _c
 }
 
-func (_c *MockProductService_Create_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) (int64, error)) *MockProductService_Create_Call {
+func (_c *MockProductService_Create_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) (*product.Product, error)) *MockProductService_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateWithAttrs provides a mock function for the type MockProductService
-func (_mock *MockProductService) CreateWithAttrs(ctx context.Context, product1 *product.Product) (int64, error) {
+func (_mock *MockProductService) CreateWithAttrs(ctx context.Context, product1 *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, product1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateWithAttrs")
 	}
 
-	var r0 int64
+	var r0 *product.Product
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
 		return returnFunc(ctx, product1)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, product1)
 	} else {
-		r0 = ret.Get(0).(int64)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
 		r1 = returnFunc(ctx, product1)
@@ -160,12 +164,12 @@ func (_c *MockProductService_CreateWithAttrs_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockProductService_CreateWithAttrs_Call) Return(n int64, err error) *MockProductService_CreateWithAttrs_Call {
-	_c.Call.Return(n, err)
+func (_c *MockProductService_CreateWithAttrs_Call) Return(product11 *product.Product, err error) *MockProductService_CreateWithAttrs_Call {
+	_c.Call.Return(product11, err)
 	return _c
 }
 
-func (_c *MockProductService_CreateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) (int64, error)) *MockProductService_CreateWithAttrs_Call {
+func (_c *MockProductService_CreateWithAttrs_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) (*product.Product, error)) *MockProductService_CreateWithAttrs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -364,20 +368,31 @@ func (_c *MockProductService_GetDetailed_Call) RunAndReturn(run func(ctx context
 }
 
 // Update provides a mock function for the type MockProductService
-func (_mock *MockProductService) Update(ctx context.Context, product1 *product.Product) error {
+func (_mock *MockProductService) Update(ctx context.Context, product1 *product.Product) (*product.Product, error) {
 	ret := _mock.Called(ctx, product1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) error); ok {
+	var r0 *product.Product
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) (*product.Product, error)); ok {
+		return returnFunc(ctx, product1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *product.Product) *product.Product); ok {
 		r0 = returnFunc(ctx, product1)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*product.Product)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *product.Product) error); ok {
+		r1 = returnFunc(ctx, product1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockProductService_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
@@ -410,12 +425,12 @@ func (_c *MockProductService_Update_Call) Run(run func(ctx context.Context, prod
 	return _c
 }
 
-func (_c *MockProductService_Update_Call) Return(err error) *MockProductService_Update_Call {
-	_c.Call.Return(err)
+func (_c *MockProductService_Update_Call) Return(product11 *product.Product, err error) *MockProductService_Update_Call {
+	_c.Call.Return(product11, err)
 	return _c
 }
 
-func (_c *MockProductService_Update_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) error) *MockProductService_Update_Call {
+func (_c *MockProductService_Update_Call) RunAndReturn(run func(ctx context.Context, product1 *product.Product) (*product.Product, error)) *MockProductService_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

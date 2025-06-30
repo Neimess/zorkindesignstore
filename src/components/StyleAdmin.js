@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { presetAPI } from '../services/api';
+import { tokenUtils } from '../services/api';
 
 /**
  * Компонент для управления стилями в админ-панели
@@ -13,11 +14,12 @@ function StyleAdmin({ products, styles, setStyles }) {
   // Состояние для нового стиля
   const [styleName, setStyleName] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState([]);
-  
+  const [imageUrl, setImageUrl] = useState('');
   /**
    * Обработчик выбора/отмены выбора товара
    * @param {number} productId - ID товара
    */
+  const token = tokenUtils.get();
   const toggleProductSelection = (productId) => {
     setSelectedProductIds(prev => 
       prev.includes(productId)
@@ -47,8 +49,34 @@ function StyleAdmin({ products, styles, setStyles }) {
       setStyleName('');
       setSelectedProductIds([]);
       
+      if (!token) {
+      console.error("❌ Нет токена. Пользователь не авторизован.");
+      return;
+}
       // Здесь можно добавить вызов API для сохранения стиля на сервере
-      // await presetAPI.create(newStyle);
+      const items = selectedProductIds.map(id => ({ product_id: id }));
+const selectedProducts = products.filter(p => selectedProductIds.includes(p.product_id));
+const total_price = selectedProducts.reduce((sum, p) => sum + p.price, 0);
+if (!imageUrl.trim() || !/^https?:\/\/.+/.test(imageUrl.trim())) {
+  alert("Пожалуйста, укажите корректную ссылку на изображение");
+  return;
+}
+
+const payload = {
+  name: styleName.trim(),
+  description: "Автоматически создано",
+  image_url: imageUrl.trim(),
+
+  items,
+  total_price
+};
+
+const created = await presetAPI.create(payload, token);
+
+      if (created && created.preset_id) {
+      setStyles([...styles, created]);
+}
+
     } catch (error) {
       console.error('Ошибка при создании стиля:', error);
     }
@@ -64,7 +92,8 @@ function StyleAdmin({ products, styles, setStyles }) {
       setStyles(styles.filter(style => style.preset_id !== styleId));
       
       // Здесь можно добавить вызов API для удаления стиля на сервере
-      // await presetAPI.delete(styleId);
+      await presetAPI.delete(styleId);
+// await presetAPI.delete(styleId);
     } catch (error) {
       console.error('Ошибка при удалении стиля:', error);
     }
@@ -167,6 +196,14 @@ borderColor: '#334155',
           placeholder="Название стиля" 
           style={uiStyles.inputStyle} 
         />
+        <input 
+  value={imageUrl}
+  onChange={e => setImageUrl(e.target.value)} 
+  placeholder="Ссылка на изображение (https://...)"
+  style={{ ...uiStyles.inputStyle, marginTop: '15px' }} 
+/>
+
+
         
         <div style={{ marginTop: '20px', marginBottom: '15px' }}>
           <div style={{ marginBottom: '10px', color: '#94a3b8' }}>Выберите товары для стиля:</div>

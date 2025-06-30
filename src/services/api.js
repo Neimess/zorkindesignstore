@@ -21,11 +21,14 @@ const apiRequest = async (endpoint, options = {}) => {
     console.log(`↳ Response status: ${response.status}`);
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-      console.log('🔴 Подробный ответ сервера:', errorData);
-      console.error(`[API ERROR] ${url} ➤ ${response.status}: ${errorData.message}`);
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
+  const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+  console.error(`[API ERROR] ${url} ➤ ${response.status}: ${errorData.message}`);
+  if (errorData.errors) {
+    console.error('🛠 Детали ошибок валидации:', errorData.errors);
+  }
+  throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+}
+
 
     if (response.status === 204) {
       console.log('✓ Success: No Content');
@@ -178,32 +181,21 @@ export const productAPI = {
 
 // Функции для работы с пресетами (стилями)
 export const presetAPI = {
-  // Получить все пресеты (краткая информация)
-  getAll: () => apiRequest('/presets'),
-  
-  // Получить все пресеты с подробной информацией
-  getAllDetailed: () => apiRequest('/presets/detailed'),
-  
-  // Получить пресет по ID
-  getById: (id) => apiRequest(`/presets/${id}`),
-  
-  // Создать пресет (требует авторизации)
-  create: (presetData, token) => apiRequest('/admin/presets', {
+  create: async (data, token) => await apiRequest('/admin/presets', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(presetData),
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data)
   }),
-  
-  // Удалить пресет (требует авторизации)
-  delete: (id, token) => apiRequest(`/admin/presets/${id}`, {
+  delete: async (id, token) => await apiRequest(`/admin/presets/${id}`, {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` }
   }),
+  list: async () => await apiRequest('/presets'),
+  getAllDetailed: async () => await apiRequest('/presets/detailed'), // 🔥 добавлено это
+  getById: async (id) => await apiRequest(`/presets/${id}`)
 };
+
+
 
 // Функции для авторизации
 export const authAPI = {

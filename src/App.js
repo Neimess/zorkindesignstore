@@ -40,9 +40,18 @@ function App() {
       // 2. Загрузка товаров по категориям
       console.log('Загруженные категории:', categoriesData);
 
-const productLists = await Promise.all(
-  categoriesData.map((cat) => productAPI.getByCategory(cat.id))
-);
+const productLists = [];
+for (const cat of categoriesData) {
+  try {
+    const products = await productAPI.getByCategory(cat.id);
+    productLists.push(products);
+  } catch (err) {
+    console.warn(`Ошибка при загрузке товаров категории ID ${cat.id}:`, err.message);
+    productLists.push([]); // чтобы не ломать структуру, даже если запрос не удался
+  }
+}
+
+setProducts(productLists.flat());
       setProducts(productLists.flat()); // объединяем все массивы
 
       // 3. Загрузка стилей

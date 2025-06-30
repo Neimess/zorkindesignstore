@@ -598,6 +598,8 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest'
+      produces:
+      - application/json
       responses:
         "201":
           description: Created
@@ -653,6 +655,15 @@ paths:
       tags:
       - Preset
     put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Preset data
+        in: body
+        name: preset
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest'
       produces:
       - application/json
       responses:
@@ -672,6 +683,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Update preset info
       tags:
       - Preset

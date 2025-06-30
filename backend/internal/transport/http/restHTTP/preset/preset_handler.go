@@ -66,6 +66,7 @@ func New(d Deps) *Handler {
 // @Description Create a new preset with its items
 // @Tags Preset
 // @Accept json
+// @Produce json
 // @Security BearerAuth
 // @Param preset body dto.PresetRequest true "Preset data"//
 // @Success 201 {object} dto.PresetResponse
@@ -235,7 +236,10 @@ func (h *Handler) ListShort(w http.ResponseWriter, r *http.Request) {
 // Update godoc
 // @Summary Update preset info
 // @Tags Preset
+// @Accept json
 // @Produce json
+// @Security BearerAuth
+// @Param preset body 	 dto.PresetRequest true "Preset data"//
 // @Success 200 {object} dto.PresetResponse
 // @Failure 404 {object} httputils.ErrorResponse
 // @Failure 422 {object} httputils.ErrorResponse

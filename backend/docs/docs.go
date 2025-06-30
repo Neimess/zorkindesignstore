@@ -473,6 +473,9 @@ const docTemplate = `{
                 "consumes": [
                     "application/json"
                 ],
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "Preset"
                 ],
@@ -524,6 +527,14 @@ const docTemplate = `{
         },
         "/api/admin/presets/{id}": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -531,6 +542,17 @@ const docTemplate = `{
                     "Preset"
                 ],
                 "summary": "Update preset info",
+                "parameters": [
+                    {
+                        "description": "Preset data",
+                        "name": "preset",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

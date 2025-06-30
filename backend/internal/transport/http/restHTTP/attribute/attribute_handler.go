@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"log/slog"
@@ -20,7 +21,7 @@ type AttributeService interface {
 	CreateAttribute(ctx context.Context, category_id int64, in *attr.Attribute) (*attr.Attribute, error)
 	GetAttribute(ctx context.Context, categoryID, id int64) (*attr.Attribute, error)
 	ListAttributes(ctx context.Context, categoryID int64) ([]attr.Attribute, error)
-	UpdateAttribute(ctx context.Context, attr *attr.Attribute) error
+	UpdateAttribute(ctx context.Context, attr *attr.Attribute) (*attr.Attribute, error)
 	DeleteAttribute(ctx context.Context, id int64) error
 }
 
@@ -146,13 +147,13 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 	}
 	attr := req.MapToDomain()
 	attr.CategoryID = categoryID
-	_, err := h.srv.CreateAttribute(ctx, categoryID, attr)
+	created, err := h.srv.CreateAttribute(ctx, categoryID, attr)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
-
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Location", fmt.Sprintf("/api/admin/category/%d/attribute/%d", categoryID, created.ID))
+	httputils.WriteJSON(w, http.StatusCreated, dto.MapToAttributeResponse(created))
 }
 
 // ListAttributes godoc
@@ -238,7 +239,7 @@ func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 // @Param        categoryID path int true "Category ID"
 // @Param        id path int true "Attribute ID"
 // @Param        data body dto.AttributeRequest true "Attribute data"
-// @Success      204 "No Content"
+// @Success      200 {object} dto.AttributeResponse
 // @Failure      400 {object} httputils.ErrorResponse
 // @Failure      422 {object} httputils.ErrorResponse
 // @Failure      500 {object} httputils.ErrorResponse
@@ -272,12 +273,12 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 	attr.ID = id
 	attr.CategoryID = categoryID
 
-	if err := h.srv.UpdateAttribute(ctx, attr); err != nil {
+	updated, err := h.srv.UpdateAttribute(ctx, attr)
+	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
-
-	w.WriteHeader(http.StatusNoContent)
+	httputils.WriteJSON(w, http.StatusOK, dto.MapToAttributeResponse(updated))
 }
 
 // DeleteAttribute godoc

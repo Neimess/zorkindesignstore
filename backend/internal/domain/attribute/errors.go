@@ -9,4 +9,5 @@ var (
 	ErrAttributeAlreadyExists = errors.New("attribute already exists")
 	ErrBatchEmpty             = errors.New("batch of attributes is empty")
 	ErrBatchTooLarge          = errors.New("batch of attributes is too large")
+	ErrInvalidCategoryID      = errors.New("invalid category id")
 )

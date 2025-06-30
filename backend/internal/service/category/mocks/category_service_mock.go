@@ -294,20 +294,31 @@ func (_c *MockCategoryRepository_List_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // Update provides a mock function for the type MockCategoryRepository
-func (_mock *MockCategoryRepository) Update(ctx context.Context, id int64, newName string) error {
+func (_mock *MockCategoryRepository) Update(ctx context.Context, id int64, newName string) (*category.Category, error) {
 	ret := _mock.Called(ctx, id, newName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+	var r0 *category.Category
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) (*category.Category, error)); ok {
+		return returnFunc(ctx, id, newName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) *category.Category); ok {
 		r0 = returnFunc(ctx, id, newName)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*category.Category)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = returnFunc(ctx, id, newName)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockCategoryRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
@@ -346,12 +357,12 @@ func (_c *MockCategoryRepository_Update_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockCategoryRepository_Update_Call) Return(err error) *MockCategoryRepository_Update_Call {
-	_c.Call.Return(err)
+func (_c *MockCategoryRepository_Update_Call) Return(category1 *category.Category, err error) *MockCategoryRepository_Update_Call {
+	_c.Call.Return(category1, err)
 	return _c
 }
 
-func (_c *MockCategoryRepository_Update_Call) RunAndReturn(run func(ctx context.Context, id int64, newName string) error) *MockCategoryRepository_Update_Call {
+func (_c *MockCategoryRepository_Update_Call) RunAndReturn(run func(ctx context.Context, id int64, newName string) (*category.Category, error)) *MockCategoryRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

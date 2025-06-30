@@ -67,6 +67,11 @@ func TestCreateCategory_Success(t *testing.T) {
 	h.CreateCategory(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "/api/category/42", w.Header().Get("Location"))
+	var resp dto.CategoryResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, int64(42), resp.ID)
+	assert.Equal(t, "Books", resp.Name)
 	mockSvc.AssertExpectations(t)
 }
 

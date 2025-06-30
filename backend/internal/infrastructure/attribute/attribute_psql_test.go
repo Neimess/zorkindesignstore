@@ -159,8 +159,9 @@ func (s *PGAttributeRepositorySuite) Test_Update() {
 	a.Name = "Updated"
 	a.Unit = ptr("г")
 
-	require.NoError(s.T(), s.repo.Update(s.ctx, a))
-
+	updated, err := s.repo.Update(s.ctx, a)
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), a.Name, updated.Name)
 	found, err := s.repo.GetByID(s.ctx, a.ID)
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "Updated", found.Name)

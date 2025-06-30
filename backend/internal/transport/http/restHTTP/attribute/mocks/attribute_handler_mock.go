@@ -375,20 +375,31 @@ func (_c *MockAttributeService_ListAttributes_Call) RunAndReturn(run func(ctx co
 }
 
 // UpdateAttribute provides a mock function for the type MockAttributeService
-func (_mock *MockAttributeService) UpdateAttribute(ctx context.Context, attr1 *attr.Attribute) error {
+func (_mock *MockAttributeService) UpdateAttribute(ctx context.Context, attr1 *attr.Attribute) (*attr.Attribute, error) {
 	ret := _mock.Called(ctx, attr1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAttribute")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *attr.Attribute) error); ok {
+	var r0 *attr.Attribute
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *attr.Attribute) (*attr.Attribute, error)); ok {
+		return returnFunc(ctx, attr1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *attr.Attribute) *attr.Attribute); ok {
 		r0 = returnFunc(ctx, attr1)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*attr.Attribute)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *attr.Attribute) error); ok {
+		r1 = returnFunc(ctx, attr1)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockAttributeService_UpdateAttribute_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAttribute'
@@ -421,12 +432,12 @@ func (_c *MockAttributeService_UpdateAttribute_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockAttributeService_UpdateAttribute_Call) Return(err error) *MockAttributeService_UpdateAttribute_Call {
-	_c.Call.Return(err)
+func (_c *MockAttributeService_UpdateAttribute_Call) Return(attribute *attr.Attribute, err error) *MockAttributeService_UpdateAttribute_Call {
+	_c.Call.Return(attribute, err)
 	return _c
 }
 
-func (_c *MockAttributeService_UpdateAttribute_Call) RunAndReturn(run func(ctx context.Context, attr1 *attr.Attribute) error) *MockAttributeService_UpdateAttribute_Call {
+func (_c *MockAttributeService_UpdateAttribute_Call) RunAndReturn(run func(ctx context.Context, attr1 *attr.Attribute) (*attr.Attribute, error)) *MockAttributeService_UpdateAttribute_Call {
 	_c.Call.Return(run)
 	return _c
 }

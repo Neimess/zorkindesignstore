@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -16,7 +17,7 @@ import (
 type CategoryService interface {
 	CreateCategory(ctx context.Context, cat *catDom.Category) (*catDom.Category, error)
 	GetCategory(ctx context.Context, id int64) (*catDom.Category, error)
-	UpdateCategory(ctx context.Context, cat *catDom.Category) error
+	UpdateCategory(ctx context.Context, cat *catDom.Category) (*catDom.Category, error)
 	DeleteCategory(ctx context.Context, id int64) error
 	ListCategories(ctx context.Context) ([]catDom.Category, error)
 }
@@ -66,7 +67,7 @@ func New(deps Deps) *Handler {
 //		@Produce		json
 //	 @Security       BearerAuth
 //		@Param			category	body		dto.CategoryCreateRequest	true	"Category to create"
-//		@Success		201	 "Created"
+//		@Success		201	 		{object}	dto.CategoryResponse
 //		@Failure		400			{object}	httputils.ErrorResponse
 //		@Failure		409			{object}	httputils.ErrorResponse
 //		@Failure		500			{object}	httputils.ErrorResponse
@@ -94,12 +95,13 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cat := input.ToDomainCreate()
-	_, err := h.srv.CreateCategory(ctx, cat)
+	created, err := h.srv.CreateCategory(ctx, cat)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Location", "/api/category/"+fmt.Sprint(created.ID))
+	httputils.WriteJSON(w, http.StatusCreated, dto.ToDTOResponse(created))
 }
 
 // -----------------------------------------------------------------------------
@@ -164,7 +166,7 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 //	 	@Security       BearerAuth
 //		@Param			id			path	int							true	"Category ID"
 //		@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
-//		@Success		204
+//		@Success		200	{object}	dto.CategoryResponse
 //		@Failure		400	{object}	httputils.ErrorResponse
 //		@Failure		404	{object}	httputils.ErrorResponse
 //		@Failure		500	{object}	httputils.ErrorResponse
@@ -195,11 +197,12 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 
 	cat := input.ToDomainUpdate(id)
 
-	if err := h.srv.UpdateCategory(ctx, cat); err != nil {
+	updated, err := h.srv.UpdateCategory(ctx, cat)
+	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	httputils.WriteJSON(w, http.StatusOK, dto.ToDTOResponse(updated))
 }
 
 // -----------------------------------------------------------------------------

@@ -17,7 +17,7 @@ type AttributeRepository interface {
 	Save(ctx context.Context, attr *attrDom.Attribute) error
 	GetByID(ctx context.Context, id int64) (*attrDom.Attribute, error)
 	FindByCategory(ctx context.Context, categoryID int64) ([]attrDom.Attribute, error)
-	Update(ctx context.Context, attr *attrDom.Attribute) error
+	Update(ctx context.Context, attr *attrDom.Attribute) (*attrDom.Attribute, error)
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -126,22 +126,25 @@ func (s *Service) ListAttributes(ctx context.Context, categoryID int64) ([]attrD
 	return list, nil
 }
 
-func (s *Service) UpdateAttribute(ctx context.Context, a *attrDom.Attribute) error {
-	s.log.Debug("UpdateAttribute", slog.Int64("id", a.ID))
+func (s *Service) UpdateAttribute(ctx context.Context, a *attrDom.Attribute) (*attrDom.Attribute, error) {
+	if err := a.Validate(); err != nil {
+		return nil, err
+	}
 
 	if err := s.ensureCategory(ctx, a.CategoryID); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := s.repoAttr.Update(ctx, a); err != nil {
+	updated, err := s.repoAttr.Update(ctx, a)
+	if err != nil {
 		s.log.Error("Update failed", slog.Any("error", err))
 		if errors.Is(err, der.ErrNotFound) {
-			return attrDom.ErrAttributeNotFound
+			return nil, attrDom.ErrAttributeNotFound
 		}
-		return fmt.Errorf("service: update attribute: %w", err)
+		return nil, fmt.Errorf("service: update attribute: %w", err)
 	}
 	s.log.Info("UpdateAttribute succeeded", slog.Int64("id", a.ID))
-	return nil
+	return updated, nil
 }
 
 func (s *Service) DeleteAttribute(ctx context.Context, id int64) error {

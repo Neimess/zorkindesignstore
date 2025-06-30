@@ -16,6 +16,7 @@ import (
 
 	attrDom "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
+	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/mocks"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-playground/validator/v10"
@@ -146,3 +147,36 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateAttribute_Success(t *testing.T) {
+	mockSvc := mocks.NewMockAttributeService(t)
+	h := newHandler(mockSvc, nil)
+
+	body := map[string]interface{}{"name": "AttrName", "unit": "u"}
+	raw, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/admin/category/1/attribute", bytes.NewReader(raw))
+	req = withChiParams(req, map[string]string{"categoryID": "1"})
+	w := httptest.NewRecorder()
+
+	mockSvc.
+		On("CreateAttribute", mock.Anything, int64(1), mock.MatchedBy(func(a *attrDom.Attribute) bool {
+			return a.Name == "AttrName" && a.Unit != nil && *a.Unit == "u"
+		})).
+		Return(&attrDom.Attribute{ID: 55, Name: "AttrName", Unit: strPtr("u"), CategoryID: 1}, nil).
+		Once()
+
+	h.CreateAttribute(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "/api/admin/category/1/attribute/55", w.Header().Get("Location"))
+	var resp dto.AttributeResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, int64(55), resp.ID)
+	assert.Equal(t, "AttrName", resp.Name)
+	assert.Equal(t, int64(1), resp.CategoryID)
+	mockSvc.AssertExpectations(t)
+}
+
+func strPtr(s string) *string { return &s }

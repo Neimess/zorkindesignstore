@@ -294,20 +294,31 @@ func (_c *MockCategoryService_ListCategories_Call) RunAndReturn(run func(ctx con
 }
 
 // UpdateCategory provides a mock function for the type MockCategoryService
-func (_mock *MockCategoryService) UpdateCategory(ctx context.Context, cat *category.Category) error {
+func (_mock *MockCategoryService) UpdateCategory(ctx context.Context, cat *category.Category) (*category.Category, error) {
 	ret := _mock.Called(ctx, cat)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCategory")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *category.Category) error); ok {
+	var r0 *category.Category
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *category.Category) (*category.Category, error)); ok {
+		return returnFunc(ctx, cat)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *category.Category) *category.Category); ok {
 		r0 = returnFunc(ctx, cat)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*category.Category)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *category.Category) error); ok {
+		r1 = returnFunc(ctx, cat)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockCategoryService_UpdateCategory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateCategory'
@@ -340,12 +351,12 @@ func (_c *MockCategoryService_UpdateCategory_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockCategoryService_UpdateCategory_Call) Return(err error) *MockCategoryService_UpdateCategory_Call {
-	_c.Call.Return(err)
+func (_c *MockCategoryService_UpdateCategory_Call) Return(category1 *category.Category, err error) *MockCategoryService_UpdateCategory_Call {
+	_c.Call.Return(category1, err)
 	return _c
 }
 
-func (_c *MockCategoryService_UpdateCategory_Call) RunAndReturn(run func(ctx context.Context, cat *category.Category) error) *MockCategoryService_UpdateCategory_Call {
+func (_c *MockCategoryService_UpdateCategory_Call) RunAndReturn(run func(ctx context.Context, cat *category.Category) (*category.Category, error)) *MockCategoryService_UpdateCategory_Call {
 	_c.Call.Return(run)
 	return _c
 }

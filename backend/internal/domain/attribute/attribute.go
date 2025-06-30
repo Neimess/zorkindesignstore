@@ -6,3 +6,13 @@ type Attribute struct {
 	Unit       *string
 	CategoryID int64
 }
+
+func (a *Attribute) Validate() error {
+	if a.Name == "" {
+		return ErrAttributeValidation
+	}
+	if a.CategoryID == 0 {
+		return ErrInvalidCategoryID
+	}
+	return nil
+}

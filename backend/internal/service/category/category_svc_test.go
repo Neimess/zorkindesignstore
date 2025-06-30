@@ -164,6 +164,7 @@ func (s *CategoryServiceSuite) TestUpdateCategory() {
 		name      string
 		input     *category.Category
 		mockSetup func()
+		expect    *category.Category
 		expectErr bool
 	}
 
@@ -172,30 +173,34 @@ func (s *CategoryServiceSuite) TestUpdateCategory() {
 			name:  "success",
 			input: &category.Category{ID: 1, Name: "Updated"},
 			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(1), "Updated").Return(nil).Once()
+				s.mockRepo.On("Update", mock.Anything, int64(1), "Updated").Return(&category.Category{ID: 1, Name: "Updated"}, nil).Once()
 			},
+			expect:    &category.Category{ID: 1, Name: "Updated"},
 			expectErr: false,
 		},
 		{
 			name:      "validation error",
 			input:     &category.Category{ID: 1, Name: ""},
 			mockSetup: func() {},
+			expect:    nil,
 			expectErr: true,
 		},
 		{
 			name:  "not found",
 			input: &category.Category{ID: 2, Name: "Updated"},
 			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(2), "Updated").Return(category.ErrCategoryNotFound).Once()
+				s.mockRepo.On("Update", mock.Anything, int64(2), "Updated").Return(nil, category.ErrCategoryNotFound).Once()
 			},
+			expect:    nil,
 			expectErr: true,
 		},
 		{
 			name:  "repository error",
 			input: &category.Category{ID: 3, Name: "RepoFail"},
 			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(3), "RepoFail").Return(errors.New("db error")).Once()
+				s.mockRepo.On("Update", mock.Anything, int64(3), "RepoFail").Return(nil, errors.New("db error")).Once()
 			},
+			expect:    nil,
 			expectErr: true,
 		},
 	}
@@ -204,11 +209,13 @@ func (s *CategoryServiceSuite) TestUpdateCategory() {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			tc.mockSetup()
-			err := s.svc.UpdateCategory(context.Background(), tc.input)
+			updated, err := s.svc.UpdateCategory(context.Background(), tc.input)
 			if tc.expectErr {
 				s.Error(err)
+				s.Nil(updated)
 			} else {
 				s.NoError(err)
+				s.Equal(tc.expect, updated)
 			}
 			s.mockRepo.AssertExpectations(s.T())
 		})

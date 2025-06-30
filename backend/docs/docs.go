@@ -86,7 +86,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -272,8 +275,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -383,8 +389,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad Request",
@@ -624,7 +633,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "No Content"
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad request",
@@ -798,8 +810,11 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "No Content"
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductResponse"
+                        }
                     },
                     "400": {
                         "description": "Bad request",

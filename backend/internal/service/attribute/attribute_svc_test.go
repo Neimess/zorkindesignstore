@@ -128,3 +128,72 @@ func (s *ServiceTestSuite) TestCreateAttributesBatch() {
 		})
 	}
 }
+
+// ─── UpdateAttribute ─────────────────────────────────────────────────────---
+
+func (s *ServiceTestSuite) TestUpdateAttribute() {
+	goodAttr := &attrDom.Attribute{ID: 1, Name: "Attr1", CategoryID: 2}
+	updatedAttr := &attrDom.Attribute{ID: 1, Name: "Attr1-upd", CategoryID: 2}
+	badAttr := &attrDom.Attribute{ID: 2, Name: "", CategoryID: 2}
+
+	cases := []struct {
+		name    string
+		input   *attrDom.Attribute
+		setup   func()
+		want    *attrDom.Attribute
+		wantErr bool
+	}{
+		{
+			name:  "success",
+			input: &attrDom.Attribute{ID: 1, Name: "Attr1-upd", CategoryID: 2},
+			setup: func() {
+				s.stubCatFound(2)
+				s.repoAttr.On("Update", mock.Anything, mock.MatchedBy(func(a *attrDom.Attribute) bool {
+					return a.ID == 1 && a.Name == "Attr1-upd" && a.CategoryID == 2
+				})).Return(updatedAttr, nil).Once()
+			},
+			want:    updatedAttr,
+			wantErr: false,
+		},
+		{
+			name:    "category not found",
+			input:   goodAttr,
+			setup:   func() { s.stubCatNotFound(2) },
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:  "repo error",
+			input: goodAttr,
+			setup: func() {
+				s.stubCatFound(2)
+				s.repoAttr.On("Update", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("db fail")).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "validation error",
+			input:   badAttr,
+			setup:   func() {},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			tc.setup()
+			res, err := s.svc.UpdateAttribute(context.Background(), tc.input)
+			if tc.wantErr {
+				assert.Error(s.T(), err)
+				s.Nil(res)
+			} else {
+				assert.NoError(s.T(), err)
+				assert.Equal(s.T(), tc.want, res)
+			}
+			s.repoCat.AssertExpectations(s.T())
+			s.repoAttr.AssertExpectations(s.T())
+		})
+	}
+}

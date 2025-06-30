@@ -139,32 +139,21 @@ func (r *PGAttributeRepository) FindByCategory(ctx context.Context, categoryID i
 	return rawListToDomain(raws), nil
 }
 
-func (r *PGAttributeRepository) Update(ctx context.Context, attr *attr.Attribute) error {
+func (r *PGAttributeRepository) Update(ctx context.Context, attr *attr.Attribute) (*attr.Attribute, error) {
 	const query = `
 	UPDATE attributes
 	SET name = $1, unit = $2, category_id = $3
 	WHERE attribute_id = $4
+	RETURNING attribute_id, name, unit, category_id
 	`
-
+	var updated attributeDB
 	err := r.withQuery(ctx, query, func() error {
-		res, err := r.db.ExecContext(ctx, query, attr.Name, attr.Unit, attr.CategoryID, attr.ID)
-		if err != nil {
-			return err
-		}
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if rowsAffected == 0 {
-			return fmt.Errorf("%w: attribute with ID %d not found", der.ErrNotFound, attr.ID)
-		}
-		return nil
+		return r.db.QueryRowContext(ctx, query, attr.Name, attr.Unit, attr.CategoryID, attr.ID).Scan(&updated.ID, &updated.Name, &updated.Unit, &updated.CategoryID)
 	})
 	if err != nil {
-		return r.mapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
-
-	return nil
+	return updated.toDomain(), nil
 }
 
 func (r *PGAttributeRepository) Delete(ctx context.Context, id int64) error {

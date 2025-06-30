@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log/slog"
 
@@ -72,29 +71,16 @@ func (r *PGCategoryRepository) GetByID(ctx context.Context, id int64) (*catDom.C
 	return &c, nil
 }
 
-func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName string) error {
-	const query = `UPDATE categories SET name = $1 WHERE category_id = $2`
-	var res sql.Result
+func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName string) (*catDom.Category, error) {
+	const query = `UPDATE categories SET name = $1 WHERE category_id = $2 RETURNING category_id, name`
+	var c catDom.Category
 	err := r.withQuery(ctx, query, func() error {
-		var err error
-		res, err = r.db.ExecContext(ctx,
-			query,
-			newName, id,
-		)
-		return err
+		return r.db.QueryRowContext(ctx, query, newName, id).Scan(&c.ID, &c.Name)
 	})
-
 	if err != nil {
-		return r.mapPostgreSQLError(err)
+		return nil, r.mapPostgreSQLError(err)
 	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return r.mapPostgreSQLError(err)
-	}
-	if rows == 0 {
-		return app_error.ErrNotFound
-	}
-	return nil
+	return &c, nil
 }
 
 func (r *PGCategoryRepository) Delete(ctx context.Context, id int64) error {

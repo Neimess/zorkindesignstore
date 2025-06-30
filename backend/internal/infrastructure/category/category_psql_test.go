@@ -113,16 +113,16 @@ func (s *CategoryRepositorySuite) Test_GetByID_NotFound() {
 func (s *CategoryRepositorySuite) Test_Update() {
 	id := s.createCategory("oldname")
 
-	err := s.repo.Update(s.ctx, id, "newname")
+	updated, err := s.repo.Update(s.ctx, id, "newname")
 	require.NoError(s.T(), err)
-
+	require.Equal(s.T(), "newname", updated.Name)
 	fetched, err := s.repo.GetByID(s.ctx, id)
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "newname", fetched.Name)
 }
 
 func (s *CategoryRepositorySuite) Test_Update_NotFound() {
-	err := s.repo.Update(s.ctx, 99999, "name")
+	_, err := s.repo.Update(s.ctx, 99999, "name")
 	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 

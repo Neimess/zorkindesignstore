@@ -412,7 +412,7 @@ func (s *ProductServiceSuite) TestDelete() {
 			mockSetup: func() {
 				s.mockRepo.On("Delete", mock.Anything, int64(2)).Return(der.ErrNotFound).Once()
 			},
-			expectErr: domProduct.ErrProductNotFound,
+			expectErr: nil,
 		},
 		{
 			name: "not found (product.ErrProductNotFound)",
@@ -420,7 +420,7 @@ func (s *ProductServiceSuite) TestDelete() {
 			mockSetup: func() {
 				s.mockRepo.On("Delete", mock.Anything, int64(3)).Return(domProduct.ErrProductNotFound).Once()
 			},
-			expectErr: domProduct.ErrProductNotFound,
+			expectErr: nil,
 		},
 		{
 			name: "repo error",

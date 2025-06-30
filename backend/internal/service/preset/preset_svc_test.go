@@ -178,10 +178,18 @@ func (s *PresetServiceSuite) TestDelete() {
 			expectErr: nil,
 		},
 		{
-			name: "repo error",
+			name: "not found",
 			id:   2,
 			mockSetup: func() {
-				s.mockRepo.On("Delete", mock.Anything, int64(2)).Return(errors.New("db fail")).Once()
+				s.mockRepo.On("Delete", mock.Anything, int64(2)).Return(der.ErrNotFound).Once()
+			},
+			expectErr: nil,
+		},
+		{
+			name: "repo error",
+			id:   3,
+			mockSetup: func() {
+				s.mockRepo.On("Delete", mock.Anything, int64(3)).Return(errors.New("db fail")).Once()
 			},
 			expectErr: errors.New("db fail"),
 		},

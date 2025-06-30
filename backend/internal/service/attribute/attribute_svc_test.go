@@ -197,3 +197,46 @@ func (s *ServiceTestSuite) TestUpdateAttribute() {
 		})
 	}
 }
+
+// ─── DeleteAttribute ────────────────────────────────────────────────────────
+
+func (s *ServiceTestSuite) TestDeleteAttribute() {
+	cases := []struct {
+		name    string
+		id      int64
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name:    "success",
+			id:      1,
+			setup:   func() { s.repoAttr.On("Delete", mock.Anything, int64(1)).Return(nil).Once() },
+			wantErr: false,
+		},
+		{
+			name:    "not found (idempotent)",
+			id:      2,
+			setup:   func() { s.repoAttr.On("Delete", mock.Anything, int64(2)).Return(der.ErrNotFound).Once() },
+			wantErr: false,
+		},
+		{
+			name:    "repo error",
+			id:      3,
+			setup:   func() { s.repoAttr.On("Delete", mock.Anything, int64(3)).Return(fmt.Errorf("db fail")).Once() },
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range cases {
+		s.Run(tc.name, func() {
+			tc.setup()
+			err := s.svc.DeleteAttribute(context.Background(), tc.id)
+			if tc.wantErr {
+				assert.Error(s.T(), err)
+			} else {
+				assert.NoError(s.T(), err)
+			}
+			s.repoAttr.AssertExpectations(s.T())
+		})
+	}
+}

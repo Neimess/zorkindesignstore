@@ -153,10 +153,11 @@ func (s *Service) DeleteAttribute(ctx context.Context, id int64) error {
 	if err := s.repoAttr.Delete(ctx, id); err != nil {
 		s.log.Error("Delete failed", slog.Any("error", err))
 		if errors.Is(err, der.ErrNotFound) {
-			return attrDom.ErrAttributeNotFound
+			return nil
 		}
 		return fmt.Errorf("service: delete attribute: %w", err)
 	}
+
 	s.log.Info("DeleteAttribute succeeded", slog.Int64("id", id))
 	return nil
 }

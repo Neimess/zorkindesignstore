@@ -245,7 +245,7 @@ func (s *CategoryServiceSuite) TestDeleteCategory() {
 			mockSetup: func() {
 				s.mockRepo.On("Delete", mock.Anything, int64(2)).Return(category.ErrCategoryNotFound).Once()
 			},
-			expectErr: true,
+			expectErr: false,
 		},
 		{
 			name: "repository error",

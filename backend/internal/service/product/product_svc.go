@@ -162,7 +162,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		if errors.Is(err, der.ErrNotFound) || errors.Is(err, domProduct.ErrProductNotFound) {
 			log.Warn("product not found", slog.Int64("product_id", id))
-			return domProduct.ErrProductNotFound
+			return nil
 		}
 		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("error", err))
 		return fmt.Errorf("%s: %w", op, err)

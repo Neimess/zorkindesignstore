@@ -94,6 +94,9 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
+		if errors.Is(err, der.ErrNotFound) {
+			return nil
+		}
 		log.Error("repo.Delete failed", slog.Int64("preset_id", id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}

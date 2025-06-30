@@ -83,7 +83,10 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, catDom.ErrCategoryNotFound) || errors.Is(err, catDom.ErrCategoryInUse) {
+		if errors.Is(err, catDom.ErrCategoryNotFound) {
+			return nil
+		}
+		if errors.Is(err, catDom.ErrCategoryInUse) {
 			return err
 		}
 		return fmt.Errorf("service: failed to delete category: %w", err)

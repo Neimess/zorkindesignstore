@@ -35,16 +35,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: ${{ env.MODULE_PATH }}/go.sum
       
-      - name: Set Go sum hash
-        id: go_sum_hash
-        run: |
-          echo "go_sum_hash_value=$(hashFiles('**/go.sum'))" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Print Go sum hash
-        run: |
-          echo "Go.sum hash: ${{ steps.go_sum_hash.outputs.go_sum_hash_value }}"
 
       - name: Cache Go modules & build cache
         uses: actions/cache@v4
@@ -52,7 +44,7 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ steps.go_sum_hash.outputs.go_sum_hash_value }}
+          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ env.GO_VERSION }}-
 

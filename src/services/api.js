@@ -12,7 +12,7 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
-  console.log(`[API] ➤ GET ${url}`);
+  console.log(`[API] ➤ ${options.method || 'GET'} ${url}`);
   console.log('↳ Request config:', config);
 
   try {
@@ -25,42 +25,27 @@ const apiRequest = async (endpoint, options = {}) => {
       console.log('🔴 Подробный ответ сервера:', errorData);
       console.error(`[API ERROR] ${url} ➤ ${response.status}: ${errorData.message}`);
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      
     }
 
-    // Для DELETE запросов может не быть тела ответа
     if (response.status === 204) {
-      console.log(`✓ Success: No Content`);
+      console.log('✓ Success: No Content');
       return null;
     }
 
-    // 204 — «No Content» вы уже обработали,
- // теперь добавим безопасный разбор для 201 (Created) и 200 (OK)
+    const raw = await response.text();
+    if (!raw) {
+      console.log('✓ Success: empty body');
+      return null;
+    }
 
- // Если статус 204 — по-прежнему возвращаем null
- if (response.status === 204) {
-   console.log('✓ Success: No Content');
-   return null;
- }
-
- // Для остальных успешных статусов пробуем сначала text(),
- // а JSON парсим только если тело не пустое
- const raw = await response.text();
- if (!raw) {
-   console.log('✓ Success: empty body');
-   return null;            // или return {} – как удобнее
- }
-
- // Если в теле всё-таки есть строка, пробуем распарсить
- try {
-   const data = JSON.parse(raw);
-   console.log('✓ Success:', data);
-   return data;
- } catch (e) {
-   console.warn('✓ Success (no-JSON body):', raw);
-  return raw;             // вернём просто строку
- }
-
+    try {
+      const data = JSON.parse(raw);
+      console.log('✓ Success:', data);
+      return data;
+    } catch (e) {
+      console.warn('✓ Success (non-JSON body):', raw);
+      return raw;
+    }
 
   } catch (error) {
     console.error('✗ Ошибка выполнения запроса:', error.message);

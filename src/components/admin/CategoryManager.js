@@ -26,10 +26,13 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
       const token = await getAdminToken();
       if (!token) return;
       
-      await categoryAPI.create({ name: catName }, token);
-      
+      const response = await categoryAPI.create({ name: catName }, token);
+
       // Обновляем локальный список категорий
-      const newCategory = { id: Date.now(), name: catName };
+      const newCategory = { 
+        id: response.id,
+  name: response.name,
+      };
       setCategories([...categories, newCategory]);
       setCatName('');
       showMessage('Категория успешно добавлена');
@@ -44,6 +47,7 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
    * @param {number} id - ID категории для удаления
    */
   const removeCategory = async (id) => {
+    console.log('Удаляем категорию с id:', id);
     try {
       const token = await getAdminToken();
       if (!token) return;
@@ -51,6 +55,8 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
       await categoryAPI.delete(id, token);
       
       // Обновляем локальные данные
+      
+      
       setCategories(categories.filter((c) => c.id !== id));
       showMessage('Категория успешно удалена');
     } catch (error) {

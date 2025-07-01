@@ -222,8 +222,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	p := req.MapToPreset()
- p.ID = id
+	p := req.MapUpdateToPreset(id)
 	res, err := h.srv.Update(ctx, p)
 	if err != nil {
 		h.handleServiceError(w, err)

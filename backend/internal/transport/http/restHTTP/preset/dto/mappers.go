@@ -55,6 +55,16 @@ func (r *PresetRequest) MapToPreset() *preset.Preset {
 	}
 }
 
+func (r *PresetRequest) MapUpdateToPreset(preset_id int64) *preset.Preset {
+	return &preset.Preset{
+		ID:          preset_id,
+		Name:        r.Name,
+		Description: r.Description,
+		TotalPrice:  r.TotalPrice,
+		ImageURL:    r.ImageURL,
+		Items:       r.mapToPresetItems(),
+	}
+}
 func (r *PresetRequest) mapToPresetItems() []preset.PresetItem {
 	items := make([]preset.PresetItem, len(r.Items))
 	for i, it := range r.Items {

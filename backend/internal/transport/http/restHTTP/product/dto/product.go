@@ -90,7 +90,6 @@ func (r ProductRequest) Validate() error {
 	return nil
 }
 
-
 func (r ProductAttributeValueRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {

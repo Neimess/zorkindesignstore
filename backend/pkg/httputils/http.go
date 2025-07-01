@@ -2,14 +2,13 @@ package httputils
 
 import (
 	"encoding/json"
-	"net/http"
 	"log/slog"
+	"net/http"
 )
 
 type Validatable interface {
 	Validate() error
 }
-
 
 func DecodeAndValidate[T Validatable](w http.ResponseWriter, r *http.Request, log *slog.Logger) (*T, bool) {
 	var req T

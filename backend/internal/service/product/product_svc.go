@@ -8,7 +8,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
-	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
+	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
@@ -59,7 +59,7 @@ func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduc
 			der.ErrValidation:            domProduct.ErrInvalidAttribute,
 			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
 		}
-		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
+		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product created", slog.Int64("product_id", p.ID))
@@ -78,7 +78,7 @@ func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*
 			der.ErrValidation:            domProduct.ErrInvalidAttribute,
 			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
 		}
-		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
+		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product with attributes created", slog.Int64("product_id", prod.ID))
@@ -131,7 +131,7 @@ func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduc
 			der.ErrValidation:             domProduct.ErrInvalidAttribute,
 			der.ErrBadRequest:             domProduct.ErrInvalidAttribute,
 		}
-		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
+		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product updated with attributes", slog.Int64("product_id", p.ID))
@@ -147,7 +147,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 			der.ErrNotFound:               nil,
 			domProduct.ErrProductNotFound: nil,
 		}
-		return serviceutils.ErrorHandler(log, op, err, mapping)
+		return utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product deleted", slog.Int64("product_id", id))

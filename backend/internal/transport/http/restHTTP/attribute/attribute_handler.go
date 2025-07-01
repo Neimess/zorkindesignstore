@@ -2,7 +2,6 @@ package attribute
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -75,19 +74,8 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req dto.CreateAttributesBatchRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-	if err := req.Validate(); err != nil {
-		h.log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.CreateAttributesBatchRequest](w, r, h.log)
+	if !ok {
 		return
 	}
 
@@ -121,19 +109,8 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.AttributeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-	if err := req.Validate(); err != nil {
-		h.log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
+	if !ok {
 		return
 	}
 	attr := req.MapToDomain()
@@ -246,22 +223,11 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req dto.AttributeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-	if err := req.Validate(); err != nil {
-		h.log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
+	if !ok {
 		return
 	}
 	attr := req.MapToDomain()
-
 	attr.ID = id
 	attr.CategoryID = categoryID
 

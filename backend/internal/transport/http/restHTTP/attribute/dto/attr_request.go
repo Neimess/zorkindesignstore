@@ -15,12 +15,7 @@ type AttributeRequest struct {
 	Unit *string `json:"unit,omitempty" validate:"omitempty,max=50"`
 }
 
-func (r *AttributeRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
-		}
-	}
+func (r AttributeRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
@@ -60,12 +55,7 @@ type CreateAttributesBatchRequest struct {
 	Items []AttributeRequest `json:"data" validate:"required,min=1,dive"`
 }
 
-func (r *CreateAttributesBatchRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
-		}
-	}
+func (r CreateAttributesBatchRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
@@ -100,14 +90,14 @@ func (r *CreateAttributesBatchRequest) Validate() error {
 	return nil
 }
 
-func (r *AttributeRequest) MapToDomain() *attr.Attribute {
+func (r AttributeRequest) MapToDomain() *attr.Attribute {
 	return &attr.Attribute{
 		Name: r.Name,
 		Unit: r.Unit,
 	}
 }
 
-func (r *CreateAttributesBatchRequest) MapToDomainBatch() []attr.Attribute {
+func (r CreateAttributesBatchRequest) MapToDomainBatch() []attr.Attribute {
 	out := make([]attr.Attribute, len(r.Items))
 	for i, it := range r.Items {
 		out[i] = attr.Attribute{

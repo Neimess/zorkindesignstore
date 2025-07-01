@@ -46,7 +46,7 @@ func (s *ProductHandlerSuite) TestCreate() {
 	tests := []testCase{
 		{
 			name: "success",
-			body: dto.ProductCreateRequest{
+			body: dto.ProductRequest{
 				Name:       "ValidProduct",
 				Price:      10,
 				CategoryID: 1,
@@ -73,7 +73,7 @@ func (s *ProductHandlerSuite) TestCreate() {
 		},
 		{
 			name: "validation error - empty name",
-			body: dto.ProductCreateRequest{
+			body: dto.ProductRequest{
 				Name:       "",
 				Price:      10,
 				CategoryID: 1,
@@ -136,7 +136,7 @@ func (s *ProductHandlerSuite) TestCreateWithAttributes() {
 	tests := []testCase{
 		{
 			name: "success",
-			body: dto.ProductCreateRequest{Name: "ProductWithAttrs", Price: 10, CategoryID: 1},
+			body: dto.ProductRequest{Name: "ProductWithAttrs", Price: 10, CategoryID: 1},
 			svcMock: func(svc *mocks.MockProductService) {
 				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, nil).Once()
 			},
@@ -150,7 +150,7 @@ func (s *ProductHandlerSuite) TestCreateWithAttributes() {
 		},
 		{
 			name: "invalid attribute",
-			body: dto.ProductCreateRequest{Name: "ProductWithInvalidAttr", Price: 10, CategoryID: 1},
+			body: dto.ProductRequest{Name: "ProductWithInvalidAttr", Price: 10, CategoryID: 1},
 			svcMock: func(svc *mocks.MockProductService) {
 				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, prodDom.ErrInvalidAttribute).Once()
 			},
@@ -267,7 +267,7 @@ func (s *ProductHandlerSuite) TestListByCategory() {
 }
 
 func (s *ProductHandlerSuite) TestUpdate() {
-	body := dto.ProductUpdateRequest{Name: "UpdatedProduct", Price: 10, CategoryID: 1}
+	body := dto.ProductRequest{Name: "UpdatedProduct", Price: 10, CategoryID: 1}
 	raw, _ := json.Marshal(body)
 
 	req := httptest.NewRequest(http.MethodPut, "/api/admin/product/7", bytes.NewReader(raw))

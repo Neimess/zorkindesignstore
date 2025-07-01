@@ -1,4 +1,4 @@
-package serviceutils
+package utils
 
 import (
 	"errors"

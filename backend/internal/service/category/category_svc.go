@@ -6,7 +6,7 @@ import (
 	"log/slog"
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
-	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
+	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 )
 
 type CategoryRepository interface {
@@ -57,7 +57,7 @@ func (s *Service) CreateCategory(ctx context.Context, cat *catDom.Category) (*ca
 func (s *Service) GetCategory(ctx context.Context, id int64) (*catDom.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, serviceutils.ErrorHandler(s.log, "service.category.GetCategory", err, map[error]error{
+		return nil, utils.ErrorHandler(s.log, "service.category.GetCategory", err, map[error]error{
 			catDom.ErrCategoryNotFound: catDom.ErrCategoryNotFound,
 		})
 	}
@@ -71,7 +71,7 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 
 	updated, err := s.repo.Update(ctx, cat.ID, cat.Name)
 	if err != nil {
-		return nil, serviceutils.ErrorHandler(s.log, "service.category.UpdateCategory", err, map[error]error{
+		return nil, utils.ErrorHandler(s.log, "service.category.UpdateCategory", err, map[error]error{
 			catDom.ErrCategoryNotFound: catDom.ErrCategoryNotFound,
 		})
 	}
@@ -81,7 +81,7 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		return serviceutils.ErrorHandler(s.log, "service.category.DeleteCategory", err, map[error]error{
+		return utils.ErrorHandler(s.log, "service.category.DeleteCategory", err, map[error]error{
 			catDom.ErrCategoryNotFound: nil,
 			catDom.ErrCategoryInUse:    catDom.ErrCategoryInUse,
 		})
@@ -92,7 +92,7 @@ func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 func (s *Service) ListCategories(ctx context.Context) ([]catDom.Category, error) {
 	cats, err := s.repo.List(ctx)
 	if err != nil {
-		return nil, serviceutils.ErrorHandler(s.log, "service.category.ListCategories", err, nil)
+		return nil, utils.ErrorHandler(s.log, "service.category.ListCategories", err, nil)
 	}
 	return cats, nil
 }

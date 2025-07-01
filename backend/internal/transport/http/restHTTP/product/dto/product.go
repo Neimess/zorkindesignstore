@@ -13,22 +13,13 @@ import (
 var validate *validator.Validate = validator.New()
 
 //swagger:model ProductCreateRequest
-type ProductCreateRequest struct {
+type ProductRequest struct {
 	Name        string                         `json:"name" example:"Керамогранит" validate:"required,min=2"`
 	Price       float64                        `json:"price" example:"3490" validate:"required,gt=0"`
 	Description *string                        `json:"description,omitempty" example:"Прочный плиточный материал"`
 	CategoryID  int64                          `json:"category_id" example:"1" validate:"required,gt=0"`
 	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"omitempty,url"`
 	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
-}
-
-type ProductUpdateRequest struct {
-	Name        string                         `json:"name"        validate:"required"`
-	Price       float64                        `json:"price"       validate:"required,gt=0"`
-	Description *string                        `json:"description,omitempty" validate:"omitempty"`
-	CategoryID  int64                          `json:"category_id" validate:"required,gt=0"`
-	ImageURL    *string                        `json:"image_url,omitempty" validate:"omitempty,url"`
-	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"omitempty,dive"`
 }
 
 //swagger:model ProductAttributeValueRequest
@@ -57,12 +48,7 @@ type ProductAttributeValueResponse struct {
 	Value       string  `json:"value" example:"1.25"`
 }
 
-func (r *ProductCreateRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
-		}
-	}
+func (r ProductRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
@@ -104,59 +90,8 @@ func (r *ProductCreateRequest) Validate() error {
 	return nil
 }
 
-func (r *ProductUpdateRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
-		}
-	}
-	var errs []ve.FieldError
-	if err := validate.Struct(r); err != nil {
-		if _, ok := err.(*validator.InvalidValidationError); ok {
-			return err
-		}
-		validationErrors := err.(validator.ValidationErrors)
-		for _, e := range validationErrors {
-			switch e.Field() {
-			case "Name":
-				errs = append(errs, ve.FieldError{Field: "name", Message: "name is required"})
-			case "Price":
-				errs = append(errs, ve.FieldError{Field: "price", Message: "price is required and must be greater than 0"})
-			case "CategoryID":
-				errs = append(errs, ve.FieldError{Field: "category_id", Message: "category_id is required and must be greater than 0"})
-			case "ImageURL":
-				errs = append(errs, ve.FieldError{Field: "image_url", Message: "image_url must be a valid URL"})
-			case "Attributes":
-				errs = append(errs, ve.FieldError{Field: "attributes", Message: "invalid attributes"})
-			default:
-				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
-			}
-		}
-	}
-	for idx, attr := range r.Attributes {
-		if err := attr.Validate(); err != nil {
-			if veResp, ok := err.(ve.ValidationErrorResponse); ok {
-				for _, ferr := range veResp.Errors {
-					ferr.Field = fmt.Sprintf("attributes[%d].%s", idx, ferr.Field)
-					errs = append(errs, ferr)
-				}
-			} else {
-				errs = append(errs, ve.FieldError{Field: fmt.Sprintf("attributes[%d]", idx), Message: err.Error()})
-			}
-		}
-	}
-	if len(errs) > 0 {
-		return ve.ValidationErrorResponse{Errors: errs}
-	}
-	return nil
-}
 
-func (r *ProductAttributeValueRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{{Field: "attribute", Message: "attribute is nil"}},
-		}
-	}
+func (r ProductAttributeValueRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
@@ -180,7 +115,7 @@ func (r *ProductAttributeValueRequest) Validate() error {
 	return nil
 }
 
-func MapCreateReqToDomain(req *ProductCreateRequest) *prodDom.Product {
+func MapCreateReqToDomain(req *ProductRequest) *prodDom.Product {
 	p := &prodDom.Product{
 		Name:        req.Name,
 		Price:       req.Price,
@@ -220,7 +155,7 @@ func MapDomainToProductResponse(p *prodDom.Product) *ProductResponse {
 	return resp
 }
 
-func MapUpdateReqToDomain(id int64, req *ProductUpdateRequest) *prodDom.Product {
+func MapUpdateReqToDomain(id int64, req *ProductRequest) *prodDom.Product {
 	p := &prodDom.Product{
 		ID:          id,
 		Name:        req.Name,

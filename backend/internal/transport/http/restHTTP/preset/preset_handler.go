@@ -2,7 +2,6 @@ package preset
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -69,30 +68,12 @@ func New(d Deps) *Handler {
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "Create")
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
 
-	// 1) Decode
-	var req dto.PresetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, fmt.Sprintf("Invalid JSON: %s", err.Error()))
+	req, ok := httputils.DecodeAndValidate[dto.PresetRequest](w, r, log)
+	if !ok {
 		return
 	}
 
-	if err := req.Validate(); err != nil {
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// 3) Business logic
 	p := req.MapToPreset()
 	preset, err := h.srv.Create(ctx, p)
 	if err != nil {
@@ -236,25 +217,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
 
-	var req dto.PresetRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, fmt.Sprintf("Invalid JSON: %s", err.Error()))
-		return
-	}
-
-	if err := req.Validate(); err != nil {
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.PresetRequest](w, r, log)
+	if !ok {
 		return
 	}
 	p := req.MapToPreset()

@@ -9,7 +9,7 @@ import (
 	attrDom "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/service/category"
-	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
+	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
@@ -65,7 +65,7 @@ func (s *Service) CreateAttributesBatch(ctx context.Context, categoryID int64, a
 
 	if err := s.repoAttr.SaveBatch(ctx, attrs); err != nil {
 		s.log.Error("SaveBatch failed", slog.Any("error", err))
-		return serviceutils.ErrorHandler(s.log, "service.attribute.CreateAttributesBatch", err, map[error]error{
+		return utils.ErrorHandler(s.log, "service.attribute.CreateAttributesBatch", err, map[error]error{
 			der.ErrConflict: attrDom.ErrAttributeAlreadyExists,
 		})
 	}
@@ -81,7 +81,7 @@ func (s *Service) CreateAttribute(ctx context.Context, categoryID int64, a *attr
 
 	if err := s.repoAttr.Save(ctx, a); err != nil {
 		s.log.Error("Save failed", slog.Any("error", err))
-		return nil, serviceutils.ErrorHandler(s.log, "service.attribute.CreateAttribute", err, map[error]error{
+		return nil, utils.ErrorHandler(s.log, "service.attribute.CreateAttribute", err, map[error]error{
 			der.ErrConflict: attrDom.ErrAttributeAlreadyExists,
 		})
 	}
@@ -99,7 +99,7 @@ func (s *Service) GetAttribute(ctx context.Context, categoryID, id int64) (*attr
 
 	a, err := s.repoAttr.GetByID(ctx, id)
 	if err != nil {
-		return nil, serviceutils.ErrorHandler(s.log, "service.attribute.GetAttribute", err, map[error]error{
+		return nil, utils.ErrorHandler(s.log, "service.attribute.GetAttribute", err, map[error]error{
 			der.ErrNotFound: attrDom.ErrAttributeNotFound,
 		})
 	}
@@ -116,7 +116,7 @@ func (s *Service) ListAttributes(ctx context.Context, categoryID int64) ([]attrD
 	list, err := s.repoAttr.FindByCategory(ctx, categoryID)
 	if err != nil {
 		s.log.Error("FindByCategory failed", slog.Any("error", err))
-		return nil, serviceutils.ErrorHandler(s.log, "service.attribute.ListAttributes", err, nil)
+		return nil, utils.ErrorHandler(s.log, "service.attribute.ListAttributes", err, nil)
 	}
 	s.log.Info("ListAttributes succeeded", slog.Int("count", len(list)), slog.Int64("categoryID", categoryID))
 	return list, nil
@@ -134,7 +134,7 @@ func (s *Service) UpdateAttribute(ctx context.Context, a *attrDom.Attribute) (*a
 	updated, err := s.repoAttr.Update(ctx, a)
 	if err != nil {
 		s.log.Error("Update failed", slog.Any("error", err))
-		return nil, serviceutils.ErrorHandler(s.log, "service.attribute.UpdateAttribute", err, map[error]error{
+		return nil, utils.ErrorHandler(s.log, "service.attribute.UpdateAttribute", err, map[error]error{
 			der.ErrNotFound: attrDom.ErrAttributeNotFound,
 		})
 	}
@@ -147,7 +147,7 @@ func (s *Service) DeleteAttribute(ctx context.Context, id int64) error {
 
 	if err := s.repoAttr.Delete(ctx, id); err != nil {
 		s.log.Error("Delete failed", slog.Any("error", err))
-		return serviceutils.ErrorHandler(s.log, "service.attribute.DeleteAttribute", err, map[error]error{
+		return utils.ErrorHandler(s.log, "service.attribute.DeleteAttribute", err, map[error]error{
 			der.ErrNotFound: nil,
 		})
 	}

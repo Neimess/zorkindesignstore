@@ -2,7 +2,6 @@ package product
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -75,29 +74,12 @@ func New(d Deps) *Handler {
 func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.Create")
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
 
-	var input dto.ProductCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
+	input, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	if !ok {
 		return
 	}
-
-	if err := input.Validate(); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
-		return
-	}
-	product := dto.MapCreateReqToDomain(&input)
+	product := dto.MapCreateReqToDomain(input)
 
 	product, err := h.srv.Create(ctx, product)
 	if err != nil {
@@ -129,30 +111,12 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.GetDetailed")
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
 
-	var req dto.ProductCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
+	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	if !ok {
 		return
 	}
-
-	if err := req.Validate(); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
-		return
-	}
-
-	domainProd := dto.MapCreateReqToDomain(&req)
+	domainProd := dto.MapCreateReqToDomain(req)
 
 	_, err := h.srv.CreateWithAttrs(ctx, domainProd)
 	if err != nil {
@@ -277,31 +241,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2) decode body
-	var req dto.ProductUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
-
-	if err := req.Validate(); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	if !ok {
 		return
 	}
 
 	// 4) map to domain
-	p := dto.MapUpdateReqToDomain(id, &req)
+	p := dto.MapUpdateReqToDomain(id, req)
 
 	// 5) execute service
 	prodRes, err := h.srv.Update(ctx, p)

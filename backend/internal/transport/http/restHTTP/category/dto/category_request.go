@@ -12,15 +12,7 @@ type CategoryRequest struct {
 	Name string `json:"name" example:"Плитка" validate:"required,min=2,max=255"`
 }
 
-func (r *CategoryRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{
-				{Field: "request", Message: "request is nil"},
-			},
-		}
-	}
-
+func (r CategoryRequest) Validate() error {
 	var errs []ve.FieldError
 
 	if err := validate.Struct(r); err != nil {

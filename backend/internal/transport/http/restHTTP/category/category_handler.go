@@ -2,7 +2,6 @@ package category
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -68,26 +67,8 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
 
-	var req dto.CategoryRequest
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid JSON", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-
-	if err := req.Validate(); err != nil {
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
+	if !ok {
 		return
 	}
 
@@ -176,25 +157,9 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid category id")
 		return
 	}
-	var req dto.CategoryRequest
-	defer func() {
-		if cerr := r.Body.Close(); cerr != nil {
-			log.Warn("body close failed", slog.Any("error", cerr))
-		}
-	}()
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
-		return
-	}
-
-	if err := req.Validate(); err != nil {
-		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
-			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
-			return
-		}
-
-		httputils.WriteError(w, http.StatusBadRequest, err.Error())
+	req, ok := httputils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
+	if !ok {
 		return
 	}
 

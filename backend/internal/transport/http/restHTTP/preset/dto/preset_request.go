@@ -18,15 +18,7 @@ type PresetRequest struct {
 	Items       []PresetRequestItem `json:"items" validate:"required,dive"`
 }
 
-func (r *PresetRequest) Validate() error {
-	if r == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{
-				{Field: "request", Message: "request is nil"},
-			},
-		}
-	}
-
+func (r PresetRequest) Validate() error {
 	var errs []ve.FieldError
 
 	if err := validate.Struct(r); err != nil {
@@ -94,14 +86,7 @@ type PresetRequestItem struct {
 	ProductID int64 `json:"product_id" validate:"required,gt=0"`
 }
 
-func (i *PresetRequestItem) Validate() error {
-	if i == nil {
-		return ve.ValidationErrorResponse{
-			Errors: []ve.FieldError{
-				{Field: "item", Message: "item is nil"},
-			},
-		}
-	}
+func (i PresetRequestItem) Validate() error {
 
 	var errs []ve.FieldError
 

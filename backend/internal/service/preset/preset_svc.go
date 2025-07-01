@@ -7,7 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
-	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
+	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
@@ -61,7 +61,7 @@ func (s *Service) Create(ctx context.Context, p *preset.Preset) (*preset.Preset,
 			der.ErrConflict: preset.ErrPresetAlreadyExists,
 			der.ErrNotFound: preset.ErrInvalidProductID,
 		}
-		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
+		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset created", slog.Int64("preset_id", p.ID))
@@ -94,7 +94,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 		mapping := map[error]error{
 			der.ErrNotFound: nil,
 		}
-		return serviceutils.ErrorHandler(log, op, err, mapping)
+		return utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset deleted", slog.Int64("preset_id", id))
@@ -139,7 +139,7 @@ func (s *Service) Update(ctx context.Context, p *preset.Preset) (*preset.Preset,
 			der.ErrConflict: preset.ErrPresetAlreadyExists,
 			der.ErrNotFound: preset.ErrPresetNotFound,
 		}
-		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
+		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset updated", slog.Int64("preset_id", res.ID))

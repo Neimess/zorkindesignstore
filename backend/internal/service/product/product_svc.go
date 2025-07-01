@@ -8,6 +8,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
@@ -52,19 +53,13 @@ func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduc
 
 	prod, err := s.repo.Create(ctx, p)
 	if err != nil {
-		switch {
-		case errors.Is(err, der.ErrNotFound), errors.Is(err, category.ErrCategoryNotFound):
-			log.Info("invalid category", slog.Any("category_id", p.CategoryID))
-			return nil, domProduct.ErrBadCategoryID
-
-		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
-			log.Info("invalid attribute data", slog.Any("error", err))
-			return nil, domProduct.ErrInvalidAttribute
-
-		default:
-			log.Error("repo failed", slog.Any("error", err))
-			return nil, fmt.Errorf("%s: %w", op, err)
+		mapping := map[error]error{
+			der.ErrNotFound:              domProduct.ErrBadCategoryID,
+			category.ErrCategoryNotFound: domProduct.ErrBadCategoryID,
+			der.ErrValidation:            domProduct.ErrInvalidAttribute,
+			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
 		}
+		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product created", slog.Int64("product_id", p.ID))
@@ -77,19 +72,13 @@ func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*
 
 	prod, err := s.repo.CreateWithAttrs(ctx, p)
 	if err != nil {
-		switch {
-		case errors.Is(err, der.ErrNotFound), errors.Is(err, category.ErrCategoryNotFound):
-			log.Warn("invalid category", slog.Int64("category_id", p.CategoryID))
-			return nil, domProduct.ErrBadCategoryID
-
-		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
-			log.Warn("invalid attribute data", slog.Any("error", err))
-			return nil, domProduct.ErrInvalidAttribute
-
-		default:
-			log.Error("repo failed", slog.Any("error", err))
-			return nil, fmt.Errorf("%s: %w", op, err)
+		mapping := map[error]error{
+			der.ErrNotFound:              domProduct.ErrBadCategoryID,
+			category.ErrCategoryNotFound: domProduct.ErrBadCategoryID,
+			der.ErrValidation:            domProduct.ErrInvalidAttribute,
+			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
 		}
+		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product with attributes created", slog.Int64("product_id", prod.ID))
@@ -136,19 +125,13 @@ func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduc
 
 	prod, err := s.repo.UpdateWithAttrs(ctx, p)
 	if err != nil {
-		switch {
-		case errors.Is(err, der.ErrNotFound), errors.Is(err, domProduct.ErrProductNotFound):
-			log.Warn("product not found", slog.Int64("product_id", p.ID))
-			return nil, domProduct.ErrProductNotFound
-
-		case errors.Is(err, der.ErrValidation), errors.Is(err, der.ErrBadRequest):
-			log.Warn("invalid attribute data", slog.Any("error", err))
-			return nil, domProduct.ErrInvalidAttribute
-
-		default:
-			log.Error("repo failed", slog.Any("error", err))
-			return nil, fmt.Errorf("%s: %w", op, err)
+		mapping := map[error]error{
+			der.ErrNotFound:               domProduct.ErrProductNotFound,
+			domProduct.ErrProductNotFound: domProduct.ErrProductNotFound,
+			der.ErrValidation:             domProduct.ErrInvalidAttribute,
+			der.ErrBadRequest:             domProduct.ErrInvalidAttribute,
 		}
+		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product updated with attributes", slog.Int64("product_id", p.ID))
@@ -160,12 +143,11 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	log := s.log.With("op", op)
 
 	if err := s.repo.Delete(ctx, id); err != nil {
-		if errors.Is(err, der.ErrNotFound) || errors.Is(err, domProduct.ErrProductNotFound) {
-			log.Warn("product not found", slog.Int64("product_id", id))
-			return nil
+		mapping := map[error]error{
+			der.ErrNotFound:               nil,
+			domProduct.ErrProductNotFound: nil,
 		}
-		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("error", err))
-		return fmt.Errorf("%s: %w", op, err)
+		return serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("product deleted", slog.Int64("product_id", id))

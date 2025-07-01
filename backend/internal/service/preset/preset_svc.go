@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
+	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
@@ -56,15 +57,11 @@ func (s *Service) Create(ctx context.Context, p *preset.Preset) (*preset.Preset,
 
 	p, err := s.repo.Create(ctx, p)
 	if err != nil {
-		switch {
-		case errors.Is(err, der.ErrConflict):
-			return nil, preset.ErrPresetAlreadyExists
-		case errors.Is(err, der.ErrNotFound):
-			return nil, preset.ErrInvalidProductID
+		mapping := map[error]error{
+			der.ErrConflict: preset.ErrPresetAlreadyExists,
+			der.ErrNotFound: preset.ErrInvalidProductID,
 		}
-
-		log.Error("repo.Create failed", slog.Any("err", err))
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset created", slog.Int64("preset_id", p.ID))
@@ -94,11 +91,10 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, der.ErrNotFound) {
-			return nil
+		mapping := map[error]error{
+			der.ErrNotFound: nil,
 		}
-		log.Error("repo.Delete failed", slog.Int64("preset_id", id), slog.Any("err", err))
-		return fmt.Errorf("%s: %w", op, err)
+		return serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset deleted", slog.Int64("preset_id", id))
@@ -139,16 +135,11 @@ func (s *Service) Update(ctx context.Context, p *preset.Preset) (*preset.Preset,
 
 	res, err := s.repo.Update(ctx, p)
 	if err != nil {
-		// Маппим известные ошибки
-		switch {
-		case errors.Is(err, der.ErrConflict):
-			return nil, preset.ErrPresetAlreadyExists
-		case errors.Is(err, der.ErrNotFound):
-			return nil, preset.ErrPresetNotFound
-		default:
-			log.Error("repo.Update failed", slog.Int64("preset_id", p.ID), slog.Any("err", err))
-			return nil, fmt.Errorf("%s: %w", op, err)
+		mapping := map[error]error{
+			der.ErrConflict: preset.ErrPresetAlreadyExists,
+			der.ErrNotFound: preset.ErrPresetNotFound,
 		}
+		return nil, serviceutils.ErrorHandler(log, op, err, mapping)
 	}
 
 	log.Info("preset updated", slog.Int64("preset_id", res.ID))

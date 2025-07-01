@@ -3,10 +3,10 @@ package category
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
+	"github.com/Neimess/zorkin-store-project/internal/serviceutils"
 )
 
 type CategoryRepository interface {
@@ -57,10 +57,9 @@ func (s *Service) CreateCategory(ctx context.Context, cat *catDom.Category) (*ca
 func (s *Service) GetCategory(ctx context.Context, id int64) (*catDom.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		if errors.Is(err, catDom.ErrCategoryNotFound) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("service: failed to retrieve category: %w", err)
+		return nil, serviceutils.ErrorHandler(s.log, "service.category.GetCategory", err, map[error]error{
+			catDom.ErrCategoryNotFound: catDom.ErrCategoryNotFound,
+		})
 	}
 	return cat, nil
 }
@@ -72,10 +71,9 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 
 	updated, err := s.repo.Update(ctx, cat.ID, cat.Name)
 	if err != nil {
-		if errors.Is(err, catDom.ErrCategoryNotFound) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("service: failed to update category: %w", err)
+		return nil, serviceutils.ErrorHandler(s.log, "service.category.UpdateCategory", err, map[error]error{
+			catDom.ErrCategoryNotFound: catDom.ErrCategoryNotFound,
+		})
 	}
 	return updated, nil
 }
@@ -83,13 +81,10 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	err := s.repo.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, catDom.ErrCategoryNotFound) {
-			return nil
-		}
-		if errors.Is(err, catDom.ErrCategoryInUse) {
-			return err
-		}
-		return fmt.Errorf("service: failed to delete category: %w", err)
+		return serviceutils.ErrorHandler(s.log, "service.category.DeleteCategory", err, map[error]error{
+			catDom.ErrCategoryNotFound: nil,
+			catDom.ErrCategoryInUse:    catDom.ErrCategoryInUse,
+		})
 	}
 	return nil
 }
@@ -97,7 +92,7 @@ func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 func (s *Service) ListCategories(ctx context.Context) ([]catDom.Category, error) {
 	cats, err := s.repo.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("service: failed to list categories: %w", err)
+		return nil, serviceutils.ErrorHandler(s.log, "service.category.ListCategories", err, nil)
 	}
 	return cats, nil
 }

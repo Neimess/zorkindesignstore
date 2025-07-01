@@ -449,7 +449,7 @@ func TestCreate_Errors(t *testing.T) {
 			name:     "invalid JSON",
 			body:     `{`,
 			wantCode: http.StatusBadRequest,
-			wantMsg:  "Invalid JSON: unexpected EOF",
+			wantMsg:  "invalid JSON",
 		},
 		{
 			name:           "validation error - empty name",
@@ -512,7 +512,7 @@ func TestUpdate_Errors(t *testing.T) {
 			body:     `{`,
 			vars:     map[string]string{"id": "1"},
 			wantCode: http.StatusBadRequest,
-			wantMsg:  "Invalid JSON: unexpected EOF",
+			wantMsg:  "invalid JSON",
 		},
 		{
 			name:     "invalid preset id",

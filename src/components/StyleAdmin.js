@@ -1,297 +1,314 @@
-import React, { useState } from 'react';
-import { presetAPI } from '../services/api';
-import { tokenUtils } from '../services/api';
+import React, { useState } from "react";
+import { presetAPI, tokenUtils } from "../services/api";
 
 /**
- * Компонент для управления стилями в админ-панели
- * 
- * @param {Object} props - Свойства компонента
- * @param {Array} props.products - Список товаров
- * @param {Array} props.styles - Список стилей
- * @param {Function} props.setStyles - Функция для обновления списка стилей
+ * Компонент‑админка для управления «стилями» (пресетами товаров).
+ *
+ * props:
+ *   products  – массив товаров из API (product_id, name, price)
+ *   styles    – массив существующих стилей (preset_id, name, items[] …)
+ *   setStyles – setState‑функция из родителя, хранящего глобальный список
  */
 function StyleAdmin({ products, styles, setStyles }) {
-  // Состояние для нового стиля
-  const [styleName, setStyleName] = useState('');
+  const [styleName, setStyleName] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState([]);
-  const [imageUrl, setImageUrl] = useState('');
-  /**
-   * Обработчик выбора/отмены выбора товара
-   * @param {number} productId - ID товара
-   */
-  const token = tokenUtils.get();
-  const toggleProductSelection = (productId) => {
-    setSelectedProductIds(prev => 
-      prev.includes(productId)
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+  const [imageUrl, setImageUrl] = useState("");
+  const [editingStyle, setEditingStyle] = useState(null);
+
+  // Bearer‑токен администратора
+  const token = React.useMemo(() => tokenUtils.get(), []);
+
+  /* ------------------------------------------------------------ */
+  /* helpers                                                      */
+  /* ------------------------------------------------------------ */
+  const normalizePreset = (p) => ({ ...p, preset_id: p.preset_id ?? p.id });
+
+  const resetForm = () => {
+    setStyleName("");
+    setSelectedProductIds([]);
+    setImageUrl("");
+    setEditingStyle(null);
+  };
+
+  const toggleProductSelection = (id) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
     );
   };
-  
-  /**
-   * Добавление нового стиля
-   */
-  const addStyle = async () => {
+
+  /* ------------------------------------------------------------ */
+  /* save / delete                                                */
+  /* ------------------------------------------------------------ */
+  const saveStyle = async () => {
     if (!styleName.trim() || selectedProductIds.length === 0) return;
-    
+
+    const items = selectedProductIds.map((id) => ({ product_id: Number(id) }));
+    const total_price = products
+      .filter((p) => selectedProductIds.includes(p.product_id))
+      .reduce((sum, p) => sum + p.price, 0);
+
+    const payload = {
+      name: styleName.trim(),
+      description: "Обновлено через UI",
+      image_url: imageUrl.trim(),
+      items,
+      total_price,
+    };
+
     try {
-      // Создаем новый стиль
-      const newStyle = {
-        preset_id: Date.now(),  // Временный ID, в реальном приложении будет присвоен сервером
-        name: styleName,
-        productIds: selectedProductIds
-      };
-      
-      // Обновляем список стилей
-      setStyles([...styles, newStyle]);
-      
-      // Сбрасываем форму
-      setStyleName('');
-      setSelectedProductIds([]);
-      
-      if (!token) {
-      console.error("❌ Нет токена. Пользователь не авторизован.");
-      return;
-}
-      // Здесь можно добавить вызов API для сохранения стиля на сервере
-      const items = selectedProductIds.map(id => ({ product_id: id }));
-const selectedProducts = products.filter(p => selectedProductIds.includes(p.product_id));
-const total_price = selectedProducts.reduce((sum, p) => sum + p.price, 0);
-if (!imageUrl.trim() || !/^https?:\/\/.+/.test(imageUrl.trim())) {
-  alert("Пожалуйста, укажите корректную ссылку на изображение");
-  return;
-}
-
-const payload = {
-  name: styleName.trim(),
-  description: "Автоматически создано",
-  image_url: imageUrl.trim(),
-
-  items,
-  total_price
-};
-
-const created = await presetAPI.create(payload, token);
-
-      if (created && created.preset_id) {
-      setStyles([...styles, created]);
-}
-
-    } catch (error) {
-      console.error('Ошибка при создании стиля:', error);
+      const id = editingStyle?.preset_id;
+      if (editingStyle && Number.isInteger(id)) {
+        // --- UPDATE ---------------------------------------------------------
+        const updated = await presetAPI.update(id, payload, token);
+        setStyles((prev) =>
+          prev.map((s) =>
+            normalizePreset(s).preset_id === updated.preset_id ? updated : s
+          )
+        );
+      } else {
+        // --- CREATE ---------------------------------------------------------
+        const created = await presetAPI.create(payload, token);
+        setStyles((prev) => {
+          const pid = normalizePreset(created).preset_id;
+          // защита от дубликатов
+          const uniq = prev.filter((s) => normalizePreset(s).preset_id !== pid);
+          return [...uniq, created];
+        });
+      }
+      resetForm();
+    } catch (err) {
+      console.error("Ошибка при сохранении стиля:", err?.message || err);
     }
   };
-  
-  /**
-   * Удаление стиля
-   * @param {number} styleId - ID стиля
-   */
-  const removeStyle = async (styleId) => {
+
+  const removeStyle = async (id) => {
     try {
-      // Удаляем стиль из списка
-      setStyles(styles.filter(style => style.preset_id !== styleId));
-      
-      // Здесь можно добавить вызов API для удаления стиля на сервере
-      await presetAPI.delete(styleId);
-// await presetAPI.delete(styleId);
-    } catch (error) {
-      console.error('Ошибка при удалении стиля:', error);
+      setStyles((prev) => prev.filter((s) => normalizePreset(s).preset_id !== id));
+      await presetAPI.delete(id, token);
+      if (editingStyle?.preset_id === id) resetForm();
+    } catch (err) {
+      console.error("Ошибка при удалении:", err);
     }
   };
-  
-  // Стили для элементов интерфейса
-  const uiStyles = {
-    inputStyle: {
-      padding: '12px 16px',
-      borderRadius: '10px',
-      border: '1px solid #334155',
-      background: 'rgba(15, 23, 42, 0.6)',
-      color: '#f1f5f9',
-      fontSize: '1rem',
-      width: '100%',
-      transition: 'all 0.3s ease',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-      outline: 'none'
+
+  /* ------------------------------------------------------------ */
+  /* UI styles                                                    */
+  /* ------------------------------------------------------------ */
+  const ui = {
+    input: {
+      padding: "12px 16px",
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: "#334155",
+      borderRadius: 10,
+      background: "rgba(15,23,42,0.6)",
+      color: "#f1f5f9",
+      fontSize: "1rem",
+      width: "100%",
+      transition: "all .3s ease",
+      boxShadow: "0 4px 10px rgba(0,0,0,.1)",
+      outline: "none",
     },
-    buttonStyle: {
-      background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '10px',
-      padding: '12px 20px',
-      fontSize: '1rem',
+    btn: {
+      background: "linear-gradient(135deg,#3b82f6,#2563eb)",
+      color: "#fff",
+      border: 0,
+      borderRadius: 10,
+      padding: "12px 20px",
+      fontSize: "1rem",
       fontWeight: 600,
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      cursor: "pointer",
+      transition: "all .3s ease",
+      boxShadow: "0 4px 12px rgba(37,99,235,.3)",
+      textTransform: "uppercase",
+      letterSpacing: ".5px",
     },
-    deleteButtonStyle: {
-      background: 'rgba(185, 28, 28, 0.1)',
-      color: '#f87171',
-      border: '1px solid rgba(185, 28, 28, 0.3)',
-      borderRadius: '8px',
-      padding: '8px 16px',
-      fontSize: '0.9rem',
+    delBtn: {
+      background: "rgba(185,28,28,.1)",
+      color: "#f87171",
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: "rgba(185,28,28,.3)",
+      borderRadius: 8,
+      padding: "8px 16px",
+      fontSize: ".9rem",
       fontWeight: 500,
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      marginLeft: '10px'
+      cursor: "pointer",
+      transition: "all .3s ease",
+      marginLeft: 10,
     },
-    checkboxStyle: {
-      display: 'flex',
-      alignItems: 'center',
-      padding: '10px 15px',
-      borderRadius: '8px',
-      borderWidth: '1px',
-borderStyle: 'solid',
-borderColor: '#334155',
-      background: 'rgba(15, 23, 42, 0.6)',
-      marginBottom: '8px',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
+    checkbox: {
+      display: "flex",
+      alignItems: "center",
+      padding: "10px 15px",
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: "#334155",
+      borderRadius: 8,
+      background: "rgba(15,23,42,0.6)",
+      marginBottom: 8,
+      cursor: "pointer",
+      transition: "all .3s ease",
     },
-    checkboxCheckedStyle: {
-      background: 'rgba(59, 130, 246, 0.1)',
-      borderColor: '#3b82f6'
+    checkboxChecked: {
+      background: "rgba(59,130,246,.1)",
+      borderColor: "#3b82f6",
     },
     checkboxInput: {
-      marginRight: '10px',
-      cursor: 'pointer'
-    }
+      marginRight: 10,
+      cursor: "pointer",
+    },
   };
 
+  /* ------------------------------------------------------------ */
+  /* render                                                       */
+  /* ------------------------------------------------------------ */
   return (
     <div className="AdminSection" style={{ marginTop: 40 }}>
-      <h2 style={{ 
-        fontSize: '1.5rem', 
-        color: '#f8fafc', 
-        marginBottom: '20px', 
-        position: 'relative',
-        paddingBottom: '10px'
-      }}>
-        Стили ремонта
-        <span style={{ 
-          position: 'absolute', 
-          bottom: 0, 
-          left: 0, 
-          width: '60px', 
-          height: '3px', 
-          background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', 
-          borderRadius: '2px' 
-        }}></span>
-      </h2>
-      
-      <div style={{ 
-        background: 'rgba(30, 41, 59, 0.5)',
-        padding: '20px',
-        borderRadius: '12px',
-        border: '1px solid #334155',
-        marginBottom: '24px'
-      }}>
-        <input 
-          value={styleName} 
-          onChange={e => setStyleName(e.target.value)} 
-          placeholder="Название стиля" 
-          style={uiStyles.inputStyle} 
+      {/* ---------------- Form create / edit ---------------- */}
+      <div
+        style={{
+          background: "rgba(30,41,59,.5)",
+          padding: 20,
+          borderRadius: 12,
+          border: "1px solid #334155",
+          marginBottom: 24,
+        }}
+      >
+        <input
+          value={styleName}
+          onChange={(e) => setStyleName(e.target.value)}
+          placeholder="Название стиля"
+          style={ui.input}
         />
-        <input 
-  value={imageUrl}
-  onChange={e => setImageUrl(e.target.value)} 
-  placeholder="Ссылка на изображение (https://...)"
-  style={{ ...uiStyles.inputStyle, marginTop: '15px' }} 
-/>
+        <input
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="Ссылка на изображение (https://...)"
+          style={{ ...ui.input, marginTop: 15 }}
+        />
 
-
-        
-        <div style={{ marginTop: '20px', marginBottom: '15px' }}>
-          <div style={{ marginBottom: '10px', color: '#94a3b8' }}>Выберите товары для стиля:</div>
-          <div style={{ maxHeight: '300px', overflowY: 'auto', padding: '5px' }}>
-            {products.map(product => (
-              // console.log('products:', products), // массив
-              <div 
-                key={product.product_id ?? product.id}
-                style={{
-                  ...uiStyles.checkboxStyle,
-                  ...(selectedProductIds.includes(product.product_id) ? uiStyles.checkboxCheckedStyle : {})
-                }}
-                onClick={() => toggleProductSelection(product.product_id)}
-              >
-                <input 
-                  type="checkbox" 
-                  checked={selectedProductIds.includes(product.product_id)}
-                      onChange={() => toggleProductSelection(product.product_id)} 
-                  style={uiStyles.checkboxInput} 
-                />
-                <div>
-                  <div style={{ fontWeight: 500, color: '#f1f5f9' }}>{product.name}</div>
-                  <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '3px' }}>
-                    {product.price} ₽
+        <div style={{ marginTop: 20, marginBottom: 15 }}>
+          <div style={{ marginBottom: 10, color: "#94a3b8" }}>
+            Выберите товары для стиля:
+          </div>
+          <div style={{ maxHeight: 300, overflowY: "auto", padding: 5 }}>
+            {products.map((p) => {
+              const checked = selectedProductIds.includes(p.product_id);
+              return (
+                <div
+                  key={p.product_id}
+                  style={{
+                    ...ui.checkbox,
+                    ...(checked ? ui.checkboxChecked : {}),
+                  }}
+                  onClick={() => toggleProductSelection(p.product_id)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleProductSelection(p.product_id)}
+                    style={ui.checkboxInput}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: "#f1f5f9" }}>
+                      {p.name}
+                    </div>
+                    <div style={{ fontSize: ".9rem", color: "#94a3b8", marginTop: 3 }}>
+                      {p.price} ₽
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
-        
-        <button 
-          onClick={addStyle} 
-          style={{
-            ...uiStyles.buttonStyle,
-            marginTop: '15px',
-            width: '100%'
-          }}
+
+        <button
+          onClick={saveStyle}
+          style={{ ...ui.btn, marginTop: 15, width: "100%" }}
           disabled={!styleName.trim() || selectedProductIds.length === 0}
         >
-          <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
-          Добавить стиль
+          {editingStyle ? "💾 Сохранить изменения" : "➕ Добавить стиль"}
         </button>
       </div>
-      
-      <div style={{ 
-        background: 'rgba(30, 41, 59, 0.5)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid #334155'
-      }}>
-        <div style={{ padding: '15px 20px', borderBottom: '1px solid #334155', color: '#94a3b8' }}>
+
+      {/* ---------------- List of presets ---------------- */}
+      <div
+        style={{
+          background: "rgba(30,41,59,.5)",
+          borderRadius: 12,
+          overflow: "hidden",
+          border: "1px solid #334155",
+        }}
+      >
+        <div
+          style={{
+            padding: "15px 20px",
+            borderBottom: "1px solid #334155",
+            color: "#94a3b8",
+          }}
+        >
           Существующие стили
         </div>
-        <ul style={{ 
-          listStyle: 'none', 
-          padding: 0,
-          margin: 0
-        }}>
-          {styles.map(style => (
-            <li key={style.preset_id} style={{ 
-              padding: '14px 20px', 
-              borderBottom: '1px solid rgba(51, 65, 85, 0.5)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <div style={{ fontWeight: 500, color: '#f1f5f9', fontSize: '1.1rem' }}>{style.name}</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '5px' }}>
-                  Товаров: {style.productIds?.length || 0}
-                </div>
-              </div>
-              <button 
-                onClick={() => removeStyle(style.preset_id)} 
-                style={uiStyles.deleteButtonStyle}
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {styles.map((s) => {
+            const pid = normalizePreset(s).preset_id;
+            const isEditing = editingStyle?.preset_id === pid;
+            return (
+              <li
+                key={pid}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "14px 20px",
+                  borderBottom: "1px solid rgba(51,65,85,.5)",
+                  borderLeft: isEditing ? "4px solid #60a5fa" : "none",
+                  backgroundColor: isEditing ? "rgba(59,130,246,.05)" : "transparent",
+                }}
               >
-                <i className="fas fa-trash-alt" style={{ marginRight: '6px' }}></i>
-                Удалить
-              </button>
-            </li>
-          ))}
+                <div>
+                  <div style={{ fontWeight: 500, color: "#f1f5f9", fontSize: "1.1rem" }}>
+                    {s.name}
+                  </div>
+                  <div style={{ color: "#94a3b8", fontSize: ".9rem", marginTop: 5 }}>
+                    Товаров: {s.items?.length || 0}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      const norm = normalizePreset(s);
+                      setEditingStyle(norm);
+                      setStyleName(norm.name);
+                      setImageUrl(norm.image_url || "");
+                      setSelectedProductIds(
+                        norm.items?.map((i) => i.product_id ?? i.product?.id) || []
+                      );
+                    }}
+                    style={{
+                      ...ui.delBtn,
+                      background: "rgba(34,197,94,.1)",
+                      color: "#4ade80",
+                    }}
+                  >
+                    ✎ Редактировать
+                  </button>
+
+                  <button
+                    onClick={() => removeStyle(pid)}
+                    style={ui.delBtn}
+                  >
+                    🗑 Удалить
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+
           {styles.length === 0 && (
-            <li style={{ 
-              padding: '20px', 
-              textAlign: 'center',
-              color: '#94a3b8'
-            }}>
+            <li style={{ padding: 20, textAlign: "center", color: "#94a3b8" }}>
               Нет добавленных стилей
             </li>
           )}

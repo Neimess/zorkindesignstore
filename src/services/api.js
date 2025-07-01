@@ -2,57 +2,41 @@
 
 // Используем относительный путь, так как запросы будут проксироваться через локальный сервер
 const API_BASE_URL = 'https://dev.api.inspireforge.ru/api';
+
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    const method = (options.method || 'GET').toUpperCase();
+  const hasBody = ['POST', 'PUT', 'PATCH'].includes(method);
+  const isForm = options.body instanceof FormData;
+    const config = {
     ...options,
+    headers: {
+      Accept: 'application/json',
+      ...(hasBody && !isForm ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.headers || {}),
+    },
   };
 
   console.log(`[API] ➤ ${options.method || 'GET'} ${url}`);
   console.log('↳ Request config:', config);
-
+  console.log(`[API] ➤ ${method} ${url}`, config);
   try {
     const response = await fetch(url, config);
-
-    console.log(`↳ Response status: ${response.status}`);
+    const rawText = await response.text();
 
     if (!response.ok) {
-  const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-  console.error(`[API ERROR] ${url} ➤ ${response.status}: ${errorData.message}`);
-  if (errorData.errors) {
-    console.error('🛠 Детали ошибок валидации:', errorData.errors);
-  }
-  throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-}
-
-
-    if (response.status === 204) {
-      console.log('✓ Success: No Content');
-      return null;
+      let err;
+      try { err = JSON.parse(rawText); } catch { err = { message: rawText || 'Unknown error' }; }
+      console.error(`[API ERROR] ${url}`, response.status, err);
+      throw new Error(err.message || `HTTP ${response.status}`, { cause: err });
     }
 
-    const raw = await response.text();
-    if (!raw) {
-      console.log('✓ Success: empty body');
-      return null;
-    }
-
-    try {
-      const data = JSON.parse(raw);
-      console.log('✓ Success:', data);
-      return data;
-    } catch (e) {
-      console.warn('✓ Success (non-JSON body):', raw);
-      return raw;
-    }
-
-  } catch (error) {
-    console.error('✗ Ошибка выполнения запроса:', error.message);
-    throw error;
+    if (!rawText) return null;            // 204 или пустой body
+    try { return JSON.parse(rawText); }   // обычный JSON
+    catch { return rawText; }             // plain text / html
+  } catch (e) {
+    console.error('✗ Запрос упал:', e.message);
+    throw e;
   }
 };
 
@@ -190,6 +174,13 @@ export const presetAPI = {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
   }),
+  update: async (id, data, token) =>
+  await apiRequest(`/admin/presets/${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data)
+  }),
+
   list: async () => await apiRequest('/presets'),
   getAllDetailed: async () => await apiRequest('/presets/detailed'), // 🔥 добавлено это
   getById: async (id) => await apiRequest(`/presets/${id}`)

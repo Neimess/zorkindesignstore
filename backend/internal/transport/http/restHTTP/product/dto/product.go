@@ -1,10 +1,16 @@
 package dto
 
 import (
+	"fmt"
 	"time"
+
+	ve "github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/go-playground/validator/v10"
 
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 )
+
+var validate *validator.Validate = validator.New()
 
 //swagger:model ProductCreateRequest
 type ProductCreateRequest struct {
@@ -12,7 +18,7 @@ type ProductCreateRequest struct {
 	Price       float64                        `json:"price" example:"3490" validate:"required,gt=0"`
 	Description *string                        `json:"description,omitempty" example:"Прочный плиточный материал"`
 	CategoryID  int64                          `json:"category_id" example:"1" validate:"required,gt=0"`
-	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"url"`
+	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"omitempty,url"`
 	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
 }
 
@@ -49,6 +55,129 @@ type ProductAttributeValueResponse struct {
 	Name        string  `json:"name" example:"Объём"`
 	Unit        *string `json:"unit,omitempty" example:"л"`
 	Value       string  `json:"value" example:"1.25"`
+}
+
+func (r *ProductCreateRequest) Validate() error {
+	if r == nil {
+		return ve.ValidationErrorResponse{
+			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
+		}
+	}
+	var errs []ve.FieldError
+	if err := validate.Struct(r); err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			return err
+		}
+		validationErrors := err.(validator.ValidationErrors)
+		for _, e := range validationErrors {
+			switch e.Field() {
+			case "Name":
+				errs = append(errs, ve.FieldError{Field: "name", Message: "name is required and must be at least 2 characters"})
+			case "Price":
+				errs = append(errs, ve.FieldError{Field: "price", Message: "price is required and must be greater than 0"})
+			case "CategoryID":
+				errs = append(errs, ve.FieldError{Field: "category_id", Message: "category_id is required and must be greater than 0"})
+			case "ImageURL":
+				errs = append(errs, ve.FieldError{Field: "image_url", Message: "image_url must be a valid URL"})
+			case "Attributes":
+				errs = append(errs, ve.FieldError{Field: "attributes", Message: "invalid attributes"})
+			default:
+				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
+			}
+		}
+	}
+	for idx, attr := range r.Attributes {
+		if err := attr.Validate(); err != nil {
+			if veResp, ok := err.(ve.ValidationErrorResponse); ok {
+				for _, ferr := range veResp.Errors {
+					ferr.Field = fmt.Sprintf("attributes[%d].%s", idx, ferr.Field)
+					errs = append(errs, ferr)
+				}
+			} else {
+				errs = append(errs, ve.FieldError{Field: fmt.Sprintf("attributes[%d]", idx), Message: err.Error()})
+			}
+		}
+	}
+	if len(errs) > 0 {
+		return ve.ValidationErrorResponse{Errors: errs}
+	}
+	return nil
+}
+
+func (r *ProductUpdateRequest) Validate() error {
+	if r == nil {
+		return ve.ValidationErrorResponse{
+			Errors: []ve.FieldError{{Field: "request", Message: "request is nil"}},
+		}
+	}
+	var errs []ve.FieldError
+	if err := validate.Struct(r); err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			return err
+		}
+		validationErrors := err.(validator.ValidationErrors)
+		for _, e := range validationErrors {
+			switch e.Field() {
+			case "Name":
+				errs = append(errs, ve.FieldError{Field: "name", Message: "name is required"})
+			case "Price":
+				errs = append(errs, ve.FieldError{Field: "price", Message: "price is required and must be greater than 0"})
+			case "CategoryID":
+				errs = append(errs, ve.FieldError{Field: "category_id", Message: "category_id is required and must be greater than 0"})
+			case "ImageURL":
+				errs = append(errs, ve.FieldError{Field: "image_url", Message: "image_url must be a valid URL"})
+			case "Attributes":
+				errs = append(errs, ve.FieldError{Field: "attributes", Message: "invalid attributes"})
+			default:
+				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
+			}
+		}
+	}
+	for idx, attr := range r.Attributes {
+		if err := attr.Validate(); err != nil {
+			if veResp, ok := err.(ve.ValidationErrorResponse); ok {
+				for _, ferr := range veResp.Errors {
+					ferr.Field = fmt.Sprintf("attributes[%d].%s", idx, ferr.Field)
+					errs = append(errs, ferr)
+				}
+			} else {
+				errs = append(errs, ve.FieldError{Field: fmt.Sprintf("attributes[%d]", idx), Message: err.Error()})
+			}
+		}
+	}
+	if len(errs) > 0 {
+		return ve.ValidationErrorResponse{Errors: errs}
+	}
+	return nil
+}
+
+func (r *ProductAttributeValueRequest) Validate() error {
+	if r == nil {
+		return ve.ValidationErrorResponse{
+			Errors: []ve.FieldError{{Field: "attribute", Message: "attribute is nil"}},
+		}
+	}
+	var errs []ve.FieldError
+	if err := validate.Struct(r); err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			return err
+		}
+		validationErrors := err.(validator.ValidationErrors)
+		for _, e := range validationErrors {
+			switch e.Field() {
+			case "AttributeID":
+				errs = append(errs, ve.FieldError{Field: "attribute_id", Message: "attribute_id is required and must be greater than 1"})
+			case "Value":
+				errs = append(errs, ve.FieldError{Field: "value", Message: "value is required"})
+			default:
+				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
+			}
+		}
+	}
+	if len(errs) > 0 {
+		return ve.ValidationErrorResponse{Errors: errs}
+	}
+	return nil
 }
 
 func MapCreateReqToDomain(req *ProductCreateRequest) *prodDom.Product {

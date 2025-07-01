@@ -7,14 +7,12 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product"
 )
 
 type Deps struct {
 	Logger           *slog.Logger
-	Validator        interfaces.Validator
 	ProductService   product.ProductService
 	CategoryService  category.CategoryService
 	AuthService      auth.AuthService
@@ -24,7 +22,6 @@ type Deps struct {
 
 func NewDeps(
 	Logger *slog.Logger,
-	Validator interfaces.Validator,
 	ProductService product.ProductService,
 	CategoryService category.CategoryService,
 	AuthService auth.AuthService,
@@ -46,15 +43,11 @@ func NewDeps(
 	if AttributeService == nil {
 		return nil, fmt.Errorf("missing AttributeService dependency")
 	}
-	if Validator == nil {
-		return nil, fmt.Errorf("missing Validator dependency")
-	}
 	if Logger == nil {
 		return nil, fmt.Errorf("missing Logger dependency")
 	}
 	return &Deps{
 		Logger:           Logger,
-		Validator:        Validator,
 		ProductService:   ProductService,
 		CategoryService:  CategoryService,
 		AuthService:      AuthService,
@@ -77,14 +70,14 @@ func New(deps *Deps) (*Handlers, error) {
 	}
 
 	// product handler
-	prodDeps, err := product.NewDeps(deps.Validator, deps.Logger, deps.ProductService)
+	prodDeps, err := product.NewDeps(deps.Logger, deps.ProductService)
 	if err != nil {
 		return nil, fmt.Errorf("product handler init: %w", err)
 	}
 	prodHandler := product.New(prodDeps)
 
 	// category handler
-	catDeps, err := category.NewDeps(deps.Validator, deps.Logger, deps.CategoryService)
+	catDeps, err := category.NewDeps(deps.Logger, deps.CategoryService)
 	if err != nil {
 		return nil, fmt.Errorf("category handler init: %w", err)
 	}
@@ -98,14 +91,14 @@ func New(deps *Deps) (*Handlers, error) {
 	authHandler := auth.New(authDeps)
 
 	// preset handler
-	presetDeps, err := preset.NewDeps(deps.Validator, deps.Logger, deps.PresetService)
+	presetDeps, err := preset.NewDeps(deps.Logger, deps.PresetService)
 	if err != nil {
 		return nil, fmt.Errorf("preset handler init: %w", err)
 	}
 	presetHandler := preset.New(presetDeps)
 
 	// attribute handler
-	attrDeps, err := attribute.NewDeps(deps.Validator, deps.Logger, deps.AttributeService)
+	attrDeps, err := attribute.NewDeps(deps.Logger, deps.AttributeService)
 	if err != nil {
 		return nil, fmt.Errorf("attribute handler init: %w", err)
 	}

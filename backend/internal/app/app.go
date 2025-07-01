@@ -14,7 +14,6 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
 	"github.com/Neimess/zorkin-store-project/pkg/database/psql"
 	"github.com/Neimess/zorkin-store-project/pkg/secret/jwt"
-	"github.com/go-playground/validator/v10"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -90,12 +89,8 @@ func NewApplication(dep *Deps) (*Application, error) {
 		return nil, fmt.Errorf("application.services: %w", err)
 	}
 
-	// validator
-	val := validator.New()
-
 	handlersDeps, err := restHTTP.NewDeps(
 		dep.Logger,
-		val,
 		services.ProductService,
 		services.CategoryService,
 		services.AuthService,

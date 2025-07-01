@@ -7,8 +7,8 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 
 	"log/slog"
@@ -16,48 +16,23 @@ import (
 	domPreset "github.com/Neimess/zorkin-store-project/internal/domain/preset"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset/mocks"
+	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-chi/chi/v5"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
-// === Helpers ===
-type fakeValidator struct{ err error }
-
-func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error {
-	return f.err
-}
-
-type fakeFieldError struct{}
-
-func (f fakeFieldError) Tag() string                       { return "required" }
-func (f fakeFieldError) ActualTag() string                 { return "required" }
-func (f fakeFieldError) Namespace() string                 { return "Preset.Name" }
-func (f fakeFieldError) StructNamespace() string           { return "Preset.Name" }
-func (f fakeFieldError) Field() string                     { return "Name" }
-func (f fakeFieldError) StructField() string               { return "Name" }
-func (f fakeFieldError) Value() interface{}                { return "" }
-func (f fakeFieldError) Param() string                     { return "" }
-func (f fakeFieldError) Kind() reflect.Kind                { return reflect.String }
-func (f fakeFieldError) Type() reflect.Type                { return reflect.TypeOf("") }
-func (f fakeFieldError) Translate(ut ut.Translator) string { return f.Error() }
-func (f fakeFieldError) Error() string                     { return "Name is required" }
-
 type PresetHandlerSuite struct {
 	suite.Suite
 	h       *Handler
 	mockSvc *mocks.MockPresetService
-	valErr  error
 }
 
 func (s *PresetHandlerSuite) SetupTest() {
 	s.mockSvc = new(mocks.MockPresetService)
-	val := fakeValidator{err: s.valErr}
-	deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
+	deps, err := NewDeps(slog.New(slog.DiscardHandler), s.mockSvc)
 	s.Require().NoError(err)
 	s.h = New(deps)
 }
@@ -65,6 +40,14 @@ func (s *PresetHandlerSuite) SetupTest() {
 func withChiParam(r *http.Request, key, val string) *http.Request {
 	chiCtx := chi.NewRouteContext()
 	chiCtx.URLParams.Add(key, val)
+	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, chiCtx))
+}
+
+func withChiParams(r *http.Request, params map[string]string) *http.Request {
+	chiCtx := chi.NewRouteContext()
+	for k, v := range params {
+		chiCtx.URLParams.Add(k, v)
+	}
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, chiCtx))
 }
 
@@ -78,7 +61,6 @@ func (s *PresetHandlerSuite) TestCreatePreset() {
 			{"product_id": 1, "price": 42.5},
 		},
 	}
-	bs, _ := json.Marshal(validBody)
 
 	type svcResult struct {
 		p   *domPreset.Preset
@@ -86,15 +68,15 @@ func (s *PresetHandlerSuite) TestCreatePreset() {
 	}
 
 	tests := []struct {
-		name           string
-		validatorError error
-		svcReturn      svcResult
-		wantStatus     int
-		wantLocation   bool
+		name         string
+		body         interface{}
+		svcReturn    svcResult
+		wantStatus   int
+		wantLocation bool
 	}{
 		{
-			name:           "success",
-			validatorError: nil,
+			name: "success",
+			body: validBody,
 			svcReturn: svcResult{
 				p: &domPreset.Preset{
 					ID:         42,
@@ -111,48 +93,50 @@ func (s *PresetHandlerSuite) TestCreatePreset() {
 			wantLocation: true,
 		},
 		{
-			name:           "invalid JSON",
-			validatorError: nil,
-			svcReturn:      svcResult{},
-			wantStatus:     http.StatusBadRequest,
+			name:       "invalid JSON",
+			body:       `{`,
+			svcReturn:  svcResult{},
+			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "validation error",
-			validatorError: validator.ValidationErrors{fakeFieldError{}},
-			svcReturn:      svcResult{},
-			wantStatus:     http.StatusUnprocessableEntity,
+			name: "validation error - empty name",
+			body: map[string]interface{}{
+				"name":        "",
+				"total_price": 42.5,
+				"items":       []map[string]interface{}{},
+			},
+			svcReturn:  svcResult{},
+			wantStatus: http.StatusUnprocessableEntity,
 		},
 		{
-			name:           "domain errors → 4xx",
-			validatorError: nil,
-			svcReturn:      svcResult{p: nil, err: domPreset.ErrPresetAlreadyExists},
-			wantStatus:     http.StatusConflict,
+			name:       "domain errors → 4xx",
+			body:       validBody,
+			svcReturn:  svcResult{p: nil, err: domPreset.ErrPresetAlreadyExists},
+			wantStatus: http.StatusConflict,
 		},
 		{
-			name:           "internal service error",
-			validatorError: nil,
-			svcReturn:      svcResult{p: nil, err: errors.New("boom")},
-			wantStatus:     http.StatusInternalServerError,
+			name:       "internal service error",
+			body:       validBody,
+			svcReturn:  svcResult{p: nil, err: errors.New("boom")},
+			wantStatus: http.StatusInternalServerError,
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			s.SetupTest()
-			s.valErr = tc.validatorError
-			val := fakeValidator{err: tc.validatorError}
-			deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
-			s.Require().NoError(err)
-			s.h = New(deps)
-
-			reqBody := bytes.NewReader(bs)
-			if tc.name == "invalid JSON" {
-				reqBody = bytes.NewReader([]byte("{bad json"))
+			var reqBody *bytes.Reader
+			if s, ok := tc.body.(string); ok {
+				reqBody = bytes.NewReader([]byte(s))
+			} else {
+				b, _ := json.Marshal(tc.body)
+				reqBody = bytes.NewReader(b)
 			}
 			req := httptest.NewRequest(http.MethodPost, "/api/admin/presets", reqBody)
 			w := httptest.NewRecorder()
 
-			if tc.name == "success" || tc.name == "domain errors → 4xx" || tc.name == "internal service error" {
+			shouldMock := tc.wantStatus == http.StatusCreated || tc.wantStatus == http.StatusConflict || tc.wantStatus == http.StatusInternalServerError
+			if shouldMock {
 				s.mockSvc.
 					On("Create", mock.Anything, mock.Anything).
 					Return(tc.svcReturn.p, tc.svcReturn.err).
@@ -168,7 +152,9 @@ func (s *PresetHandlerSuite) TestCreatePreset() {
 				assert.Equal(s.T(), "/api/admin/presets/"+id, loc)
 			}
 
-			s.mockSvc.AssertExpectations(s.T())
+			if shouldMock {
+				s.mockSvc.AssertExpectations(s.T())
+			}
 		})
 	}
 }
@@ -335,13 +321,11 @@ func (s *PresetHandlerSuite) TestListPresetEndpoints() {
 func (s *PresetHandlerSuite) TestUpdatePreset() {
 	validBody := map[string]interface{}{
 		"name":        "UpdatedPreset",
-		"total_price": 99.99,
+		"total_price": 50.0,
 		"items": []map[string]interface{}{
-			{"product_id": 1},
-			{"product_id": 2},
+			{"product_id": 2, "price": 50.0},
 		},
 	}
-	bs, _ := json.Marshal(validBody)
 
 	type svcResult struct {
 		p   *domPreset.Preset
@@ -351,60 +335,57 @@ func (s *PresetHandlerSuite) TestUpdatePreset() {
 	tests := []struct {
 		name       string
 		idParam    string
-		validator  error
+		body       interface{}
 		svcReturn  svcResult
 		wantStatus int
 	}{
 		{
-			name:      "success",
-			idParam:   "10",
-			validator: nil,
+			name:    "success",
+			idParam: "10",
+			body:    validBody,
 			svcReturn: svcResult{
 				p: &domPreset.Preset{
 					ID:         10,
 					Name:       "UpdatedPreset",
-					TotalPrice: 99.99,
-					Items: []domPreset.PresetItem{
-						{ProductID: 1, PresetID: 10},
-						{ProductID: 2, PresetID: 10},
-					},
+					TotalPrice: 50.0,
+					Items: []domPreset.PresetItem{{
+						ProductID: 2, PresetID: 10,
+						Product: &domProduct.ProductSummary{ID: 2, Name: "Product 2", Price: 50.0},
+					}},
 				},
 				err: nil,
 			},
 			wantStatus: http.StatusOK,
 		},
 		{
-			name:       "invalid id",
-			idParam:    "abc",
-			validator:  nil,
-			svcReturn:  svcResult{},
-			wantStatus: http.StatusBadRequest,
-		},
-		{
 			name:       "invalid JSON",
 			idParam:    "10",
-			validator:  nil,
+			body:       `{`,
 			svcReturn:  svcResult{},
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "validation error",
-			idParam:    "10",
-			validator:  validator.ValidationErrors{fakeFieldError{}},
+			name:    "validation error - empty name",
+			idParam: "10",
+			body: map[string]interface{}{
+				"name":        "",
+				"total_price": 50.0,
+				"items":       []map[string]interface{}{},
+			},
 			svcReturn:  svcResult{},
 			wantStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name:       "not found",
 			idParam:    "10",
-			validator:  nil,
+			body:       validBody,
 			svcReturn:  svcResult{p: nil, err: domPreset.ErrPresetNotFound},
 			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "internal error",
 			idParam:    "10",
-			validator:  nil,
+			body:       validBody,
 			svcReturn:  svcResult{p: nil, err: errors.New("boom")},
 			wantStatus: http.StatusInternalServerError,
 		},
@@ -413,17 +394,12 @@ func (s *PresetHandlerSuite) TestUpdatePreset() {
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			s.SetupTest()
-			s.valErr = tc.validator
-			val := fakeValidator{err: tc.validator}
-			deps, err := NewDeps(val, slog.New(slog.DiscardHandler), s.mockSvc)
-			s.Require().NoError(err)
-			s.h = New(deps)
-
 			var reqBody *bytes.Reader
-			if tc.name == "invalid JSON" {
-				reqBody = bytes.NewReader([]byte("{bad json"))
+			if s, ok := tc.body.(string); ok {
+				reqBody = bytes.NewReader([]byte(s))
 			} else {
-				reqBody = bytes.NewReader(bs)
+				b, _ := json.Marshal(tc.body)
+				reqBody = bytes.NewReader(b)
 			}
 
 			req := withChiParam(
@@ -449,4 +425,142 @@ func (s *PresetHandlerSuite) TestUpdatePreset() {
 
 func TestPresetHandlerSuite(t *testing.T) {
 	suite.Run(t, new(PresetHandlerSuite))
+}
+
+func newHandler(mockSvc *mocks.MockPresetService) *Handler {
+	dep, err := NewDeps(slog.New(slog.DiscardHandler), mockSvc)
+	if err != nil {
+		return nil
+	}
+	h := New(dep)
+	return h
+}
+
+func TestCreate_Errors(t *testing.T) {
+	cases := []struct {
+		name           string
+		body           string
+		svcErr         error
+		wantCode       int
+		wantMsg        string
+		wantValidation bool
+	}{
+		{
+			name:     "invalid JSON",
+			body:     `{`,
+			wantCode: http.StatusBadRequest,
+			wantMsg:  "Invalid JSON: unexpected EOF",
+		},
+		{
+			name:           "validation error - empty name",
+			body:           `{"name":"","description":"test"}`,
+			wantCode:       http.StatusUnprocessableEntity,
+			wantValidation: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockSvc := mocks.NewMockPresetService(t)
+			shouldMock := tc.svcErr != nil
+			if shouldMock {
+				mockSvc.
+					EXPECT().
+					Create(mock.Anything, mock.Anything).
+					Return(&domPreset.Preset{}, tc.svcErr).
+					Once()
+			}
+
+			h := newHandler(mockSvc)
+			req := httptest.NewRequest(http.MethodPost, "/presets", strings.NewReader(tc.body))
+			w := httptest.NewRecorder()
+
+			h.Create(w, req)
+
+			assert.Equal(t, tc.wantCode, w.Code)
+
+			if tc.wantValidation {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
+			} else {
+				var resp httputils.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.Contains(t, resp.Message, tc.wantMsg)
+			}
+			if shouldMock {
+				mockSvc.AssertExpectations(t)
+			}
+		})
+	}
+}
+
+func TestUpdate_Errors(t *testing.T) {
+	cases := []struct {
+		name           string
+		body           string
+		vars           map[string]string
+		svcErr         error
+		wantCode       int
+		wantMsg        string
+		wantValidation bool
+	}{
+		{
+			name:     "invalid JSON",
+			body:     `{`,
+			vars:     map[string]string{"id": "1"},
+			wantCode: http.StatusBadRequest,
+			wantMsg:  "Invalid JSON: unexpected EOF",
+		},
+		{
+			name:     "invalid preset id",
+			body:     `{"name":"test","description":"test"}`,
+			vars:     map[string]string{"id": "abc"},
+			wantCode: http.StatusBadRequest,
+			wantMsg:  "invalid id",
+		},
+		{
+			name:           "validation error - empty name",
+			body:           `{"name":"","description":"test"}`,
+			vars:           map[string]string{"id": "1"},
+			wantCode:       http.StatusUnprocessableEntity,
+			wantValidation: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockSvc := mocks.NewMockPresetService(t)
+			if tc.svcErr != nil {
+				mockSvc.
+					EXPECT().
+					Update(mock.Anything, mock.Anything).
+					Return(&domPreset.Preset{}, tc.svcErr).
+					Once()
+			}
+
+			h := newHandler(mockSvc)
+			req := httptest.NewRequest(http.MethodPut, "/presets/1", strings.NewReader(tc.body))
+			req = withChiParams(req, tc.vars)
+			w := httptest.NewRecorder()
+
+			h.Update(w, req)
+
+			assert.Equal(t, tc.wantCode, w.Code)
+
+			if tc.wantValidation {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
+			} else {
+				var resp httputils.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.Contains(t, resp.Message, tc.wantMsg)
+			}
+		})
+	}
 }

@@ -44,3 +44,21 @@ func mapToResponseItems(items []preset.PresetItem) []PresetResponseItem {
 	}
 	return out
 }
+
+func (r *PresetRequest) MapToPreset() *preset.Preset {
+	return &preset.Preset{
+		Name:        r.Name,
+		Description: r.Description,
+		TotalPrice:  r.TotalPrice,
+		ImageURL:    r.ImageURL,
+		Items:       r.mapToPresetItems(),
+	}
+}
+
+func (r *PresetRequest) mapToPresetItems() []preset.PresetItem {
+	items := make([]preset.PresetItem, len(r.Items))
+	for i, it := range r.Items {
+		items[i] = preset.PresetItem{ProductID: it.ProductID}
+	}
+	return items
+}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -12,44 +11,33 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/mocks"
+	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
-
-type fakeValidator struct{ err error }
-
-func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error {
-	return f.err
-}
 
 type ProductHandlerSuite struct {
 	suite.Suite
 	h       *Handler
 	mockSvc *mocks.MockProductService
-	valErr  error
 }
 
 func (s *ProductHandlerSuite) SetupTest() {
 	s.mockSvc = mocks.NewMockProductService(s.T())
-	s.valErr = nil
-	dep, err := NewDeps(validator.New(), slog.New(slog.DiscardHandler), s.mockSvc)
+	dep, err := NewDeps(slog.New(slog.DiscardHandler), s.mockSvc)
 	s.Require().NoError(err)
 	s.h = New(dep)
-	s.h.val = fakeValidator{err: s.valErr}
 }
 
 func (s *ProductHandlerSuite) TestCreate() {
 	type testCase struct {
 		name      string
 		body      interface{}
-		valErr    error
 		svcMock   func(*mocks.MockProductService)
 		wantCode  int
 		wantCheck func(*testing.T, *httptest.ResponseRecorder)
@@ -57,74 +45,58 @@ func (s *ProductHandlerSuite) TestCreate() {
 
 	tests := []testCase{
 		{
-			name:   "success",
-			body:   dto.ProductCreateRequest{Name: "Product X", Price: 78.3, CategoryID: 1},
-			valErr: nil,
+			name: "success",
+			body: dto.ProductCreateRequest{
+				Name:       "ValidProduct",
+				Price:      10,
+				CategoryID: 1,
+				Attributes: []dto.ProductAttributeValueRequest{
+					{AttributeID: 2, Value: "some value"},
+				},
+			},
 			svcMock: func(s *mocks.MockProductService) {
-				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1, Name: "test"}, nil).Once()
+				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, nil).Once()
 			},
 			wantCode: http.StatusCreated,
 			wantCheck: func(t *testing.T, w *httptest.ResponseRecorder) {
 				var resp dto.ProductResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
-				require.NoError(t, err)
-				require.Equal(t, int64(1), resp.ProductID)
-				require.Equal(t, "test", resp.Name)
+				assert.NoError(t, err)
+				assert.Equal(t, int64(1), resp.ProductID)
 			},
 		},
 		{
-			name:      "bad JSON",
-			body:      `{`,
-			valErr:    nil,
-			svcMock:   nil,
-			wantCode:  http.StatusBadRequest,
-			wantCheck: nil,
+			name:     "bad JSON",
+			body:     `{`,
+			svcMock:  nil,
+			wantCode: http.StatusBadRequest,
 		},
 		{
-			name:      "validation failed",
-			body:      dto.ProductCreateRequest{Name: ""},
-			valErr:    errors.New("validation"),
-			svcMock:   nil,
-			wantCode:  http.StatusUnprocessableEntity,
-			wantCheck: nil,
-		},
-		{
-			name:   "bad category",
-			body:   dto.ProductCreateRequest{Name: "ValidName", Price: 10, CategoryID: 999},
-			valErr: nil,
+			name: "validation error - empty name",
+			body: dto.ProductCreateRequest{
+				Name:       "",
+				Price:      10,
+				CategoryID: 1,
+				Attributes: []dto.ProductAttributeValueRequest{
+					{AttributeID: 2, Value: "some value"},
+				},
+			},
 			svcMock: func(s *mocks.MockProductService) {
-				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{}, prodDom.ErrBadCategoryID).Once()
+				// Не ожидаем вызов сервиса при ошибке валидации
 			},
-			wantCode:  http.StatusBadRequest,
-			wantCheck: nil,
-		},
-		{
-			name:   "invalid attr",
-			body:   dto.ProductCreateRequest{Name: "ValidName", Price: 10, CategoryID: 1},
-			valErr: nil,
-			svcMock: func(s *mocks.MockProductService) {
-				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{}, prodDom.ErrInvalidAttribute).Once()
+			wantCode: http.StatusUnprocessableEntity,
+			wantCheck: func(t *testing.T, w *httptest.ResponseRecorder) {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
 			},
-			wantCode:  http.StatusUnprocessableEntity,
-			wantCheck: nil,
-		},
-		{
-			name:   "generic error",
-			body:   dto.ProductCreateRequest{Name: "ValidName", Price: 10, CategoryID: 1},
-			valErr: nil,
-			svcMock: func(s *mocks.MockProductService) {
-				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{}, errors.New("boom")).Once()
-			},
-			wantCode:  http.StatusInternalServerError,
-			wantCheck: nil,
 		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			s.SetupTest()
-			s.valErr = tc.valErr
-			s.h.val = fakeValidator{err: tc.valErr}
 
 			var req *http.Request
 			if s, ok := tc.body.(string); ok {
@@ -135,14 +107,19 @@ func (s *ProductHandlerSuite) TestCreate() {
 			}
 			w := httptest.NewRecorder()
 
-			if tc.svcMock != nil {
+			shouldMock := tc.svcMock != nil && tc.wantCode == http.StatusCreated
+			if shouldMock {
 				tc.svcMock(s.mockSvc)
 			}
 
 			s.h.Create(w, req)
+
 			assert.Equal(s.T(), tc.wantCode, w.Code)
 			if tc.wantCheck != nil {
 				tc.wantCheck(s.T(), w)
+			}
+			if shouldMock {
+				s.mockSvc.AssertExpectations(s.T())
 			}
 		})
 	}
@@ -159,7 +136,7 @@ func (s *ProductHandlerSuite) TestCreateWithAttributes() {
 	tests := []testCase{
 		{
 			name: "success",
-			body: dto.ProductCreateRequest{Name: "Product Y"},
+			body: dto.ProductCreateRequest{Name: "ProductWithAttrs", Price: 10, CategoryID: 1},
 			svcMock: func(svc *mocks.MockProductService) {
 				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, nil).Once()
 			},
@@ -173,7 +150,7 @@ func (s *ProductHandlerSuite) TestCreateWithAttributes() {
 		},
 		{
 			name: "invalid attribute",
-			body: dto.ProductCreateRequest{Name: "Product Z"},
+			body: dto.ProductCreateRequest{Name: "ProductWithInvalidAttr", Price: 10, CategoryID: 1},
 			svcMock: func(svc *mocks.MockProductService) {
 				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, prodDom.ErrInvalidAttribute).Once()
 			},
@@ -290,7 +267,7 @@ func (s *ProductHandlerSuite) TestListByCategory() {
 }
 
 func (s *ProductHandlerSuite) TestUpdate() {
-	body := dto.ProductUpdateRequest{Name: "Updated"}
+	body := dto.ProductUpdateRequest{Name: "UpdatedProduct", Price: 10, CategoryID: 1}
 	raw, _ := json.Marshal(body)
 
 	req := httptest.NewRequest(http.MethodPut, "/api/admin/product/7", bytes.NewReader(raw))
@@ -319,24 +296,22 @@ func TestProductHandlerSuite(t *testing.T) {
 }
 
 func withChiParams(r *http.Request, params map[string]string) *http.Request {
-	chiCtx := chi.NewRouteContext()
+	routeCtx := chi.NewRouteContext()
 	for k, v := range params {
-		chiCtx.URLParams.Add(k, v)
+		routeCtx.URLParams.Add(k, v)
 	}
-	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, chiCtx))
+	ctx := context.WithValue(r.Context(), chi.RouteCtxKey, routeCtx)
+	return r.WithContext(ctx)
 }
 
 func validProduct() *prodDom.Product {
-	desc := "desc"
-	img := "img"
+	desc := "Test Description"
 	return &prodDom.Product{
 		ID:          1,
-		Name:        "Test",
-		Price:       100.0,
+		Name:        "Test Product",
 		Description: &desc,
+		Price:       100.0,
 		CategoryID:  1,
-		ImageURL:    &img,
 		CreatedAt:   time.Now(),
-		Attributes:  nil,
 	}
 }

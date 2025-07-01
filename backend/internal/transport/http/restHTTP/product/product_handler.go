@@ -10,7 +10,6 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
@@ -26,20 +25,18 @@ type ProductService interface {
 
 type Deps struct {
 	pSvc ProductService
-	val  interfaces.Validator
 	log  *slog.Logger
 }
 
-func NewDeps(val interfaces.Validator, log *slog.Logger, srv ProductService) (Deps, error) {
+func NewDeps(log *slog.Logger, srv ProductService) (Deps, error) {
 	if srv == nil {
 		return Deps{}, errors.New("product handler: missing ProductService")
 	}
-	if val == nil {
-		return Deps{}, errors.New("product handler: missing validator")
+	if log == nil {
+		return Deps{}, errors.New("product handler: missing logger")
 	}
 	return Deps{
 		pSvc: srv,
-		val:  val,
 		log:  log.With("component", "restHTTP.product"),
 	}, nil
 }
@@ -47,14 +44,12 @@ func NewDeps(val interfaces.Validator, log *slog.Logger, srv ProductService) (De
 type Handler struct {
 	srv ProductService
 	log *slog.Logger
-	val interfaces.Validator
 }
 
 func New(d Deps) *Handler {
 	return &Handler{
 		srv: d.pSvc,
 		log: d.log,
-		val: d.val,
 	}
 }
 
@@ -93,9 +88,13 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.val.StructCtx(ctx, &input); err != nil {
+	if err := input.Validate(); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
+		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 	product := dto.MapCreateReqToDomain(&input)
@@ -140,6 +139,16 @@ func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		log.Warn("validation failed", slog.Any("error", err))
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
+		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -281,10 +290,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// 3) validate
-	if err := h.val.StructCtx(ctx, &req); err != nil {
+	if err := req.Validate(); err != nil {
 		log.Warn("validation failed", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
+		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 

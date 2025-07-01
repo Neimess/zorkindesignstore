@@ -2,8 +2,6 @@ package product
 
 import (
 	"time"
-
-	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 )
 
 type Product struct {
@@ -15,18 +13,6 @@ type Product struct {
 	ImageURL    *string
 	CreatedAt   time.Time
 	Attributes  []ProductAttribute
-}
-
-type ProductAttribute struct {
-	ProductID   int64
-	AttributeID int64
-	Value       string
-	Attribute   attr.Attribute
-}
-
-type PresetProduct struct {
-	PresetID  int64
-	ProductID int64
 }
 
 type ProductSummary struct {

@@ -19,20 +19,14 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/mocks"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
-type fakeValidator struct{ err error }
-
-func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error { return f.err }
-
-func newHandler(mockSvc *mocks.MockAttributeService, valErr error) *Handler {
-	dep, err := NewDeps(validator.New(), slog.New(slog.DiscardHandler), mockSvc)
+func newHandler(mockSvc *mocks.MockAttributeService) *Handler {
+	dep, err := NewDeps(slog.New(slog.DiscardHandler), mockSvc)
 	if err != nil {
 		return nil
 	}
 	h := New(dep)
-	h.val = fakeValidator{err: valErr}
 	return h
 }
 
@@ -46,7 +40,7 @@ func withChiParams(r *http.Request, params map[string]string) *http.Request {
 
 func TestCreateAttributesBatch_Success(t *testing.T) {
 	mockSvc := mocks.NewMockAttributeService(t)
-	h := newHandler(mockSvc, nil)
+	h := newHandler(mockSvc)
 
 	input := []map[string]interface{}{{"name": "A", "unit": "u"}}
 	body, err := json.Marshal(map[string]interface{}{"data": input})
@@ -69,13 +63,13 @@ func TestCreateAttributesBatch_Success(t *testing.T) {
 
 func TestCreateAttributesBatch_Errors(t *testing.T) {
 	cases := []struct {
-		name     string
-		body     string
-		vars     map[string]string
-		valErr   error
-		svcErr   error
-		wantCode int
-		wantMsg  string
+		name           string
+		body           string
+		vars           map[string]string
+		svcErr         error
+		wantCode       int
+		wantMsg        string
+		wantValidation bool
 	}{
 		{
 			name:     "invalid JSON",
@@ -90,6 +84,13 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 			vars:     map[string]string{"categoryID": "abc"},
 			wantCode: http.StatusBadRequest,
 			wantMsg:  "invalid category id",
+		},
+		{
+			name:           "validation error",
+			body:           `{"data":[{"name":""}]}`,
+			vars:           map[string]string{"categoryID": "1"},
+			wantCode:       http.StatusUnprocessableEntity,
+			wantValidation: true,
 		},
 		{
 			name:     "service batch empty",
@@ -123,7 +124,7 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 			t.Parallel()
 
 			mockSvc := mocks.NewMockAttributeService(t)
-			h := newHandler(mockSvc, nil)
+			h := newHandler(mockSvc)
 
 			req := httptest.NewRequest(http.MethodPost, "/batch", bytes.NewReader([]byte(tc.body)))
 			req = withChiParams(req, tc.vars)
@@ -139,10 +140,17 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 			h.CreateAttributesBatch(w, req)
 			assert.Equal(t, tc.wantCode, w.Code)
 
-			var resp httputils.ErrorResponse
-			err := json.Unmarshal(w.Body.Bytes(), &resp)
-			require.NoError(t, err)
-			assert.Equal(t, tc.wantMsg, resp.Message)
+			if tc.wantValidation {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				require.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
+			} else {
+				var resp httputils.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				require.NoError(t, err)
+				assert.Equal(t, tc.wantMsg, resp.Message)
+			}
 			mockSvc.AssertExpectations(t)
 		})
 	}
@@ -150,7 +158,7 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 
 func TestCreateAttribute_Success(t *testing.T) {
 	mockSvc := mocks.NewMockAttributeService(t)
-	h := newHandler(mockSvc, nil)
+	h := newHandler(mockSvc)
 
 	body := map[string]interface{}{"name": "AttrName", "unit": "u"}
 	raw, err := json.Marshal(body)
@@ -177,6 +185,26 @@ func TestCreateAttribute_Success(t *testing.T) {
 	assert.Equal(t, "AttrName", resp.Name)
 	assert.Equal(t, int64(1), resp.CategoryID)
 	mockSvc.AssertExpectations(t)
+}
+
+func TestCreateAttribute_ValidationError(t *testing.T) {
+	mockSvc := mocks.NewMockAttributeService(t)
+	h := newHandler(mockSvc)
+
+	body := map[string]interface{}{"name": ""}
+	raw, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/admin/category/1/attribute", bytes.NewReader(raw))
+	req = withChiParams(req, map[string]string{"categoryID": "1"})
+	w := httptest.NewRecorder()
+
+	h.CreateAttribute(w, req)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	var resp httputils.ValidationErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.NotEmpty(t, resp.Errors)
 }
 
 func strPtr(s string) *string { return &s }

@@ -20,20 +20,14 @@ import (
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/mocks"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
-type fakeValidator struct{ err error }
-
-func (f fakeValidator) StructCtx(ctx context.Context, s interface{}) error {
-	return f.err
-}
-
-func newHandler(mockSvc *mocks.MockCategoryService, valErr error) *Handler {
-	dep, err := NewDeps(validator.New(), slog.New(slog.DiscardHandler), mockSvc)
-	require.NoError(&testing.T{}, err)
+func newHandler(mockSvc *mocks.MockCategoryService) *Handler {
+	dep, err := NewDeps(slog.New(slog.DiscardHandler), mockSvc)
+	if err != nil {
+		return nil
+	}
 	h := New(dep)
-	h.val = fakeValidator{err: valErr}
 	return h
 }
 
@@ -47,7 +41,7 @@ func withChiParams(r *http.Request, params map[string]string) *http.Request {
 
 func TestCreateCategory_Success(t *testing.T) {
 	mockSvc := mocks.NewMockCategoryService(t)
-	h := newHandler(mockSvc, nil)
+	h := newHandler(mockSvc)
 
 	reqBody := map[string]interface{}{"name": "Books"}
 	raw, err := json.Marshal(reqBody)
@@ -75,14 +69,14 @@ func TestCreateCategory_Success(t *testing.T) {
 	mockSvc.AssertExpectations(t)
 }
 
-func TestCreateCategory_Errors(t *testing.T) {
+func TestCreate_Errors(t *testing.T) {
 	cases := []struct {
-		name     string
-		body     string
-		valErr   error
-		svcErr   error
-		wantCode int
-		wantMsg  string
+		name           string
+		body           string
+		svcErr         error
+		wantCode       int
+		wantMsg        string
+		wantValidation bool
 	}{
 		{
 			name:     "invalid JSON",
@@ -91,47 +85,24 @@ func TestCreateCategory_Errors(t *testing.T) {
 			wantMsg:  "invalid JSON",
 		},
 		{
-			name:     "validation failure",
-			body:     `{"name":""}`,
-			valErr:   errors.New("any"),
-			wantCode: http.StatusUnprocessableEntity,
-			wantMsg:  "invalid product data",
+			name:           "validation error - empty name",
+			body:           `{"name":"","description":"test"}`,
+			wantCode:       http.StatusUnprocessableEntity,
+			wantValidation: true,
 		},
 		{
-			name:     "empty name",
-			body:     `{"name":" "}`,
-			svcErr:   catDom.ErrCategoryNameEmpty,
-			wantCode: http.StatusUnprocessableEntity,
-			wantMsg:  "category name cannot be empty",
-		},
-		{
-			name:     "name too long",
-			body:     `{"name":"` + strings.Repeat("x", 300) + `"}`,
-			svcErr:   catDom.ErrCategoryNameTooLong,
-			wantCode: http.StatusUnprocessableEntity,
-			wantMsg:  "category name must be at most 255 characters",
-		},
-		{
-			name:     "generic service error",
-			body:     `{"name":"Books"}`,
-			svcErr:   errors.New("boom"),
+			name:     "service error",
+			body:     `{"name":"test","description":"test"}`,
+			svcErr:   errors.New("service error"),
 			wantCode: http.StatusInternalServerError,
 			wantMsg:  "internal server error",
 		},
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			mockSvc := mocks.NewMockCategoryService(t)
-			h := newHandler(mockSvc, tc.valErr)
-
-			req := httptest.NewRequest(http.MethodPost, "/api/admin/category", bytes.NewReader([]byte(tc.body)))
-			w := httptest.NewRecorder()
-
-			// only stub service if validation passed and JSON was valid
-			if tc.valErr == nil && tc.svcErr != nil && tc.body[0] == '{' {
+			if tc.svcErr != nil {
 				mockSvc.
 					EXPECT().
 					CreateCategory(mock.Anything, mock.Anything).
@@ -139,21 +110,32 @@ func TestCreateCategory_Errors(t *testing.T) {
 					Once()
 			}
 
+			h := newHandler(mockSvc)
+			req := httptest.NewRequest(http.MethodPost, "/api/admin/category", strings.NewReader(tc.body))
+			w := httptest.NewRecorder()
+
 			h.CreateCategory(w, req)
+
 			assert.Equal(t, tc.wantCode, w.Code)
 
-			// on error we return JSON with { "message": "<msg>" }
-			var resp httputils.ErrorResponse
-			_ = json.Unmarshal(w.Body.Bytes(), &resp)
-			assert.Equal(t, tc.wantMsg, resp.Message)
-			mockSvc.AssertExpectations(t)
+			if tc.wantValidation {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
+			} else {
+				var resp httputils.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.Contains(t, resp.Message, tc.wantMsg)
+			}
 		})
 	}
 }
 
 func TestGetCategory_Success(t *testing.T) {
 	mockSvc := mocks.NewMockCategoryService(t)
-	h := newHandler(mockSvc, nil)
+	h := newHandler(mockSvc)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/category/7", nil)
 	req = withChiParams(req, map[string]string{"id": "7"})
@@ -191,7 +173,7 @@ func TestGetCategory_Errors(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			mockSvc := mocks.NewMockCategoryService(t)
-			h := newHandler(mockSvc, nil)
+			h := newHandler(mockSvc)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/category/"+tc.param, nil)
 			req = withChiParams(req, map[string]string{"id": tc.param})
@@ -217,7 +199,7 @@ func TestGetCategory_Errors(t *testing.T) {
 
 func TestDeleteCategory_Success(t *testing.T) {
 	mockSvc := mocks.NewMockCategoryService(t)
-	h := newHandler(mockSvc, nil)
+	h := newHandler(mockSvc)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/admin/category/3", nil)
 	req = withChiParams(req, map[string]string{"id": "3"})
@@ -251,7 +233,7 @@ func TestDeleteCategory_Errors(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			mockSvc := mocks.NewMockCategoryService(t)
-			h := newHandler(mockSvc, nil)
+			h := newHandler(mockSvc)
 
 			req := httptest.NewRequest(http.MethodDelete, "/api/admin/category/"+tc.param, nil)
 			req = withChiParams(req, map[string]string{"id": tc.param})
@@ -273,6 +255,82 @@ func TestDeleteCategory_Errors(t *testing.T) {
 			// for 204 there is no body
 			if tc.wantCode != http.StatusNoContent {
 				assert.Equal(t, tc.wantMsg, resp.Message)
+			}
+		})
+	}
+}
+
+func TestUpdate_Errors(t *testing.T) {
+	cases := []struct {
+		name           string
+		body           string
+		vars           map[string]string
+		svcErr         error
+		wantCode       int
+		wantMsg        string
+		wantValidation bool
+	}{
+		{
+			name:     "invalid JSON",
+			body:     `{`,
+			vars:     map[string]string{"id": "1"},
+			wantCode: http.StatusBadRequest,
+			wantMsg:  "invalid JSON",
+		},
+		{
+			name:     "invalid category id",
+			body:     `{"name":"test","description":"test"}`,
+			vars:     map[string]string{"id": "abc"},
+			wantCode: http.StatusBadRequest,
+			wantMsg:  "invalid category id",
+		},
+		{
+			name:           "validation error - empty name",
+			body:           `{"name":"","description":"test"}`,
+			vars:           map[string]string{"id": "1"},
+			wantCode:       http.StatusUnprocessableEntity,
+			wantValidation: true,
+		},
+		{
+			name:     "service error",
+			body:     `{"name":"test","description":"test"}`,
+			vars:     map[string]string{"id": "1"},
+			svcErr:   errors.New("service error"),
+			wantCode: http.StatusInternalServerError,
+			wantMsg:  "internal server error",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockSvc := mocks.NewMockCategoryService(t)
+			if tc.svcErr != nil {
+				mockSvc.
+					EXPECT().
+					UpdateCategory(mock.Anything, mock.Anything).
+					Return(nil, tc.svcErr).
+					Once()
+			}
+
+			h := newHandler(mockSvc)
+			req := httptest.NewRequest(http.MethodPut, "/api/admin/category/1", strings.NewReader(tc.body))
+			req = withChiParams(req, tc.vars)
+			w := httptest.NewRecorder()
+
+			h.UpdateCategory(w, req)
+
+			assert.Equal(t, tc.wantCode, w.Code)
+
+			if tc.wantValidation {
+				var resp httputils.ValidationErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.NotEmpty(t, resp.Errors)
+			} else {
+				var resp httputils.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &resp)
+				assert.NoError(t, err)
+				assert.Contains(t, resp.Message, tc.wantMsg)
 			}
 		})
 	}

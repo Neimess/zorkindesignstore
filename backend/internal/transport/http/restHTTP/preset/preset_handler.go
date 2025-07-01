@@ -9,10 +9,8 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/preset"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
 type PresetService interface {
@@ -25,39 +23,32 @@ type PresetService interface {
 }
 
 type Deps struct {
-	log       *slog.Logger
-	validator interfaces.Validator
-	pSrv      PresetService
+	log  *slog.Logger
+	pSrv PresetService
 }
 
-func NewDeps(validator interfaces.Validator, log *slog.Logger, pSrv PresetService) (Deps, error) {
+func NewDeps(log *slog.Logger, pSrv PresetService) (Deps, error) {
 	if pSrv == nil {
 		return Deps{}, errors.New("preset: missing PresetService")
-	}
-	if validator == nil {
-		return Deps{}, errors.New("preset: missing validator")
 	}
 	if log == nil {
 		return Deps{}, errors.New("preset: missing logger")
 	}
 	return Deps{
-		pSrv:      pSrv,
-		validator: validator,
-		log:       log.With("component", "restHTTP.preset"),
+		pSrv: pSrv,
+		log:  log.With("component", "restHTTP.preset"),
 	}, nil
 }
 
 type Handler struct {
 	srv PresetService
 	log *slog.Logger
-	val interfaces.Validator
 }
 
 func New(d Deps) *Handler {
 	return &Handler{
 		srv: d.pSrv,
 		log: d.log,
-		val: d.validator,
 	}
 }
 
@@ -85,34 +76,24 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// 1) Decode
-	var in dto.PresetRequest
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+	var req dto.PresetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, fmt.Sprintf("Invalid JSON: %s", err.Error()))
 		return
 	}
 
-	// 2) Validate struct tags
-	if err := h.val.StructCtx(ctx, &in); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-
-		var verrs = make([]dto.FieldError, 0)
-		for _, fe := range err.(validator.ValidationErrors) {
-			verrs = append(verrs, dto.FieldError{
-				Field: fe.Field(),
-				Tag:   fe.Tag(),
-				Value: fe.Param(),
-			})
+	if err := req.Validate(); err != nil {
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
 		}
-		httputils.WriteJSON(w, http.StatusUnprocessableEntity, dto.ValidationErrorResponse{
-			Message: "Validation failed",
-			Errors:  verrs,
-		})
+		httputils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// 3) Business logic
-	p := in.MapToPreset()
+	p := req.MapToPreset()
 	preset, err := h.srv.Create(ctx, p)
 	if err != nil {
 		h.handleServiceError(w, err)
@@ -243,7 +224,6 @@ func (h *Handler) ListShort(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} dto.PresetResponse
 // @Failure 404 {object} httputils.ErrorResponse
 // @Failure 422 {object} httputils.ErrorResponse
-// @Failure 422 {object} dto.ValidationErrorResponse
 // @Failure 500 {object} httputils.ErrorResponse
 // @Router /api/admin/presets/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -262,32 +242,22 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// 1) Decode
-	var in dto.PresetRequest
-	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+	var req dto.PresetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, fmt.Sprintf("Invalid JSON: %s", err.Error()))
 		return
 	}
 
-	if err := h.val.StructCtx(ctx, &in); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-
-		var verrs = make([]dto.FieldError, 0)
-		for _, fe := range err.(validator.ValidationErrors) {
-			verrs = append(verrs, dto.FieldError{
-				Field: fe.Field(),
-				Tag:   fe.Tag(),
-				Value: fe.Param(),
-			})
+	if err := req.Validate(); err != nil {
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
 		}
-		httputils.WriteJSON(w, http.StatusUnprocessableEntity, dto.ValidationErrorResponse{
-			Message: "Validation failed",
-			Errors:  verrs,
-		})
+		httputils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	p := in.MapToPreset()
+	p := req.MapToPreset()
 	res, err := h.srv.Update(ctx, p)
 	if err != nil {
 		h.handleServiceError(w, err)
@@ -296,6 +266,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	resp := dto.MapDomainToDto(res)
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
+
 func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, preset.ErrPresetNotFound):

@@ -10,7 +10,6 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
 )
 
@@ -25,28 +24,22 @@ type CategoryService interface {
 type Handler struct {
 	log *slog.Logger
 	srv CategoryService
-	val interfaces.Validator
 }
 
 type Deps struct {
 	svc CategoryService
-	val interfaces.Validator
 	log *slog.Logger
 }
 
-func NewDeps(val interfaces.Validator, log *slog.Logger, svc CategoryService) (Deps, error) {
+func NewDeps(log *slog.Logger, svc CategoryService) (Deps, error) {
 	if svc == nil {
 		return Deps{}, errors.New("category handler: missing CategoryService")
-	}
-	if val == nil {
-		return Deps{}, errors.New("category handler: missing validator")
 	}
 	if log == nil {
 		return Deps{}, errors.New("category handler: missing logger")
 	}
 	return Deps{
 		svc: svc,
-		val: val,
 		log: log.With("component", "restHTTP.category"),
 	}, nil
 }
@@ -54,7 +47,6 @@ func NewDeps(val interfaces.Validator, log *slog.Logger, svc CategoryService) (D
 func New(deps Deps) *Handler {
 	return &Handler{
 		srv: deps.svc,
-		val: deps.val,
 		log: deps.log,
 	}
 }
@@ -66,7 +58,7 @@ func New(deps Deps) *Handler {
 //		@Accept			json
 //		@Produce		json
 //	 @Security       BearerAuth
-//		@Param			category	body		dto.CategoryCreateRequest	true	"Category to create"
+//		@Param			category	body		dto.CategoryRequest	true	"Category to create"
 //		@Success		201	 		{object}	dto.CategoryResponse
 //		@Failure		400			{object}	httputils.ErrorResponse
 //		@Failure		409			{object}	httputils.ErrorResponse
@@ -76,25 +68,30 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
 
-	var input dto.CategoryCreateRequest
+	var req dto.CategoryRequest
 	defer func() {
 		if cerr := r.Body.Close(); cerr != nil {
 			log.Warn("body close failed", slog.Any("error", cerr))
 		}
 	}()
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Warn("invalid JSON", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.val.StructCtx(ctx, &input); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid product data")
+
+	if err := req.Validate(); err != nil {
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
+		}
+
+		httputils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	cat := input.ToDomainCreate()
+	cat := req.ToDomainCreate()
 	created, err := h.srv.CreateCategory(ctx, cat)
 	if err != nil {
 		h.handleServiceError(w, err)
@@ -165,7 +162,7 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 //		@Produce		json
 //	 	@Security       BearerAuth
 //		@Param			id			path	int							true	"Category ID"
-//		@Param			category	body	dto.CategoryUpdateRequest	true	"New name"
+//		@Param			category	body	dto.CategoryRequest	true	"New name"
 //		@Success		200	{object}	dto.CategoryResponse
 //		@Failure		400	{object}	httputils.ErrorResponse
 //		@Failure		404	{object}	httputils.ErrorResponse
@@ -179,23 +176,29 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid category id")
 		return
 	}
-	var input dto.CategoryUpdateRequest
+	var req dto.CategoryRequest
 	defer func() {
 		if cerr := r.Body.Close(); cerr != nil {
 			log.Warn("body close failed", slog.Any("error", cerr))
 		}
 	}()
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.val.StructCtx(ctx, &input); err != nil {
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid category data")
+
+	if err := req.Validate(); err != nil {
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
+		}
+
+		httputils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	cat := input.ToDomainUpdate(id)
+	cat := req.ToDomainUpdate(id)
 
 	updated, err := h.srv.UpdateCategory(ctx, cat)
 	if err != nil {

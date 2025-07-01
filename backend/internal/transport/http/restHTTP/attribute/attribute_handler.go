@@ -11,9 +11,7 @@ import (
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
-	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/interfaces"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
-	"github.com/go-playground/validator/v10"
 )
 
 type AttributeService interface {
@@ -27,23 +25,18 @@ type AttributeService interface {
 
 type Deps struct {
 	srv AttributeService
-	val interfaces.Validator
 	log *slog.Logger
 }
 
-func NewDeps(val interfaces.Validator, log *slog.Logger, srv AttributeService) (Deps, error) {
+func NewDeps(log *slog.Logger, srv AttributeService) (Deps, error) {
 	if srv == nil {
 		return Deps{}, errors.New("attribute handler: missing AttributeService")
-	}
-	if val == nil {
-		return Deps{}, errors.New("attribute handler: missing Validator")
 	}
 	if log == nil {
 		return Deps{}, errors.New("attribute handler: missing Logger")
 	}
 	return Deps{
 		srv: srv,
-		val: val,
 		log: log.With("component", "rest.attribute"),
 	}, nil
 }
@@ -51,7 +44,6 @@ func NewDeps(val interfaces.Validator, log *slog.Logger, srv AttributeService) (
 type Handler struct {
 	srv AttributeService
 	log *slog.Logger
-	val interfaces.Validator
 }
 
 func New(d Deps) *Handler {
@@ -59,7 +51,6 @@ func New(d Deps) *Handler {
 	return &Handler{
 		srv: d.srv,
 		log: d.log,
-		val: d.val,
 	}
 }
 
@@ -90,13 +81,13 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.val.StructCtx(ctx, &req); err != nil {
+	if err := req.Validate(); err != nil {
 		h.log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(validator.ValidationErrors); ok {
-			httputils.RespondValidationError(w, ve)
-		} else {
-			httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
 		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
@@ -136,13 +127,13 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.val.StructCtx(ctx, &req); err != nil {
+	if err := req.Validate(); err != nil {
 		h.log.Warn("validation failed", slog.Any("error", err))
-		if ve, ok := err.(validator.ValidationErrors); ok {
-			httputils.RespondValidationError(w, ve)
-		} else {
-			httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
 		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 	attr := req.MapToDomain()
@@ -260,12 +251,13 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		httputils.WriteError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
-	if err := h.val.StructCtx(ctx, &req); err != nil {
-		if ve, ok := err.(validator.ValidationErrors); ok {
-			httputils.RespondValidationError(w, ve)
-		} else {
-			httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
+	if err := req.Validate(); err != nil {
+		h.log.Warn("validation failed", slog.Any("error", err))
+		if ve, ok := err.(httputils.ValidationErrorResponse); ok {
+			httputils.WriteValidationError(w, http.StatusUnprocessableEntity, ve)
+			return
 		}
+		httputils.WriteError(w, http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 	attr := req.MapToDomain()

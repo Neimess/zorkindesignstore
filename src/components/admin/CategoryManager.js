@@ -1,37 +1,19 @@
 import React, { useState } from 'react';
 import { categoryAPI } from '../../services/api';
 
-/**
- * Компонент для управления категориями в админ-панели
- * Позволяет добавлять и удалять категории
- * 
- * @param {Object} props - Свойства компонента
- * @param {Array} props.categories - Список категорий
- * @param {Function} props.setCategories - Функция для обновления списка категорий
- * @param {Function} props.getAdminToken - Функция для получения токена администратора
- * @param {Function} props.showMessage - Функция для отображения сообщений
- * @param {Object} props.styles - Объект со стилями для элементов интерфейса
- */
-function CategoryManager({ categories, setCategories, getAdminToken, showMessage, styles }) {
+function CategoryManager({ categories, setCategories, getAdminToken, showMessage, styles, onViewCategoryProducts }) {
   const [catName, setCatName] = useState('');
   const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
 
-  /**
-   * Добавляет новую категорию
-   */
   const addCategory = async () => {
     if (!catName.trim()) return;
-    
     try {
       const token = await getAdminToken();
       if (!token) return;
-      
       const response = await categoryAPI.create({ name: catName }, token);
-
-      // Обновляем локальный список категорий
       const newCategory = { 
         id: response.id,
-  name: response.name,
+        name: response.name,
       };
       setCategories([...categories, newCategory]);
       setCatName('');
@@ -42,21 +24,12 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
     }
   };
 
-  /**
-   * Удаляет категорию по ID
-   * @param {number} id - ID категории для удаления
-   */
   const removeCategory = async (id) => {
     console.log('Удаляем категорию с id:', id);
     try {
       const token = await getAdminToken();
       if (!token) return;
-      
       await categoryAPI.delete(id, token);
-      
-      // Обновляем локальные данные
-      
-      
       setCategories(categories.filter((c) => c.id !== id));
       showMessage('Категория успешно удалена');
     } catch (error) {
@@ -85,7 +58,7 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
           borderRadius: '2px' 
         }}></span>
       </h2>
-      
+
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center' }}>
         <input 
           value={catName} 
@@ -100,7 +73,7 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
           Добавить
         </button>
       </div>
-      
+
       <ul style={{ 
         marginBottom: 30, 
         listStyle: 'none', 
@@ -120,13 +93,25 @@ function CategoryManager({ categories, setCategories, getAdminToken, showMessage
             transition: 'all 0.3s ease'
           }}>
             <span style={{ fontSize: '1.1rem', fontWeight: 500 }}>{c.name}</span>
-            <button 
-              onClick={() => removeCategory(c.id)} 
-              style={deleteButtonStyle}
-            >
-              <i className="fas fa-trash-alt" style={{ marginRight: '6px' }}></i>
-              Удалить
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button 
+                onClick={() => onViewCategoryProducts(c.id)} 
+                style={{ 
+                  ...buttonStyle, 
+                  backgroundColor: '#0ea5e9',
+                  borderColor: '#0284c7'
+                }}
+              >
+                Товары
+              </button>
+              <button 
+                onClick={() => removeCategory(c.id)} 
+                style={deleteButtonStyle}
+              >
+                <i className="fas fa-trash-alt" style={{ marginRight: '6px' }}></i>
+                Удалить
+              </button>
+            </div>
           </li>
         ))}
       </ul>

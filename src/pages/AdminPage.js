@@ -3,44 +3,26 @@ import { useLocation } from 'react-router-dom';
 import CategoryManager from '../components/admin/CategoryManager';
 import ProductManager from '../components/admin/ProductManager';
 import StyleAdmin from '../components/StyleAdmin';
-import { authAPI, tokenUtils } from '../services/api';
+import { authAPI, tokenUtils, productAPI } from '../services/api';
 
-/**
- * Функция для получения параметров из URL
- */
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-/**
- * Компонент страницы администратора
- * Объединяет управление категориями, товарами и стилями
- * 
- * @param {Object} props - Свойства компонента
- * @param {Array} props.categories - Список категорий
- * @param {Function} props.setCategories - Функция для обновления списка категорий
- * @param {Array} props.products - Список товаров
- * @param {Function} props.setProducts - Функция для обновления списка товаров
- * @param {Array} props.styles - Список стилей
- * @param {Function} props.setStyles - Функция для обновления списка стилей
- */
 function AdminPage({ categories, setCategories, products, setProducts, styles, setStyles }) {
   const query = useQuery();
   const key = query.get('key');
   const [adminToken, setAdminToken] = useState(tokenUtils.get());
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [modalProducts, setModalProducts] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // Константа с ключом администратора
   const ADMIN_KEY = 'V2patTbDXS1wuqbqpyZGwg2vq70cem2wk3ElHO6y9l2FhfgNfN';
 
-  /**
-   * Функция для получения токена администратора
-   * @returns {Promise<string|null>} Токен администратора или null в случае ошибки
-   */
   const getAdminToken = async () => {
     if (adminToken) return adminToken;
-    
+
     try {
       setIsLoading(true);
       const response = await authAPI.login(ADMIN_KEY);
@@ -57,17 +39,11 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
     }
   };
 
-  /**
-   * Функция для отображения сообщений
-   * @param {string} msg - Текст сообщения
-   * @param {boolean} isError - Флаг ошибки
-   */
   const showMessage = (msg, isError = false) => {
     setMessage({ text: msg, isError });
     setTimeout(() => setMessage(''), 3000);
   };
 
-  // Стили для элементов интерфейса
   const uiStyles = {
     inputStyle: {
       padding: '12px 16px',
@@ -109,14 +85,13 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
     }
   };
 
-  // Если ключ не совпадает, показываем сообщение о запрете доступа
   if (key !== ADMIN_KEY) {
     return (
       <div className="Configurator" style={{ maxWidth: 600, margin: '100px auto' }}>
-        <div style={{ 
-          padding: 40, 
-          textAlign: 'center', 
-          color: '#f8fafc', 
+        <div style={{
+          padding: 40,
+          textAlign: 'center',
+          color: '#f8fafc',
           fontSize: 24,
           background: 'rgba(185, 28, 28, 0.1)',
           borderRadius: '12px',
@@ -130,74 +105,79 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
     );
   }
 
+  const handleShowCategoryProducts = async (categoryId) => {
+    try {
+      const products = await productAPI.getByCategory(categoryId);
+      setModalProducts(products);
+      setModalVisible(true);
+    } catch (err) {
+      showMessage('Ошибка загрузки товаров категории', true);
+    }
+  };
+
   return (
     <div className="Configurator" style={{ maxWidth: 1000 }}>
       <h1>АДМИН-ПАНЕЛЬ</h1>
-      
-      {/* Индикатор загрузки */}
+
       {isLoading && (
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
-          <div style={{
-            background: '#1e293b',
-            padding: '20px',
-            borderRadius: '10px',
-            color: '#f1f5f9',
-            fontSize: '1.2rem'
-          }}>
-            Загрузка...
+          <div style={{ background: '#1e293b', padding: '20px', borderRadius: '10px', color: '#f1f5f9', fontSize: '1.2rem' }}>Загрузка...</div>
+        </div>
+      )}
+
+      {message && (
+        <div style={{
+          position: 'fixed', top: '20px', right: '20px',
+          background: message.isError ? '#dc2626' : '#059669',
+          color: 'white', padding: '15px 20px', borderRadius: '8px', zIndex: 1001,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        }}>{message.text}</div>
+      )}
+
+      <CategoryManager
+        categories={categories}
+        setCategories={setCategories}
+        getAdminToken={getAdminToken}
+        showMessage={showMessage}
+        styles={uiStyles}
+        onViewCategoryProducts={handleShowCategoryProducts}
+      />
+
+      <ProductManager
+        categories={categories}
+        products={products}
+        setProducts={setProducts}
+        getAdminToken={getAdminToken}
+        showMessage={showMessage}
+        styles={uiStyles}
+      />
+
+      <StyleAdmin products={products} styles={styles} setStyles={setStyles} />
+
+      {modalVisible && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1002
+        }}>
+          <div style={{ background: '#1e293b', padding: 30, borderRadius: 12, maxWidth: 600, width: '90%', color: '#f1f5f9' }}>
+            <h2 style={{ marginBottom: 20 }}>📦 Товары категории</h2>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              {modalProducts.map(p => (
+                <li key={p.product_id} style={{ marginBottom: 10, borderBottom: '1px solid #334155', paddingBottom: 6 }}>
+                  <strong>{p.name}</strong> — {p.price} ₽
+                </li>
+              ))}
+              {modalProducts.length === 0 && (
+                <li>Нет товаров в категории</li>
+              )}
+            </ul>
+            <button onClick={() => setModalVisible(false)} style={{ marginTop: 20, ...uiStyles.buttonStyle }}>Закрыть</button>
           </div>
         </div>
       )}
-      
-      {/* Сообщения */}
-      {message && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          background: message.isError ? '#dc2626' : '#059669',
-          color: 'white',
-          padding: '15px 20px',
-          borderRadius: '8px',
-          zIndex: 1001,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-        }}>
-          {message.text}
-        </div>
-      )}
-      
-      {/* Компонент управления категориями */}
-      <CategoryManager 
-        categories={categories} 
-        setCategories={setCategories} 
-        getAdminToken={getAdminToken} 
-        showMessage={showMessage} 
-        styles={uiStyles} 
-      />
-      
-      {/* Компонент управления товарами */}
-      <ProductManager 
-        categories={categories} 
-        products={products} 
-        setProducts={setProducts} 
-        getAdminToken={getAdminToken} 
-        showMessage={showMessage} 
-        styles={uiStyles} 
-      />
-      
-      {/* Компонент управления стилями */}
-      <StyleAdmin products={products} styles={styles} setStyles={setStyles} />
     </div>
   );
 }

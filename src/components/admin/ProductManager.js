@@ -1,16 +1,11 @@
 import React, { useState } from "react";
 import { productAPI } from "../../services/api";
 
-/**
- * Безопасно достаём ID товара, т.к. бэкенд иногда присылает
- *  { id }, а иногда { product_id }
- */
-const getProductId = (prod) => prod?.id ?? prod?.product_id ?? null;
+/* ------------------------------------------------------------
+ * Helpers
+ * ----------------------------------------------------------*/
+const getProductId = (p) => p?.product_id ?? p?.id ?? null;
 
-/**
- * Парсинг строки атрибутов вида “2:1.25; 3:Матовый” в массив
- * [{ attribute_id: 2, value: "1.25" }, { attribute_id: 3, value: "Матовый" }]
- */
 const parseAttributes = (raw) =>
   raw
     .split(";")
@@ -22,9 +17,12 @@ const parseAttributes = (raw) =>
     })
     .filter(Boolean);
 
-/**
- * Компонент «ProductManager» – CRUD для товаров в админ‑панели
- */
+const stringifyAttributes = (arr = []) =>
+  arr.map((a) => `${a.attribute_id}:${a.value}`).join("; ");
+
+/* ============================================================
+ * ProductManager
+ * ==========================================================*/
 function ProductManager({
   categories,
   products,
@@ -33,7 +31,7 @@ function ProductManager({
   showMessage,
   styles,
 }) {
-  /* ------------------------ state формы нового товара -------------------- */
+  /* --------------------- local state ---------------------- */
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -42,8 +40,9 @@ function ProductManager({
     categoryId: categories[0]?.id ?? 1,
     attributes: "",
   });
+  const [editingId, setEditingId] = useState(null);
 
-  const resetForm = () =>
+  const resetForm = () => {
     setForm({
       name: "",
       price: "",
@@ -52,13 +51,19 @@ function ProductManager({
       categoryId: categories[0]?.id ?? 1,
       attributes: "",
     });
+    setEditingId(null);
+  };
 
   const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
+  const editBtnStyle = {
+    ...deleteButtonStyle,
+    background: "rgba(34,197,94,.1)",
+    color: "#4ade80",
+  };
 
-  /* ----------------------------- CREATE ---------------------------------- */
-  const addProduct = async () => {
+  /* ---------------- CREATE / UPDATE ----------------------- */
+  const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
-
     try {
       const token = await getAdminToken();
       if (!token) return;
@@ -69,58 +74,58 @@ function ProductManager({
         description: form.description.trim(),
         image_url: form.image_url.trim(),
         category_id: Number(form.categoryId),
-        attributes: form.attributes.trim() ? parseAttributes(form.attributes) : [],
+        attributes: form.attributes.trim()
+          ? parseAttributes(form.attributes)
+          : [],
       };
 
-      console.log("➡️  Создаём товар:", payload);
-      const created = await productAPI.create(payload, token);
-      console.log("✅  Ответ create:", created);
-
-      if (!created || !created.product_id) {
-  showMessage("Ошибка: сервер не вернул ID", true);
-  return;
-}
-
-
-      // Бэкенд теперь возвращает полную модель → просто кладём её в store
-      const newList = [...products, { ...created, categoryId: created.category_id }];
-      setProducts(newList);
+      if (editingId) {
+        /* -------- UPDATE ---------- */
+        const updated = await productAPI.update(editingId, payload, token);
+        setProducts((prev) =>
+          prev.map((p) =>
+            getProductId(p) === editingId ? { ...updated, categoryId: updated.category_id } : p
+          )
+        );
+        showMessage("Товар обновлён");
+      } else {
+        /* -------- CREATE ---------- */
+        const created = await productAPI.create(payload, token);
+        if (!created?.product_id) {
+          showMessage("Сервер не вернул ID", true);
+          return;
+        }
+        setProducts((prev) => [...prev, { ...created, categoryId: created.category_id }]);
+        showMessage("Товар добавлен");
+      }
       resetForm();
-      showMessage("Товар успешно добавлен");
     } catch (err) {
-      const detail = err?.response?.message ?? err.message;
-      showMessage(`Ошибка сервера: ${detail}`, true);
-      console.error("❌ addProduct:", err);
-      showMessage(err.message || "Ошибка при создании", true);
+      console.error("saveProduct", err);
+      showMessage(err.message || "Ошибка сервера", true);
     }
   };
 
-  /* ----------------------------- DELETE ---------------------------------- */
+  /* --------------------- DELETE --------------------------- */
   const removeProduct = async (prod) => {
     const id = getProductId(prod);
-    if (!id) {
-      showMessage("Некорректный ID", true);
-      return;
-    }
+    if (!id) return showMessage("Некорректный ID", true);
 
     try {
       const token = await getAdminToken();
       if (!token) return;
 
-      console.log("🗑️  Удаляем товар", id);
       await productAPI.delete(id, token);
       setProducts((prev) => prev.filter((p) => getProductId(p) !== id));
+      if (editingId === id) resetForm();
       showMessage("Товар удалён");
     } catch (err) {
-      console.error("❌ removeProduct:", err);
       showMessage(err.message || "Ошибка при удалении", true);
     }
   };
 
-  /* ------------------------------ UI ------------------------------------- */
+  /* ---------------------- render -------------------------- */
   return (
     <div className="AdminSection" style={{ marginTop: 40 }}>
-      {/* ====== header ====== */}
       <h2 style={{ fontSize: "1.5rem", color: "#f8fafc", marginBottom: 20 }}>
         Товары
         <span
@@ -135,7 +140,7 @@ function ProductManager({
         />
       </h2>
 
-      {/* ====== form ====== */}
+      {/* ------------------ form ------------------ */}
       <div
         style={{
           display: "grid",
@@ -191,14 +196,14 @@ function ProductManager({
           style={inputStyle}
         />
         <button
-          onClick={addProduct}
+          onClick={saveProduct}
           style={{ ...buttonStyle, gridColumn: "1/-1", marginTop: 10, padding: 14 }}
         >
-          <i className="fas fa-plus" style={{ marginRight: 8 }} /> Добавить
+          {editingId ? "💾 Сохранить" : "➕ Добавить"}
         </button>
       </div>
 
-      {/* ====== list ====== */}
+      {/* ------------------ list ------------------ */}
       <ul
         style={{
           listStyle: "none",
@@ -219,6 +224,7 @@ function ProductManager({
 
         {products.map((p) => {
           const id = getProductId(p);
+          const isEditing = editingId === id;
           return (
             <li
               key={id ?? `${p.name}_${p.price}`}
@@ -228,6 +234,8 @@ function ProductManager({
                 gap: 16,
                 padding: "14px 20px",
                 borderBottom: "1px solid rgba(51,65,85,0.5)",
+                borderLeft: isEditing ? "4px solid #60a5fa" : "none",
+                backgroundColor: isEditing ? "rgba(59,130,246,.05)" : "transparent",
               }}
             >
               <img
@@ -249,8 +257,24 @@ function ProductManager({
                 </div>
               </div>
               <div style={{ fontWeight: 700, color: "#38bdf8" }}>{p.price} ₽</div>
+              <button
+                onClick={() => {
+                  setForm({
+                    name: p.name,
+                    price: p.price,
+                    description: p.description ?? "",
+                    image_url: p.image_url ?? "",
+                    categoryId: p.categoryId ?? p.category_id,
+                    attributes: stringifyAttributes(p.attributes),
+                  });
+                  setEditingId(id);
+                }}
+                style={editBtnStyle}
+              >
+                ✎ Редактировать
+              </button>
               <button onClick={() => removeProduct(p)} style={deleteButtonStyle}>
-                <i className="fas fa-trash-alt" style={{ marginRight: 6 }} /> Удалить
+                🗑 Удалить
               </button>
             </li>
           );

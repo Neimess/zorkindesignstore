@@ -15,12 +15,19 @@ function MainPage({ categories, products, styles }) {
   // Состояние для выбранных категорий и товаров
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [selectedStyle, setSelectedStyle] = useState(null);
+  const [showStyleModal, setShowStyleModal] = useState(false);
   
+    useEffect(() => {
+    document.body.style.overflow = showStyleModal ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showStyleModal]);
+
   /**
    * Обработчик выбора категории
    * @param {number} category_id - ID категории
    */
-  const handleCategorySelect = (category_id) => {
+ const handleCategorySelect = (category_id) => {
     if (selectedCategories.includes(category_id)) {
       setSelectedCategories(selectedCategories.filter(id => id !== category_id));
     } else {
@@ -42,43 +49,60 @@ function MainPage({ categories, products, styles }) {
    * Обработчик удаления товара из выбранных
    * @param {number} productId - ID товара
    */
-const handleProductDeselect = (productId) => {
-  setSelectedProducts(prev => {
-    const index = prev.findIndex(p => p.id === productId);
-    if (index !== -1) {
-      const newProducts = [...prev];
-      newProducts.splice(index, 1); // удаляет только один
-      return newProducts;
-    }
-    return prev;
-  });
-};
-  
+  const handleProductDeselect = (productId) => {
+    setSelectedProducts(prev => {
+      const index = prev.findIndex(p => p.id === productId);
+      if (index !== -1) {
+        const newProducts = [...prev];
+        newProducts.splice(index, 1);
+        return newProducts;
+      }
+      return prev;
+    });
+  };
+
+  const handleStyleClick = (style) => {
+    setSelectedStyle(style);
+    setShowStyleModal(true);
+  };
+  const confirmStyle = () => {
+    const newProducts = (selectedStyle.items || [])
+      .map(item => item.product)
+      .filter(product =>
+        product && !selectedProducts.some(p => p.product_id === product.id)
+      )
+      .map(product => ({
+        ...product,
+        product_id: product.id
+      }));
+
+    setSelectedProducts(prev => [...prev, ...newProducts]);
+    setShowStyleModal(false);
+    setSelectedStyle(null);
+  };
   /**
    * Обработчик выбора стиля
    * @param {Object} style - Объект стиля
    */
-const handleStyleSelect = (style) => {
-  console.log('Клик по стилю:', style.name, 'товаров:', style.items?.length);
-  
-  const newProducts = (style.items || [])
-    .map(item => item.product)
-    .filter(product =>
-      product && !selectedProducts.some(p => p.product_id === product.id)
-    )
-    .map(product => ({
-      ...product,
-      product_id: product.id  // нормализуем id для рендера
-    }));
+  const handleStyleSelect = (style) => {
+    const newProducts = (style.items || [])
+      .map(item => item.product)
+      .filter(product =>
+        product && !selectedProducts.some(p => p.product_id === product.id)
+      )
+      .map(product => ({
+        ...product,
+        product_id: product.id
+      }));
 
-  setSelectedProducts(prev => [...prev, ...newProducts]);
-};
+    setSelectedProducts(prev => [...prev, ...newProducts]);
+  };
 
 
   
   // Вычисляем общую стоимость выбранных товаров
   const totalPrice = selectedProducts.reduce((sum, product) => sum + product.price, 0);
-  
+
   // Стили для элементов интерфейса
   const styles_ui = {
     categoryButton: (isSelected) => ({
@@ -157,7 +181,7 @@ const handleStyleSelect = (style) => {
       display: 'flex',
       justifyContent: 'space-between'
     },
-    popularStylesSection: {
+       popularStylesSection: {
       background: 'rgba(15, 23, 42, 0.6)',
       borderRadius: '16px',
       padding: '25px',
@@ -284,6 +308,50 @@ const handleStyleSelect = (style) => {
               <span>Итого:</span>
               <span>{totalPrice.toLocaleString()} ₽</span>
             </div>
+            {showStyleModal && selectedStyle && (
+  <div style={{
+    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+    background: 'rgba(0,0,0,0.6)', display: 'flex',
+    alignItems: 'center', justifyContent: 'center', zIndex: 1000
+  }}>
+    <div style={{
+      background: '#0f172a', padding: '30px', borderRadius: '16px',
+      maxWidth: '600px', width: '90%', boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
+    }}>
+      <h2 style={{ color: '#f1f5f9', marginBottom: 20 }}>{selectedStyle.name}</h2>
+      <img src={selectedStyle.image_url} alt={selectedStyle.name} style={{
+        width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 20
+      }} />
+      <p style={{ color: '#cbd5e1', marginBottom: 10 }}>{selectedStyle.description}</p>
+      <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
+        {selectedStyle.items?.map((item, i) => (
+          <li key={i} style={{
+            color: '#f8fafc',
+            borderBottom: '1px solid #334155',
+            padding: '8px 0'
+          }}>
+            {item.product?.name} — {(item.product?.price ?? 0).toLocaleString()} ₽
+          </li>
+        ))}
+      </ul>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <button onClick={() => setShowStyleModal(false)} style={{
+          padding: '10px 16px', background: '#475569', color: '#fff',
+          border: 'none', borderRadius: 8, cursor: 'pointer'
+        }}>
+          Отмена
+        </button>
+        <button onClick={confirmStyle} style={{
+          padding: '10px 16px', background: '#3b82f6', color: '#fff',
+          border: 'none', borderRadius: 8, cursor: 'pointer'
+        }}>
+          Добавить в корзину
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
           </div>
         )}
         
@@ -293,14 +361,40 @@ const handleStyleSelect = (style) => {
           <p style={{ color: '#94a3b8', marginBottom: '25px' }}>
             Выберите готовый стиль интерьера, и мы автоматически добавим все необходимые товары для его реализации.
           </p>
-          
-          {/* Компонент выбора стилей */}
-          <StyleSelector styles={styles} onSelect={handleStyleSelect} />
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+            {styles.map(style => (
+              <div key={style.preset_id} style={{ background: '#1e293b', padding: 20, borderRadius: 12, border: '1px solid #334155', cursor: 'pointer' }} onClick={() => handleStyleClick(style)}>
+                <img src={style.image_url} alt={style.name} style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }} />
+                <h3 style={{ color: '#f1f5f9', fontSize: '1.2rem' }}>{style.name}</h3>
+                <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: 8 }}>{style.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-      
-      {/* Подвал сайта */}
       <Footer />
+
+      {showStyleModal && selectedStyle && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ background: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '600px', width: '90%', boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}>
+            <h2 style={{ color: '#f1f5f9', marginBottom: 20 }}>{selectedStyle.name}</h2>
+            <img src={selectedStyle.image_url} alt={selectedStyle.name} style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 20 }} />
+            <p style={{ color: '#cbd5e1', marginBottom: 10 }}>{selectedStyle.description}</p>
+            <ul style={{ listStyle: 'none', padding: 0, marginBottom: 20 }}>
+              {selectedStyle.items?.map((item, i) => (
+                <li key={i} style={{ color: '#f8fafc', borderBottom: '1px solid #334155', padding: '8px 0' }}>
+                  {item.product?.name} — {(item.product?.price ?? 0).toLocaleString()} ₽
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button onClick={() => setShowStyleModal(false)} style={{ padding: '10px 16px', background: '#475569', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Отмена</button>
+              <button onClick={confirmStyle} style={{ padding: '10px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Добавить в корзину</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

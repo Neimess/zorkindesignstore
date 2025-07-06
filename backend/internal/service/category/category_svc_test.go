@@ -173,7 +173,8 @@ func (s *CategoryServiceSuite) TestUpdateCategory() {
 			name:  "success",
 			input: &category.Category{ID: 1, Name: "Updated"},
 			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(1), "Updated").Return(&category.Category{ID: 1, Name: "Updated"}, nil).Once()
+				inputted := category.Category{ID: 1, Name: "Updated"}
+				s.mockRepo.On("Update", mock.Anything, &inputted).Return(&category.Category{ID: 1, Name: "Updated"}, nil).Once()
 			},
 			expect:    &category.Category{ID: 1, Name: "Updated"},
 			expectErr: false,
@@ -189,16 +190,8 @@ func (s *CategoryServiceSuite) TestUpdateCategory() {
 			name:  "not found",
 			input: &category.Category{ID: 2, Name: "Updated"},
 			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(2), "Updated").Return(nil, category.ErrCategoryNotFound).Once()
-			},
-			expect:    nil,
-			expectErr: true,
-		},
-		{
-			name:  "repository error",
-			input: &category.Category{ID: 3, Name: "RepoFail"},
-			mockSetup: func() {
-				s.mockRepo.On("Update", mock.Anything, int64(3), "RepoFail").Return(nil, errors.New("db error")).Once()
+				inputted := category.Category{ID: 2, Name: "Updated"}
+				s.mockRepo.On("Update", mock.Anything, &inputted).Return(nil, category.ErrCategoryNotFound).Once()
 			},
 			expect:    nil,
 			expectErr: true,

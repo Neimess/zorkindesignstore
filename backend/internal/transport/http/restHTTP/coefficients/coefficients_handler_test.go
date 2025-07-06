@@ -132,7 +132,7 @@ func (s *HandlerSuite) TestServiceErrors() {
 	}
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
-			s.ms.On("Create", mock.Anything, mock.Anything).Return(nil, tc.err).Once()
+			s.ms.On("Create", mock.Anything, mock.Anything).Return((*domCoeff.Coefficient)(nil), tc.err).Once()
 			body := dto.CoefficientRequest{Name: "X", Value: 1.1}
 			b, _ := json.Marshal(body)
 			req := httptest.NewRequest(http.MethodPost, "/api/admin/coefficients", bytes.NewReader(b))

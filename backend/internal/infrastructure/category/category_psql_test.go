@@ -81,7 +81,8 @@ func (s *CategoryRepositorySuite) createSchema() error {
 	schema := `
 	CREATE TABLE IF NOT EXISTS categories (
 		category_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL UNIQUE
+		name VARCHAR(255) NOT NULL UNIQUE,
+		parent_id BIGINT REFERENCES categories(category_id) ON DELETE CASCADE
 	);
 	`
 	_, err := s.db.Exec(schema)

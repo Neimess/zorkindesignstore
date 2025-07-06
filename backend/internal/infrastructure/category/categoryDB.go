@@ -1,6 +1,8 @@
 package category
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type categoryDB struct {
 	ID       int64         `db:"category_id"`

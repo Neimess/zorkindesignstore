@@ -294,8 +294,8 @@ func (_c *MockCategoryRepository_List_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // Update provides a mock function for the type MockCategoryRepository
-func (_mock *MockCategoryRepository) Update(ctx context.Context, id int64, newName string) (*category.Category, error) {
-	ret := _mock.Called(ctx, id, newName)
+func (_mock *MockCategoryRepository) Update(ctx context.Context, cat *category.Category) (*category.Category, error) {
+	ret := _mock.Called(ctx, cat)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
@@ -303,18 +303,18 @@ func (_mock *MockCategoryRepository) Update(ctx context.Context, id int64, newNa
 
 	var r0 *category.Category
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) (*category.Category, error)); ok {
-		return returnFunc(ctx, id, newName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *category.Category) (*category.Category, error)); ok {
+		return returnFunc(ctx, cat)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, string) *category.Category); ok {
-		r0 = returnFunc(ctx, id, newName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *category.Category) *category.Category); ok {
+		r0 = returnFunc(ctx, cat)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*category.Category)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = returnFunc(ctx, id, newName)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *category.Category) error); ok {
+		r1 = returnFunc(ctx, cat)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -328,30 +328,24 @@ type MockCategoryRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id int64
-//   - newName string
-func (_e *MockCategoryRepository_Expecter) Update(ctx interface{}, id interface{}, newName interface{}) *MockCategoryRepository_Update_Call {
-	return &MockCategoryRepository_Update_Call{Call: _e.mock.On("Update", ctx, id, newName)}
+//   - cat *category.Category
+func (_e *MockCategoryRepository_Expecter) Update(ctx interface{}, cat interface{}) *MockCategoryRepository_Update_Call {
+	return &MockCategoryRepository_Update_Call{Call: _e.mock.On("Update", ctx, cat)}
 }
 
-func (_c *MockCategoryRepository_Update_Call) Run(run func(ctx context.Context, id int64, newName string)) *MockCategoryRepository_Update_Call {
+func (_c *MockCategoryRepository_Update_Call) Run(run func(ctx context.Context, cat *category.Category)) *MockCategoryRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 *category.Category
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg1 = args[1].(*category.Category)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -362,7 +356,7 @@ func (_c *MockCategoryRepository_Update_Call) Return(category1 *category.Categor
 	return _c
 }
 
-func (_c *MockCategoryRepository_Update_Call) RunAndReturn(run func(ctx context.Context, id int64, newName string) (*category.Category, error)) *MockCategoryRepository_Update_Call {
+func (_c *MockCategoryRepository_Update_Call) RunAndReturn(run func(ctx context.Context, cat *category.Category) (*category.Category, error)) *MockCategoryRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

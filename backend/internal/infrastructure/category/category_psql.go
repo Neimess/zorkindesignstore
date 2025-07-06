@@ -8,7 +8,6 @@ import (
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
 	"github.com/Neimess/zorkin-store-project/pkg/app_error"
-	"github.com/Neimess/zorkin-store-project/pkg/database"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -129,10 +128,6 @@ func (r *PGCategoryRepository) List(ctx context.Context) ([]catDom.Category, err
 		}
 	}
 	return cats, nil
-}
-
-func (r *PGCategoryRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {
-	return database.WithQuery(ctx, r.log, query, fn, extras...)
 }
 
 func (r *PGCategoryRepository) mapPostgreSQLError(err error) error {

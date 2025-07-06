@@ -80,6 +80,8 @@ func NewApplication(dep *Deps) (*Application, error) {
 			repos.CategoryRepository,
 			repos.PresetRepository,
 			repos.AttributeRepository,
+			repos.CoefficientRepository,
+			repos.ServiceRepository,
 		),
 	)
 	if err == nil {
@@ -96,6 +98,8 @@ func NewApplication(dep *Deps) (*Application, error) {
 		services.AuthService,
 		services.PresetService,
 		services.AttributeService,
+		services.CoefficientService,
+		services.ServiceService,
 	)
 	if err != nil {
 		logNew.Error("handlers dependencies initialization failed", slog.Any("error", err))

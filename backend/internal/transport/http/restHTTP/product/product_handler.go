@@ -53,13 +53,13 @@ func New(d Deps) *Handler {
 }
 
 // CreateProduct godoc
-// @Summary      Create product
+// @Summary Создать продукт
 // @Description  Creates a new product and returns its ID
 // @Tags         products
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        product  body      dto.ProductRequest  true  "Product to create"
+// @Param        product  body      dto.ProductRequest  true  "Product to create (may contain services)"
 // @Success      201	  {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse "Bad request"
 // @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
@@ -214,15 +214,15 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
-// Update godoc
-// @Summary      Update a product
+// UpdateProduct godoc
+// @Summary Обновить продукт
 // @Description  Update an existing product (and its attributes if provided)
 // @Tags         products
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id       path      int                         true  "Product ID"
-// @Param        product  body      dto.ProductRequest    true  "Product data to update"
+// @Param        product  body      dto.ProductRequest    true  "Product data to update (may contain services)"
 // @Success      200      {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse   "Bad request"
 // @Failure      404      {object}  httputils.ErrorResponse   "Not found"

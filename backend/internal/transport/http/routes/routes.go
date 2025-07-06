@@ -91,6 +91,8 @@ func NewRouter(deps Deps) chi.Router {
 				registerProductAdminRoutes(r, deps.handlers.ProductHandler)
 				registerCategoryWithAttrsAdminRoutes(r, deps.handlers.CategoryHandler, deps.handlers.AttributeHandler)
 				registerPresetAdminRoutes(r, deps.handlers.PresetHandler)
+				registerCoefficientsAdminRoutes(r, deps.handlers.CoefficientsHandler)
+				registerServiceAdminRoutes(r, deps.handlers.ServiceHandler)
 			})
 		})
 	})

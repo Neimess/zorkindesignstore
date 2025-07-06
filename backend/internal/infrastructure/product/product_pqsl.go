@@ -14,6 +14,7 @@ import (
 	tx "github.com/Neimess/zorkin-store-project/pkg/database/tx"
 
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	serviceDom "github.com/Neimess/zorkin-store-project/internal/domain/service"
 )
 
 // Deps holds dependencies for PGProductRepository
@@ -72,6 +73,11 @@ func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *prodDom.Pr
 		}
 		if len(p.Attributes) > 0 {
 			if err := r.insertAttributesTx(ctx, tx, id, p.Attributes); err != nil {
+				return nil, err
+			}
+		}
+		if len(p.Services) > 0 {
+			if err := r.insertServicesTx(ctx, tx, id, p.Services); err != nil {
 				return nil, err
 			}
 		}
@@ -175,8 +181,12 @@ func (r *PGProductRepository) UpdateWithAttrs(ctx context.Context, p *prodDom.Pr
 			`DELETE FROM product_attributes WHERE product_id = $1`, p.ID); err != nil {
 			return nil, r.mapPostgreSQLError(err)
 		}
-
-		// Если есть новые — вставляем
+		// Чистим старые услуги
+		if _, err := tx.ExecContext(ctx,
+			`DELETE FROM product_services WHERE product_id = $1`, p.ID); err != nil {
+			return nil, r.mapPostgreSQLError(err)
+		}
+		// Если есть новые атрибуты — вставляем
 		if len(p.Attributes) > 0 {
 			ids := make([]int64, len(p.Attributes))
 			aids := make([]int64, len(p.Attributes))
@@ -194,7 +204,12 @@ func (r *PGProductRepository) UpdateWithAttrs(ctx context.Context, p *prodDom.Pr
 				return nil, r.mapPostgreSQLError(err)
 			}
 		}
-
+		// Если есть новые услуги — вставляем
+		if len(p.Services) > 0 {
+			if err := r.insertServicesTx(ctx, tx, p.ID, p.Services); err != nil {
+				return nil, err
+			}
+		}
 		return p, nil
 	})
 }
@@ -271,6 +286,24 @@ func (r *PGProductRepository) insertAttributesTx(
 	return nil
 }
 
+func (r *PGProductRepository) insertServicesTx(ctx context.Context, tx *sqlx.Tx, prodID int64, services []serviceDom.Service) error {
+	if len(services) == 0 {
+		return nil
+	}
+	prodIDs := make([]int64, len(services))
+	svcIDs := make([]int64, len(services))
+	for i, s := range services {
+		prodIDs[i] = prodID
+		svcIDs[i] = s.ID
+	}
+	const query = `INSERT INTO product_services (product_id, service_id) SELECT * FROM UNNEST($1::bigint[], $2::bigint[]) ON CONFLICT DO NOTHING`
+	_, err := tx.ExecContext(ctx, query, pq.Array(prodIDs), pq.Array(svcIDs))
+	if err != nil {
+		return r.mapPostgreSQLError(err)
+	}
+	return nil
+}
+
 func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*prodDom.Product, error) {
 	const q = `SELECT product_id, name, price, description, category_id, image_url, created_at FROM products WHERE product_id=$1`
 	var raw productRow
@@ -280,7 +313,14 @@ func (r *PGProductRepository) fetchProduct(ctx context.Context, id int64) (*prod
 	if err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-	return raw.toDomain(nil), nil
+	prod := raw.toDomain(nil)
+	// Получаем услуги
+	services, err := r.fetchServices(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	prod.Services = services
+	return prod, nil
 }
 
 func (r *PGProductRepository) fetchAttributes(ctx context.Context, pid int64) ([]prodDom.ProductAttribute, error) {
@@ -307,6 +347,30 @@ func (r *PGProductRepository) fetchAttributesBatch(ctx context.Context, ids []in
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (r *PGProductRepository) fetchServices(ctx context.Context, prodID int64) ([]serviceDom.Service, error) {
+	const q = `SELECT s.service_id, s.name, s.description, s.price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
+	var rows []struct {
+		ID          int64   `db:"service_id"`
+		Name        string  `db:"name"`
+		Description *string `db:"description"`
+		Price       float64 `db:"price"`
+	}
+	err := r.db.SelectContext(ctx, &rows, q, prodID)
+	if err != nil {
+		return nil, r.mapPostgreSQLError(err)
+	}
+	services := make([]serviceDom.Service, 0, len(rows))
+	for _, row := range rows {
+		services = append(services, serviceDom.Service{
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: row.Description,
+			Price:       row.Price,
+		})
+	}
+	return services, nil
 }
 
 func (r *PGProductRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {

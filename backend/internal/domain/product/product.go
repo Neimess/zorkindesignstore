@@ -2,6 +2,8 @@ package product
 
 import (
 	"time"
+
+	serviceDom "github.com/Neimess/zorkin-store-project/internal/domain/service"
 )
 
 type Product struct {
@@ -13,6 +15,7 @@ type Product struct {
 	ImageURL    *string
 	CreatedAt   time.Time
 	Attributes  []ProductAttribute
+	Services    []serviceDom.Service
 }
 
 type ProductSummary struct {

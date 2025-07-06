@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	serviceDom "github.com/Neimess/zorkin-store-project/internal/domain/service"
 )
 
 var validate *validator.Validate = validator.New()
@@ -20,12 +21,20 @@ type ProductRequest struct {
 	CategoryID  int64                          `json:"category_id" example:"1" validate:"required,gt=0"`
 	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"omitempty,url"`
 	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
+	Services    []ProductServiceRequest        `json:"services,omitempty"`
 }
 
 //swagger:model ProductAttributeValueRequest
 type ProductAttributeValueRequest struct {
 	AttributeID int64  `json:"attribute_id" example:"2" validate:"required,gt=1"`
 	Value       string `json:"value" example:"1.25" validate:"required"`
+}
+
+// ProductServiceRequest описывает услугу для продукта
+//
+//swagger:model ProductServiceRequest
+type ProductServiceRequest struct {
+	ServiceID int64 `json:"service_id" example:"1" validate:"required,gt=0"`
 }
 
 //swagger:model ProductResponse
@@ -38,6 +47,7 @@ type ProductResponse struct {
 	ImageURL    *string                         `json:"image_url,omitempty"`
 	CreatedAt   time.Time                       `json:"created_at" example:"2025-06-20T15:00:00Z"`
 	Attributes  []ProductAttributeValueResponse `json:"attributes,omitempty"`
+	Services    []ProductServiceResponse        `json:"services,omitempty"`
 }
 
 //swagger:model ProductAttributeValueResponse
@@ -46,6 +56,16 @@ type ProductAttributeValueResponse struct {
 	Name        string  `json:"name" example:"Объём"`
 	Unit        *string `json:"unit,omitempty" example:"л"`
 	Value       string  `json:"value" example:"1.25"`
+}
+
+// ProductServiceResponse описывает услугу в ответе
+//
+//swagger:model ProductServiceResponse
+type ProductServiceResponse struct {
+	ID          int64   `json:"id" example:"1"`
+	Name        string  `json:"name" example:"Монтаж"`
+	Description *string `json:"description,omitempty" example:"Установка изделия"`
+	Price       float64 `json:"price" example:"1500.00"`
 }
 
 func (r ProductRequest) Validate() error {
@@ -129,6 +149,11 @@ func MapCreateReqToDomain(req *ProductRequest) *prodDom.Product {
 			Value:       a.Value,
 		})
 	}
+	if req.Services != nil {
+		for _, s := range req.Services {
+			p.Services = append(p.Services, serviceDom.Service{ID: s.ServiceID})
+		}
+	}
 	return p
 }
 
@@ -143,12 +168,19 @@ func MapDomainToProductResponse(p *prodDom.Product) *ProductResponse {
 		CreatedAt:   p.CreatedAt,
 	}
 	for _, pa := range p.Attributes {
-
 		resp.Attributes = append(resp.Attributes, ProductAttributeValueResponse{
 			AttributeID: pa.AttributeID,
 			Name:        pa.Attribute.Name,
 			Unit:        pa.Attribute.Unit,
 			Value:       pa.Value,
+		})
+	}
+	for _, s := range p.Services {
+		resp.Services = append(resp.Services, ProductServiceResponse{
+			ID:          s.ID,
+			Name:        s.Name,
+			Description: s.Description,
+			Price:       s.Price,
 		})
 	}
 	return resp
@@ -170,6 +202,11 @@ func MapUpdateReqToDomain(id int64, req *ProductRequest) *prodDom.Product {
 				AttributeID: a.AttributeID,
 				Value:       a.Value,
 			})
+		}
+	}
+	if req.Services != nil {
+		for _, s := range req.Services {
+			p.Services = append(p.Services, serviceDom.Service{ID: s.ServiceID})
 		}
 	}
 	return p

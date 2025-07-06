@@ -6,8 +6,10 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/category"
+	"github.com/Neimess/zorkin-store-project/internal/infrastructure/coefficients"
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/preset"
 	"github.com/Neimess/zorkin-store-project/internal/infrastructure/product"
+	"github.com/Neimess/zorkin-store-project/internal/infrastructure/service"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,10 +19,12 @@ type Deps struct {
 }
 
 type Repositories struct {
-	ProductRepository   *product.PGProductRepository
-	CategoryRepository  *category.PGCategoryRepository
-	PresetRepository    *preset.PGPresetRepository
-	AttributeRepository *attribute.PGAttributeRepository
+	ProductRepository     *product.PGProductRepository
+	CategoryRepository    *category.PGCategoryRepository
+	PresetRepository      *preset.PGPresetRepository
+	AttributeRepository   *attribute.PGAttributeRepository
+	CoefficientRepository *coefficients.PGCoefficientsRepository
+	ServiceRepository     *service.PGServiceRepository
 }
 
 func New(deps Deps) (*Repositories, error) {
@@ -37,11 +41,15 @@ func New(deps Deps) (*Repositories, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init product deps: %w", err)
 	}
+	coeffRepo := coefficients.NewPGCoefficientsRepository(deps.DB, deps.Logger)
+	serviceRepo := service.NewPGServiceRepository(deps.DB, deps.Logger)
 	r := &Repositories{
-		ProductRepository:   product.NewPGProductRepository(depsProduct),
-		CategoryRepository:  category.NewPGCategoryRepository(depsCat),
-		PresetRepository:    preset.NewPGPresetRepository(deps.DB, deps.Logger),
-		AttributeRepository: attribute.NewPGAttributeRepository(depsAttr),
+		ProductRepository:     product.NewPGProductRepository(depsProduct),
+		CategoryRepository:    category.NewPGCategoryRepository(depsCat),
+		PresetRepository:      preset.NewPGPresetRepository(deps.DB, deps.Logger),
+		AttributeRepository:   attribute.NewPGAttributeRepository(depsAttr),
+		CoefficientRepository: coeffRepo,
+		ServiceRepository:     serviceRepo,
 	}
 
 	r.mustValidate()
@@ -58,5 +66,9 @@ func (r *Repositories) mustValidate() {
 		panic("PresetRepository is not initialized")
 	case r.AttributeRepository == nil:
 		panic("AttributeRepository is not initialized")
+	case r.CoefficientRepository == nil:
+		panic("CoefficientRepository is not initialized")
+	case r.ServiceRepository == nil:
+		panic("ServiceRepository is not initialized")
 	}
 }

@@ -1,0 +1,26 @@
+env: test
+version: "e2e"
+httpServer:
+  address: ":8080"
+  readTimeout: 5s
+  writeTimeout: 5s
+  idleTimeout: 30s
+  maxHeaderBytes: 1048576
+storage:
+  host: localhost
+  port: 5432
+  user: testuser
+  password: testpassword
+  dbName: testdb
+  sslMode: disable
+  connMaxLifetime: 1h
+  maxOpenConns: 10
+jwtConfig:
+  jwtSecret: "testsecret"
+  issuer: "test"
+  audience: "test"
+  algorithm: "HS256"
+swagger:
+  host: "localhost:8080"
+  schemes: ["http"]
+  version: "e2e"

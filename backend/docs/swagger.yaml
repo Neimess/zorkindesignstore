@@ -61,6 +61,30 @@ definitions:
         example: 1
         type: integer
     type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      value:
+        type: number
+    required:
+    - name
+    - value
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientResponse:
+    properties:
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Коэффициент 1
+        type: string
+      value:
+        example: 1.2345
+        type: number
+    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest:
     properties:
       description:
@@ -204,6 +228,10 @@ definitions:
       price:
         example: 3490
         type: number
+      services:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceRequest'
+        type: array
     required:
     - category_id
     - name
@@ -234,6 +262,62 @@ definitions:
       product_id:
         example: 10
         type: integer
+      services:
+        items:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceResponse'
+        type: array
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceRequest:
+    properties:
+      service_id:
+        example: 1
+        type: integer
+    required:
+    - service_id
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceResponse:
+    properties:
+      description:
+        example: Установка изделия
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Монтаж
+        type: string
+      price:
+        example: 1500
+        type: number
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+      price:
+        type: number
+    required:
+    - name
+    - price
+    type: object
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceResponse:
+    properties:
+      description:
+        example: Установка изделия
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Монтаж
+        type: string
+      price:
+        example: 1500
+        type: number
     type: object
   github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse:
     properties:
@@ -531,6 +615,171 @@ paths:
       summary: Update category
       tags:
       - categories
+  /api/admin/coefficients:
+    get:
+      description: Получить список коэффициентов
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List coefficients
+      tags:
+      - coefficients
+    post:
+      consumes:
+      - application/json
+      description: Создать коэффициент
+      parameters:
+      - description: Coefficient data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create coefficient
+      tags:
+      - coefficients
+  /api/admin/coefficients/{id}:
+    delete:
+      description: Удалить коэффициент по ID
+      parameters:
+      - description: Coefficient ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete coefficient
+      tags:
+      - coefficients
+    get:
+      description: Получить коэффициент по ID
+      parameters:
+      - description: Coefficient ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get coefficient by ID
+      tags:
+      - coefficients
+    put:
+      consumes:
+      - application/json
+      description: Обновить коэффициент по ID
+      parameters:
+      - description: Coefficient ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Coefficient data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_coefficients_dto.CoefficientResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update coefficient
+      tags:
+      - coefficients
   /api/admin/presets:
     post:
       consumes:
@@ -639,7 +888,7 @@ paths:
       - application/json
       description: Creates a new product and returns its ID
       parameters:
-      - description: Product to create
+      - description: Product to create (may contain services)
         in: body
         name: product
         required: true
@@ -690,7 +939,7 @@ paths:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Create product
+      summary: Создать продукт
       tags:
       - products
   /api/admin/product/{id}:
@@ -732,7 +981,7 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Product data to update
+      - description: Product data to update (may contain services)
         in: body
         name: product
         required: true
@@ -763,7 +1012,7 @@ paths:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update a product
+      summary: Обновить продукт
       tags:
       - products
   /api/admin/product/detailed:
@@ -817,6 +1066,171 @@ paths:
       summary: Create product with attributes
       tags:
       - products
+  /api/admin/services:
+    get:
+      description: Получить список услуг
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List services
+      tags:
+      - services
+    post:
+      consumes:
+      - application/json
+      description: Создать услугу
+      parameters:
+      - description: Service data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create service
+      tags:
+      - services
+  /api/admin/services/{id}:
+    delete:
+      description: Удалить услугу по ID
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete service
+      tags:
+      - services
+    get:
+      description: Получить услугу по ID
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get service by ID
+      tags:
+      - services
+    put:
+      consumes:
+      - application/json
+      description: Обновить услугу по ID
+      parameters:
+      - description: Service ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Service data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_service_dto.ServiceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update service
+      tags:
+      - services
   /api/category:
     get:
       produces:

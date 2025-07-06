@@ -66,6 +66,8 @@ func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduc
 	return prod, nil
 }
 
+// CreateWithAttrs создает продукт с атрибутами и услугами (batch-insert связей реализован в репозитории)
+// TODO: если потребуется валидация услуг или бизнес-логика — добавить здесь
 func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error) {
 	const op = "service.product.CreateWithAttrs"
 	log := s.log.With("op", op)
@@ -119,6 +121,8 @@ func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]domProduc
 	return products, nil
 }
 
+// Update обновляет продукт, его атрибуты и услуги (batch-insert связей реализован в репозитории)
+// TODO: если потребуется валидация услуг или бизнес-логика — добавить здесь
 func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error) {
 	const op = "service.product.Update"
 	log := s.log.With("op", op)

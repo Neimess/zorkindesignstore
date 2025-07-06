@@ -1,0 +1,5 @@
+CREATE TABLE coefficients (
+    coefficient_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    value NUMERIC(10, 4) NOT NULL
+);

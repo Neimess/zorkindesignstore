@@ -7,12 +7,13 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
+	"github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
 
 type CategoryRepository interface {
 	Create(ctx context.Context, cat *catDom.Category) (*catDom.Category, error)
 	GetByID(ctx context.Context, id int64) (*catDom.Category, error)
-	Update(ctx context.Context, id int64, newName string) (*catDom.Category, error)
+	Update(ctx context.Context, cat *catDom.Category) (*catDom.Category, error)
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context) ([]catDom.Category, error)
 }
@@ -48,7 +49,9 @@ func (s *Service) CreateCategory(ctx context.Context, cat *catDom.Category) (*ca
 
 	cat, err := s.repo.Create(ctx, cat)
 	if err != nil {
-		return nil, err
+		return nil, utils.ErrorHandler(s.log, "service.category.CreateCategory", err, map[error]error{
+			app_error.ErrConflict: catDom.ErrCategoryNameExists,
+		})
 	}
 
 	return cat, nil
@@ -69,7 +72,7 @@ func (s *Service) UpdateCategory(ctx context.Context, cat *catDom.Category) (*ca
 		return nil, err
 	}
 
-	updated, err := s.repo.Update(ctx, cat.ID, cat.Name)
+	updated, err := s.repo.Update(ctx, cat)
 	if err != nil {
 		return nil, utils.ErrorHandler(s.log, "service.category.UpdateCategory", err, map[error]error{
 			catDom.ErrCategoryNotFound: catDom.ErrCategoryNotFound,

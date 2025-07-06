@@ -7,8 +7,9 @@ import (
 const maxNameLength = 255
 
 type Category struct {
-	ID   int64
-	Name string
+	ID       int64
+	Name     string
+	ParentID *int64
 }
 
 func (c *Category) Validate() error {

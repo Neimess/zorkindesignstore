@@ -59,7 +59,7 @@ func New(d Deps) *Handler {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
+// @Param        product  body      dto.ProductRequest  true  "Product to create"
 // @Success      201	  {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse "Bad request"
 // @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
@@ -98,7 +98,7 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        product  body      dto.ProductCreateRequest  true  "Product to create"
+// @Param        product  body      dto.ProductRequest  true  "Product to create"
 // @Success      201	"No Content"
 // @Failure      400      {object}  httputils.ErrorResponse "Bad request"
 // @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
@@ -222,7 +222,7 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id       path      int                         true  "Product ID"
-// @Param        product  body      dto.ProductUpdateRequest    true  "Product data to update"
+// @Param        product  body      dto.ProductRequest    true  "Product data to update"
 // @Success      200      {object}  dto.ProductResponse
 // @Failure      400      {object}  httputils.ErrorResponse   "Bad request"
 // @Failure      404      {object}  httputils.ErrorResponse   "Not found"

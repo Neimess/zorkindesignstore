@@ -8,4 +8,5 @@ var (
 	ErrAttributeNameEmpty  = errors.New("attribute name cannot be empty")
 	ErrCategoryNotFound    = errors.New("category not found")
 	ErrCategoryInUse       = errors.New("category is in use and cannot be deleted")
+	ErrCategoryNameExists  = errors.New("category name already exists")
 )

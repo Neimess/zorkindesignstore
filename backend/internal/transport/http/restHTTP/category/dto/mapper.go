@@ -6,21 +6,24 @@ import (
 
 func (in *CategoryRequest) ToDomainCreate() *category.Category {
 	return &category.Category{
-		Name: in.Name,
+		Name:     in.Name,
+		ParentID: in.ParentID,
 	}
 }
 
 func (in *CategoryRequest) ToDomainUpdate(category_id int64) *category.Category {
 	return &category.Category{
-		ID:   category_id,
-		Name: in.Name,
+		ID:       category_id,
+		Name:     in.Name,
+		ParentID: in.ParentID,
 	}
 }
 
 func ToDTOResponse(cat *category.Category) CategoryResponse {
 	return CategoryResponse{
-		ID:   cat.ID,
-		Name: cat.Name,
+		ID:       cat.ID,
+		Name:     cat.Name,
+		ParentID: cat.ParentID,
 	}
 }
 

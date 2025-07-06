@@ -1,16 +1,4 @@
 definitions:
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeBatchDataItem:
-    properties:
-      name:
-        maxLength: 255
-        minLength: 1
-        type: string
-      unit:
-        maxLength: 50
-        type: string
-    required:
-    - name
-    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeRequest:
     properties:
       name:
@@ -40,7 +28,7 @@ definitions:
     properties:
       data:
         items:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeBatchDataItem'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeRequest'
         minItems: 1
         type: array
     required:
@@ -51,12 +39,13 @@ definitions:
       token:
         type: string
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryCreateRequest:
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest:
     properties:
       name:
-        example: Плитка
-        minLength: 2
+        maxLength: 255
         type: string
+      parent_id:
+        type: integer
     required:
     - name
     type: object
@@ -68,24 +57,9 @@ definitions:
       name:
         example: Керамогранит
         type: string
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryUpdateRequest:
-    properties:
-      name:
-        example: Керамогранит
-        minLength: 2
-        type: string
-    required:
-    - name
-    type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError:
-    properties:
-      field:
-        type: string
-      tag:
-        type: string
-      value:
-        type: string
+      parent_id:
+        example: 1
+        type: integer
     type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequest:
     properties:
@@ -98,6 +72,7 @@ definitions:
           $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.PresetRequestItem'
         type: array
       name:
+        maxLength: 255
         minLength: 2
         type: string
       total_price:
@@ -180,15 +155,6 @@ definitions:
         example: 499
         type: number
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse:
-    properties:
-      errors:
-        items:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError'
-        type: array
-      message:
-        type: string
-    type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest:
     properties:
       attribute_id:
@@ -216,7 +182,7 @@ definitions:
         example: "1.25"
         type: string
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest:
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest:
     properties:
       attributes:
         items:
@@ -269,27 +235,6 @@ definitions:
         example: 10
         type: integer
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest:
-    properties:
-      attributes:
-        items:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest'
-        type: array
-      category_id:
-        type: integer
-      description:
-        type: string
-      image_url:
-        type: string
-      name:
-        type: string
-      price:
-        type: number
-    required:
-    - category_id
-    - name
-    - price
-    type: object
   github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse:
     properties:
       message:
@@ -337,7 +282,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryCreateRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -561,7 +506,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryUpdateRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -678,7 +623,7 @@ paths:
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -699,7 +644,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest'
       produces:
       - application/json
       responses:
@@ -792,7 +737,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest'
       produces:
       - application/json
       responses:
@@ -833,7 +778,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest'
       produces:
       - application/json
       responses:

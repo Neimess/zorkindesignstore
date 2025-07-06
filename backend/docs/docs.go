@@ -80,7 +80,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryCreateRequest"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest"
                         }
                     }
                 ],
@@ -384,7 +384,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryUpdateRequest"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest"
                         }
                     }
                 ],
@@ -569,7 +569,7 @@ const docTemplate = `{
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
                         }
                     },
                     "500": {
@@ -649,7 +649,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest"
                         }
                     }
                 ],
@@ -742,7 +742,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest"
                         }
                     }
                 ],
@@ -827,7 +827,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest"
                         }
                     }
                 ],
@@ -1309,23 +1309,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeBatchDataItem": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 1
-                },
-                "unit": {
-                    "type": "string",
-                    "maxLength": 50
-                }
-            }
-        },
         "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeRequest": {
             "type": "object",
             "required": [
@@ -1372,7 +1355,7 @@ const docTemplate = `{
                     "type": "array",
                     "minItems": 1,
                     "items": {
-                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeBatchDataItem"
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_attribute_dto.AttributeRequest"
                     }
                 }
             }
@@ -1385,7 +1368,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryCreateRequest": {
+        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -1393,8 +1376,10 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string",
-                    "minLength": 2,
-                    "example": "Плитка"
+                    "maxLength": 255
+                },
+                "parent_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1408,33 +1393,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "Керамогранит"
-                }
-            }
-        },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_category_dto.CategoryUpdateRequest": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "minLength": 2,
-                    "example": "Керамогранит"
-                }
-            }
-        },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError": {
-            "type": "object",
-            "properties": {
-                "field": {
-                    "type": "string"
                 },
-                "tag": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
+                "parent_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -1459,6 +1421,7 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 255,
                     "minLength": 2
                 },
                 "total_price": {
@@ -1571,20 +1534,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.ValidationErrorResponse": {
-            "type": "object",
-            "properties": {
-                "errors": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_preset_dto.FieldError"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest": {
             "type": "object",
             "required": [
@@ -1623,7 +1572,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductCreateRequest": {
+        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest": {
             "type": "object",
             "required": [
                 "category_id",
@@ -1694,37 +1643,6 @@ const docTemplate = `{
                 "product_id": {
                     "type": "integer",
                     "example": 10
-                }
-            }
-        },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductUpdateRequest": {
-            "type": "object",
-            "required": [
-                "category_id",
-                "name",
-                "price"
-            ],
-            "properties": {
-                "attributes": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest"
-                    }
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "price": {
-                    "type": "number"
                 }
             }
         },

@@ -44,13 +44,15 @@ func NewPGCategoryRepository(d Deps) *PGCategoryRepository {
 
 func (r *PGCategoryRepository) Create(ctx context.Context, cat *catDom.Category) (*catDom.Category, error) {
 	var id int64
-	const query = `INSERT INTO categories (name) VALUES ($1) RETURNING category_id`
-	err := r.withQuery(ctx, query, func() error {
-		return r.db.QueryRowContext(ctx,
-			query,
-			cat.Name,
-		).Scan(&id)
-	})
+	const query = `INSERT INTO categories (name, parent_id) VALUES ($1, $2) RETURNING category_id`
+	// Prepare parent_id for null handling
+	var parent interface{}
+	if cat.ParentID != nil {
+		parent = *cat.ParentID
+	} else {
+		parent = nil
+	}
+	err := r.db.QueryRowContext(ctx, query, cat.Name, parent).Scan(&id)
 	if err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
@@ -59,35 +61,46 @@ func (r *PGCategoryRepository) Create(ctx context.Context, cat *catDom.Category)
 }
 
 func (r *PGCategoryRepository) GetByID(ctx context.Context, id int64) (*catDom.Category, error) {
-	var c catDom.Category
-	const query = `SELECT category_id, name FROM categories WHERE category_id = $1`
-	err := r.withQuery(ctx, query, func() error {
-		return r.db.QueryRowContext(ctx, query, id).
-			Scan(&c.ID, &c.Name)
-	})
+	var dbCat categoryDB
+	const query = `SELECT category_id, name, parent_id FROM categories WHERE category_id = $1`
+	err := r.db.GetContext(ctx, &dbCat, query, id)
 	if err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-	return &c, nil
+	cat := &catDom.Category{
+		ID:   dbCat.ID,
+		Name: dbCat.Name,
+	}
+	if dbCat.ParentID.Valid {
+		pid := dbCat.ParentID.Int64
+		cat.ParentID = &pid
+	}
+	return cat, nil
 }
 
-func (r *PGCategoryRepository) Update(ctx context.Context, id int64, newName string) (*catDom.Category, error) {
-	const query = `UPDATE categories SET name = $1 WHERE category_id = $2 RETURNING category_id, name`
-	var c catDom.Category
-	err := r.withQuery(ctx, query, func() error {
-		return r.db.QueryRowContext(ctx, query, newName, id).Scan(&c.ID, &c.Name)
-	})
+func (r *PGCategoryRepository) Update(ctx context.Context, cat *catDom.Category) (*catDom.Category, error) {
+	const query = `UPDATE categories SET name = $1, parent_id = $2 WHERE category_id = $3 RETURNING category_id, name, parent_id`
+	var dbCat categoryDB
+	var parent interface{}
+	if cat.ParentID != nil {
+		parent = *cat.ParentID
+	} else {
+		parent = nil
+	}
+	err := r.db.GetContext(ctx, &dbCat, query, cat.Name, parent, cat.ID)
 	if err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-	return &c, nil
+	updated := &catDom.Category{ID: dbCat.ID, Name: dbCat.Name}
+	if dbCat.ParentID.Valid {
+		pid := dbCat.ParentID.Int64
+		updated.ParentID = &pid
+	}
+	return updated, nil
 }
 
 func (r *PGCategoryRepository) Delete(ctx context.Context, id int64) error {
-	res, err := r.db.ExecContext(ctx,
-		`DELETE FROM categories WHERE category_id = $1`,
-		id,
-	)
+	res, err := r.db.ExecContext(ctx, `DELETE FROM categories WHERE category_id = $1`, id)
 	if err != nil {
 		return r.mapPostgreSQLError(err)
 	}
@@ -102,17 +115,18 @@ func (r *PGCategoryRepository) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *PGCategoryRepository) List(ctx context.Context) ([]catDom.Category, error) {
-	var rows []categoryDB
-	const query = `SELECT category_id, name FROM categories ORDER BY name`
-	if err := r.withQuery(ctx, query, func() error {
-		return r.db.SelectContext(ctx, &rows, query)
-	}); err != nil {
+	var dbCats []categoryDB
+	const query = `SELECT category_id, name, parent_id FROM categories ORDER BY name`
+	if err := r.db.SelectContext(ctx, &dbCats, query); err != nil {
 		return nil, r.mapPostgreSQLError(err)
 	}
-
-	cats := make([]catDom.Category, len(rows))
-	for i, c := range rows {
-		cats[i] = catDom.Category{ID: c.ID, Name: c.Name}
+	cats := make([]catDom.Category, len(dbCats))
+	for i, dbCat := range dbCats {
+		cats[i] = catDom.Category{ID: dbCat.ID, Name: dbCat.Name}
+		if dbCat.ParentID.Valid {
+			pid := dbCat.ParentID.Int64
+			cats[i].ParentID = &pid
+		}
 	}
 	return cats, nil
 }

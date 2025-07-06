@@ -215,7 +215,8 @@ func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	// Попытка удалить категорию, которая используется
 	case errors.Is(err, catDom.ErrCategoryInUse):
 		httputils.WriteError(w, http.StatusConflict, "category is in use and cannot be deleted")
-
+	case errors.Is(err, catDom.ErrCategoryNameExists):
+		httputils.WriteError(w, http.StatusConflict, "category name already exist")
 	// Всё прочее — Internal Server Error
 	default:
 		h.log.Error("service error", slog.Any("error", err))

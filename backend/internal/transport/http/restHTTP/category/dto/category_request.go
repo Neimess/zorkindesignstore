@@ -9,7 +9,8 @@ var validate *validator.Validate = validator.New()
 
 // swagger:model CategoryRequest
 type CategoryRequest struct {
-	Name string `json:"name" example:"Плитка" validate:"required,min=2,max=255"`
+	Name     string `json:"name" validate:"required,max=255"`
+	ParentID *int64 `json:"parent_id,omitempty"`
 }
 
 func (r CategoryRequest) Validate() error {

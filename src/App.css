@@ -43,7 +43,7 @@
   padding: 40px;
   background: linear-gradient(135deg, #0f172a, #1e293b);
   border-radius: 24px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
   font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
   color: #f1f5f9;
   border: 1px solid rgba(71, 85, 105, 0.3);
@@ -58,9 +58,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-image: url('https://i.imgur.com/JXgwTYs.png');
+  /* background-image: url('https://i.imgur.com/JXgwTYs.png');
   background-size: cover;
-  background-position: center;
+  background-position: center; */
+  background: transparent;
   opacity: 0.05;
   pointer-events: none;
   z-index: 0;
@@ -124,7 +125,7 @@ h1 span {
   color: #cbd5e1;
   transition: all 0.3s ease;
   font-weight: 500;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -135,14 +136,18 @@ h1 span {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(37, 99, 235, 0.1)
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 .Categories button:hover {
   background: #334155;
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
   border-color: #475569;
 }
 .Categories button:hover::before {
@@ -173,7 +178,7 @@ h1 span {
   background: rgba(30, 41, 59, 0.9);
   border-radius: 18px;
   padding: 24px 28px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   gap: 28px;
   transition: all 0.4s ease;
   border: 1px solid #334155;
@@ -192,9 +197,13 @@ h1 span {
 }
 .ProductCard:hover {
   transform: translateY(-5px) scale(1.01);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
   border-color: #475569;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.95),
+    rgba(15, 23, 42, 0.9)
+  );
 }
 .ProductImg {
   width: 140px;
@@ -203,13 +212,13 @@ h1 span {
   border-radius: 14px;
   margin-right: 10px;
   background: #0f172a;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
   transition: all 0.4s ease;
   border: 1px solid rgba(71, 85, 105, 0.3);
 }
 .ProductCard:hover .ProductImg {
   transform: scale(1.05) rotate(2deg);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 .ProductInfo {
   text-align: left;
@@ -253,7 +262,7 @@ h1 span {
   padding: 6px 12px;
   font-size: 0.95rem;
   font-weight: 500;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(71, 85, 105, 0.3);
   transition: all 0.3s ease;
 }
@@ -261,7 +270,7 @@ h1 span {
 .Attr:hover {
   background: rgba(51, 65, 85, 1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   color: #7dd3fc;
 }
 .ProductPrice {
@@ -308,7 +317,12 @@ h1 span {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: all 0.5s ease;
 }
 .ProductCard button:hover {
@@ -329,11 +343,15 @@ h1 span {
 
 .AddedPanel {
   flex: 1;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.9));
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.95),
+    rgba(15, 23, 42, 0.9)
+  );
   border-radius: 20px;
   padding: 30px 25px;
   min-width: 320px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
   margin-left: 0;
   border: 1px solid rgba(71, 85, 105, 0.4);
   position: relative;
@@ -357,7 +375,11 @@ h1 span {
   right: 0;
   width: 150px;
   height: 150px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.1) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 .AddedPanel h2 {
@@ -408,13 +430,15 @@ h1 span {
   background: #0f172a;
   border-radius: 12px;
   padding: 10px 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   border: 1px solid #334155;
 }
 .AddedItem:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
   border-color: #475569;
 }
 .AddedImg {
@@ -423,7 +447,7 @@ h1 span {
   object-fit: cover;
   border-radius: 10px;
   background: #1e293b;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .AddedName {
   font-size: 1rem;
@@ -470,7 +494,7 @@ h1 span {
   background: #0f172a;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #334155;
 }
 .TotalPanel b {

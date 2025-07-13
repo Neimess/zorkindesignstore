@@ -6,8 +6,18 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'Cantarell',
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -24,15 +34,16 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('https://images.unsplash.com/photo-1601923876981-c262886563e9?auto=format&fit=crop&q=80') no-repeat center center;
+  background: url('https://images.unsplash.com/photo-1601923876981-c262886563e9?auto=format&fit=crop&q=80')
+    no-repeat center center;
   background-size: cover;
   opacity: 0.05;
   z-index: -1;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 button {

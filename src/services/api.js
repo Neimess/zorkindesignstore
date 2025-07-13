@@ -5,10 +5,10 @@ const API_BASE_URL = 'https://dev.api.inspireforge.ru/api';
 
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-    const method = (options.method || 'GET').toUpperCase();
+  const method = (options.method || 'GET').toUpperCase();
   const hasBody = ['POST', 'PUT', 'PATCH'].includes(method);
   const isForm = options.body instanceof FormData;
-    const config = {
+  const config = {
     ...options,
     headers: {
       Accept: 'application/json',
@@ -26,14 +26,22 @@ const apiRequest = async (endpoint, options = {}) => {
 
     if (!response.ok) {
       let err;
-      try { err = JSON.parse(rawText); } catch { err = { message: rawText || 'Unknown error' }; }
+      try {
+        err = JSON.parse(rawText);
+      } catch {
+        err = { message: rawText || 'Unknown error' };
+      }
       console.error(`[API ERROR] ${url}`, response.status, err);
       throw new Error(err.message || `HTTP ${response.status}`, { cause: err });
     }
 
-    if (!rawText) return null;            // 204 или пустой body
-    try { return JSON.parse(rawText); }   // обычный JSON
-    catch { return rawText; }             // plain text / html
+    if (!rawText) return null; // 204 или пустой body
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      // обычный JSON
+      return rawText;
+    } // plain text / html
   } catch (e) {
     console.error('✗ Запрос упал:', e.message);
     throw e;
@@ -44,35 +52,38 @@ const apiRequest = async (endpoint, options = {}) => {
 export const categoryAPI = {
   // Получить все категории
   getAll: () => apiRequest('/category'),
-  
+
   // Получить категорию по ID
   getById: (id) => apiRequest(`/category/${id}`),
-  
+
   // Создать категорию (требует авторизации)
-  create: (categoryData, token) => apiRequest('/admin/category', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(categoryData),
-  }),
-  
+  create: (categoryData, token) =>
+    apiRequest('/admin/category', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(categoryData),
+    }),
+
   // Обновить категорию (требует авторизации)
-  update: (id, categoryData, token) => apiRequest(`/admin/category/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(categoryData),
-  }),
-  
+  update: (id, categoryData, token) =>
+    apiRequest(`/admin/category/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(categoryData),
+    }),
+
   // Удалить категорию (требует авторизации)
-  delete: (id, token) => apiRequest(`/admin/category/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  }),
+  delete: (id, token) =>
+    apiRequest(`/admin/category/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
 };
 // Функции для работы с атрибутами категорий
 export const categoryAttributeAPI = {
@@ -88,8 +99,8 @@ export const categoryAttributeAPI = {
     apiRequest(`/admin/category/${categoryID}/attribute`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' // 💥 обязательно!
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // 💥 обязательно!
       },
       body: JSON.stringify(attributeData),
     }),
@@ -99,8 +110,8 @@ export const categoryAttributeAPI = {
     apiRequest(`/admin/category/${categoryID}/attribute/batch`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' // 💥 обязательно!
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // 💥 обязательно!
       },
       body: JSON.stringify(attributesArray),
     }),
@@ -110,8 +121,8 @@ export const categoryAttributeAPI = {
     apiRequest(`/admin/category/${categoryID}/attribute/${attributeID}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' // 💥 обязательно!
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // 💥 обязательно!
       },
       body: JSON.stringify(attributeData),
     }),
@@ -121,12 +132,11 @@ export const categoryAttributeAPI = {
     apiRequest(`/admin/category/${categoryID}/attribute/${attributeID}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json' // 💥 обязательно!
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // 💥 обязательно!
       },
     }),
 };
-
 
 // Функции для работы с товарами
 export const productAPI = {
@@ -135,65 +145,69 @@ export const productAPI = {
   getAll: () => apiRequest('/product'),
   // Получить товары по категории
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
-  
+
   // Создать товар (требует авторизации)
-  create: (productData, token) => apiRequest('/admin/product', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(productData),
-  }),
-  
+  create: (productData, token) =>
+    apiRequest('/admin/product', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(productData),
+    }),
+
   // Обновить товар (требует авторизации)
-  update: (id, productData, token) => apiRequest(`/admin/product/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(productData),
-  }),
-  
+  update: (id, productData, token) =>
+    apiRequest(`/admin/product/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(productData),
+    }),
+
   // Удалить товар (требует авторизации)
-  delete: (id, token) => apiRequest(`/admin/product/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  }),
+  delete: (id, token) =>
+    apiRequest(`/admin/product/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
 };
 
 // Функции для работы с пресетами (стилями)
 export const presetAPI = {
-  create: async (data, token) => await apiRequest('/admin/presets', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data)
-  }),
-  delete: async (id, token) => await apiRequest(`/admin/presets/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` }
-  }),
+  create: async (data, token) =>
+    await apiRequest('/admin/presets', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
+  delete: async (id, token) =>
+    await apiRequest(`/admin/presets/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }),
   update: async (id, data, token) =>
-  await apiRequest(`/admin/presets/${id}`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data)
-  }),
+    await apiRequest(`/admin/presets/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    }),
 
   list: async () => await apiRequest('/presets'),
   getAllDetailed: async () => await apiRequest('/presets/detailed'), // 🔥 добавлено это
-  getById: async (id) => await apiRequest(`/presets/${id}`)
+  getById: async (id) => await apiRequest(`/presets/${id}`),
 };
-
-
 
 // Функции для авторизации
 export const authAPI = {
   // Получить токен для админа
-  login: (secretKey) => apiRequest(`/admin/auth/${secretKey}`, {
-    method: 'GET',
-  }),
+  login: (secretKey) =>
+    apiRequest(`/admin/auth/${secretKey}`, {
+      method: 'GET',
+    }),
 };
 
 // Утилиты для работы с токеном
@@ -202,17 +216,17 @@ export const tokenUtils = {
   save: (token) => {
     localStorage.setItem('admin_token', token);
   },
-  
+
   // Получить токен из localStorage
   get: () => {
     return localStorage.getItem('admin_token');
   },
-  
+
   // Удалить токен из localStorage
   remove: () => {
     localStorage.removeItem('admin_token');
   },
-  
+
   // Проверить, есть ли токен
   exists: () => {
     return !!localStorage.getItem('admin_token');

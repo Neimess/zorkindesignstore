@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { productAPI } from "../../services/api";
+import React, { useState } from 'react';
+import { productAPI } from '../../services/api';
 
 /* ------------------------------------------------------------
  * Helpers
@@ -8,9 +8,9 @@ const getProductId = (p) => p?.product_id ?? p?.id ?? null;
 
 const parseAttributes = (raw) =>
   raw
-    .split(";")
+    .split(';')
     .map((chunk) => {
-      const [idPart, valuePart] = chunk.split(":").map((s) => s.trim());
+      const [idPart, valuePart] = chunk.split(':').map((s) => s.trim());
       const attribute_id = Number(idPart);
       if (!attribute_id || !valuePart) return null;
       return { attribute_id, value: valuePart };
@@ -18,7 +18,7 @@ const parseAttributes = (raw) =>
     .filter(Boolean);
 
 const stringifyAttributes = (arr = []) =>
-  arr.map((a) => `${a.attribute_id}:${a.value}`).join("; ");
+  arr.map((a) => `${a.attribute_id}:${a.value}`).join('; ');
 
 /* ============================================================
  * ProductManager
@@ -33,23 +33,23 @@ function ProductManager({
 }) {
   /* --------------------- local state ---------------------- */
   const [form, setForm] = useState({
-    name: "",
-    price: "",
-    description: "",
-    image_url: "",
+    name: '',
+    price: '',
+    description: '',
+    image_url: '',
     categoryId: categories[0]?.id ?? 1,
-    attributes: "",
+    attributes: '',
   });
   const [editingId, setEditingId] = useState(null);
 
   const resetForm = () => {
     setForm({
-      name: "",
-      price: "",
-      description: "",
-      image_url: "",
+      name: '',
+      price: '',
+      description: '',
+      image_url: '',
       categoryId: categories[0]?.id ?? 1,
-      attributes: "",
+      attributes: '',
     });
     setEditingId(null);
   };
@@ -57,8 +57,8 @@ function ProductManager({
   const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
   const editBtnStyle = {
     ...deleteButtonStyle,
-    background: "rgba(34,197,94,.1)",
-    color: "#4ade80",
+    background: 'rgba(34,197,94,.1)',
+    color: '#4ade80',
   };
 
   /* ---------------- CREATE / UPDATE ----------------------- */
@@ -84,31 +84,36 @@ function ProductManager({
         const updated = await productAPI.update(editingId, payload, token);
         setProducts((prev) =>
           prev.map((p) =>
-            getProductId(p) === editingId ? { ...updated, categoryId: updated.category_id } : p
-          )
+            getProductId(p) === editingId
+              ? { ...updated, categoryId: updated.category_id }
+              : p,
+          ),
         );
-        showMessage("Товар обновлён");
+        showMessage('Товар обновлён');
       } else {
         /* -------- CREATE ---------- */
         const created = await productAPI.create(payload, token);
         if (!created?.product_id) {
-          showMessage("Сервер не вернул ID", true);
+          showMessage('Сервер не вернул ID', true);
           return;
         }
-        setProducts((prev) => [...prev, { ...created, categoryId: created.category_id }]);
-        showMessage("Товар добавлен");
+        setProducts((prev) => [
+          ...prev,
+          { ...created, categoryId: created.category_id },
+        ]);
+        showMessage('Товар добавлен');
       }
       resetForm();
     } catch (err) {
-      console.error("saveProduct", err);
-      showMessage(err.message || "Ошибка сервера", true);
+      console.error('saveProduct', err);
+      showMessage(err.message || 'Ошибка сервера', true);
     }
   };
 
   /* --------------------- DELETE --------------------------- */
   const removeProduct = async (prod) => {
     const id = getProductId(prod);
-    if (!id) return showMessage("Некорректный ID", true);
+    if (!id) return showMessage('Некорректный ID', true);
 
     try {
       const token = await getAdminToken();
@@ -117,24 +122,24 @@ function ProductManager({
       await productAPI.delete(id, token);
       setProducts((prev) => prev.filter((p) => getProductId(p) !== id));
       if (editingId === id) resetForm();
-      showMessage("Товар удалён");
+      showMessage('Товар удалён');
     } catch (err) {
-      showMessage(err.message || "Ошибка при удалении", true);
+      showMessage(err.message || 'Ошибка при удалении', true);
     }
   };
 
   /* ---------------------- render -------------------------- */
   return (
     <div className="AdminSection" style={{ marginTop: 40 }}>
-      <h2 style={{ fontSize: "1.5rem", color: "#f8fafc", marginBottom: 20 }}>
+      <h2 style={{ fontSize: '1.5rem', color: '#f8fafc', marginBottom: 20 }}>
         Товары
         <span
           style={{
-            display: "block",
+            display: 'block',
             width: 60,
             height: 3,
             marginTop: 4,
-            background: "linear-gradient(90deg,#3b82f6,#60a5fa)",
+            background: 'linear-gradient(90deg,#3b82f6,#60a5fa)',
             borderRadius: 2,
           }}
         />
@@ -143,14 +148,14 @@ function ProductManager({
       {/* ------------------ form ------------------ */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
           gap: 16,
           marginBottom: 24,
-          background: "rgba(30,41,59,0.5)",
+          background: 'rgba(30,41,59,0.5)',
           padding: 20,
           borderRadius: 12,
-          border: "1px solid #334155",
+          border: '1px solid #334155',
         }}
       >
         <input
@@ -169,7 +174,7 @@ function ProductManager({
         <select
           value={form.categoryId}
           onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-          style={{ ...inputStyle, appearance: "none", paddingRight: 40 }}
+          style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
         >
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -197,27 +202,32 @@ function ProductManager({
         />
         <button
           onClick={saveProduct}
-          style={{ ...buttonStyle, gridColumn: "1/-1", marginTop: 10, padding: 14 }}
+          style={{
+            ...buttonStyle,
+            gridColumn: '1/-1',
+            marginTop: 10,
+            padding: 14,
+          }}
         >
-          {editingId ? "💾 Сохранить" : "➕ Добавить"}
+          {editingId ? '💾 Сохранить' : '➕ Добавить'}
         </button>
       </div>
 
       {/* ------------------ list ------------------ */}
       <ul
         style={{
-          listStyle: "none",
+          listStyle: 'none',
           padding: 0,
           margin: 0,
-          background: "rgba(30,41,59,0.5)",
+          background: 'rgba(30,41,59,0.5)',
           borderRadius: 12,
-          border: "1px solid #334155",
+          border: '1px solid #334155',
           maxHeight: 400,
-          overflowY: "auto",
+          overflowY: 'auto',
         }}
       >
         {products.length === 0 && (
-          <li style={{ padding: 20, textAlign: "center", color: "#94a3b8" }}>
+          <li style={{ padding: 20, textAlign: 'center', color: '#94a3b8' }}>
             Список товаров пуст
           </li>
         )}
@@ -229,13 +239,15 @@ function ProductManager({
             <li
               key={id ?? `${p.name}_${p.price}`}
               style={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 gap: 16,
-                padding: "14px 20px",
-                borderBottom: "1px solid rgba(51,65,85,0.5)",
-                borderLeft: isEditing ? "4px solid #60a5fa" : "none",
-                backgroundColor: isEditing ? "rgba(59,130,246,.05)" : "transparent",
+                padding: '14px 20px',
+                borderBottom: '1px solid rgba(51,65,85,0.5)',
+                borderLeft: isEditing ? '4px solid #60a5fa' : 'none',
+                backgroundColor: isEditing
+                  ? 'rgba(59,130,246,.05)'
+                  : 'transparent',
               }}
             >
               <img
@@ -244,26 +256,28 @@ function ProductManager({
                 style={{
                   width: 60,
                   height: 60,
-                  objectFit: "cover",
+                  objectFit: 'cover',
                   borderRadius: 10,
-                  background: "#1e293b",
-                  border: "1px solid #334155",
+                  background: '#1e293b',
+                  border: '1px solid #334155',
                 }}
               />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{p.name}</div>
-                <div style={{ color: "#94a3b8", fontSize: 14 }}>
-                  {categories.find((c) => c.id === p.categoryId)?.name || "—"}
+                <div style={{ color: '#94a3b8', fontSize: 14 }}>
+                  {categories.find((c) => c.id === p.categoryId)?.name || '—'}
                 </div>
               </div>
-              <div style={{ fontWeight: 700, color: "#38bdf8" }}>{p.price} ₽</div>
+              <div style={{ fontWeight: 700, color: '#38bdf8' }}>
+                {p.price} ₽
+              </div>
               <button
                 onClick={() => {
                   setForm({
                     name: p.name,
                     price: p.price,
-                    description: p.description ?? "",
-                    image_url: p.image_url ?? "",
+                    description: p.description ?? '',
+                    image_url: p.image_url ?? '',
                     categoryId: p.categoryId ?? p.category_id,
                     attributes: stringifyAttributes(p.attributes),
                   });
@@ -273,7 +287,10 @@ function ProductManager({
               >
                 ✎ Редактировать
               </button>
-              <button onClick={() => removeProduct(p)} style={deleteButtonStyle}>
+              <button
+                onClick={() => removeProduct(p)}
+                style={deleteButtonStyle}
+              >
                 🗑 Удалить
               </button>
             </li>

@@ -9,7 +9,14 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-function AdminPage({ categories, setCategories, products, setProducts, styles, setStyles }) {
+function AdminPage({
+  categories,
+  setCategories,
+  products,
+  setProducts,
+  styles,
+  setStyles,
+}) {
   const query = useQuery();
   const key = query.get('key');
   const [adminToken, setAdminToken] = useState(tokenUtils.get());
@@ -55,7 +62,7 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
       width: '100%',
       transition: 'all 0.3s ease',
       boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-      outline: 'none'
+      outline: 'none',
     },
     buttonStyle: {
       background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
@@ -69,7 +76,7 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
       transition: 'all 0.3s ease',
       boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      letterSpacing: '0.5px',
     },
     deleteButtonStyle: {
       background: 'rgba(185, 28, 28, 0.1)',
@@ -81,24 +88,32 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
       fontWeight: 500,
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      marginLeft: '10px'
-    }
+      marginLeft: '10px',
+    },
   };
 
   if (key !== ADMIN_KEY) {
     return (
-      <div className="Configurator" style={{ maxWidth: 600, margin: '100px auto' }}>
-        <div style={{
-          padding: 40,
-          textAlign: 'center',
-          color: '#f8fafc',
-          fontSize: 24,
-          background: 'rgba(185, 28, 28, 0.1)',
-          borderRadius: '12px',
-          border: '1px solid rgba(185, 28, 28, 0.3)',
-          boxShadow: '0 10px 25px rgba(185, 28, 28, 0.15)'
-        }}>
-          <i className="fas fa-lock" style={{ fontSize: 48, marginBottom: 20, color: '#b91c1c' }}></i>
+      <div
+        className="Configurator"
+        style={{ maxWidth: 600, margin: '100px auto' }}
+      >
+        <div
+          style={{
+            padding: 40,
+            textAlign: 'center',
+            color: '#f8fafc',
+            fontSize: 24,
+            background: 'rgba(185, 28, 28, 0.1)',
+            borderRadius: '12px',
+            border: '1px solid rgba(185, 28, 28, 0.3)',
+            boxShadow: '0 10px 25px rgba(185, 28, 28, 0.15)',
+          }}
+        >
+          <i
+            className="fas fa-lock"
+            style={{ fontSize: 48, marginBottom: 20, color: '#b91c1c' }}
+          ></i>
           <div>Доступ запрещён</div>
         </div>
       </div>
@@ -120,21 +135,50 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
       <h1>АДМИН-ПАНЕЛЬ</h1>
 
       {isLoading && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-        }}>
-          <div style={{ background: '#1e293b', padding: '20px', borderRadius: '10px', color: '#f1f5f9', fontSize: '1.2rem' }}>Загрузка...</div>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: '#1e293b',
+              padding: '20px',
+              borderRadius: '10px',
+              color: '#f1f5f9',
+              fontSize: '1.2rem',
+            }}
+          >
+            Загрузка...
+          </div>
         </div>
       )}
 
       {message && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px',
-          background: message.isError ? '#dc2626' : '#059669',
-          color: 'white', padding: '15px 20px', borderRadius: '8px', zIndex: 1001,
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-        }}>{message.text}</div>
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            background: message.isError ? '#dc2626' : '#059669',
+            color: 'white',
+            padding: '15px 20px',
+            borderRadius: '8px',
+            zIndex: 1001,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+          }}
+        >
+          {message.text}
+        </div>
       )}
 
       <CategoryManager
@@ -158,23 +202,52 @@ function AdminPage({ categories, setCategories, products, setProducts, styles, s
       <StyleAdmin products={products} styles={styles} setStyles={setStyles} />
 
       {modalVisible && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1002
-        }}>
-          <div style={{ background: '#1e293b', padding: 30, borderRadius: 12, maxWidth: 600, width: '90%', color: '#f1f5f9' }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1002,
+          }}
+        >
+          <div
+            style={{
+              background: '#1e293b',
+              padding: 30,
+              borderRadius: 12,
+              maxWidth: 600,
+              width: '90%',
+              color: '#f1f5f9',
+            }}
+          >
             <h2 style={{ marginBottom: 20 }}>📦 Товары категории</h2>
             <ul style={{ listStyle: 'none', padding: 0 }}>
-              {modalProducts.map(p => (
-                <li key={p.product_id} style={{ marginBottom: 10, borderBottom: '1px solid #334155', paddingBottom: 6 }}>
+              {modalProducts.map((p) => (
+                <li
+                  key={p.product_id}
+                  style={{
+                    marginBottom: 10,
+                    borderBottom: '1px solid #334155',
+                    paddingBottom: 6,
+                  }}
+                >
                   <strong>{p.name}</strong> — {p.price} ₽
                 </li>
               ))}
-              {modalProducts.length === 0 && (
-                <li>Нет товаров в категории</li>
-              )}
+              {modalProducts.length === 0 && <li>Нет товаров в категории</li>}
             </ul>
-            <button onClick={() => setModalVisible(false)} style={{ marginTop: 20, ...uiStyles.buttonStyle }}>Закрыть</button>
+            <button
+              onClick={() => setModalVisible(false)}
+              style={{ marginTop: 20, ...uiStyles.buttonStyle }}
+            >
+              Закрыть
+            </button>
           </div>
         </div>
       )}

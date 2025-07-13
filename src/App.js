@@ -18,7 +18,7 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [styles, setStyles] = useState([]);
-  
+
   // Состояние для отображения загрузки и ошибок
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,47 +27,51 @@ function App() {
    * Загрузка данных при монтировании компонента
    */
 
-  
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-      // 1. Загрузка категорий
-      const categoriesData = await categoryAPI.getAll();
-      setCategories(categoriesData);
+        // 1. Загрузка категорий
+        const categoriesData = await categoryAPI.getAll();
+        setCategories(categoriesData);
 
-      // 2. Загрузка товаров по категориям
-      console.log('Загруженные категории:', categoriesData);
+        // 2. Загрузка товаров по категориям
+        console.log('Загруженные категории:', categoriesData);
 
-const productLists = [];
-for (const cat of categoriesData) {
-  try {
-    const products = await productAPI.getByCategory(cat.id);
-    productLists.push(products);
-  } catch (err) {
-    console.warn(`Ошибка при загрузке товаров категории ID ${cat.id}:`, err.message);
-    productLists.push([]); // чтобы не ломать структуру, даже если запрос не удался
-  }
-}
+        const productLists = [];
+        for (const cat of categoriesData) {
+          try {
+            const products = await productAPI.getByCategory(cat.id);
+            productLists.push(products);
+          } catch (err) {
+            console.warn(
+              `Ошибка при загрузке товаров категории ID ${cat.id}:`,
+              err.message,
+            );
+            productLists.push([]); // чтобы не ломать структуру, даже если запрос не удался
+          }
+        }
 
-setProducts(productLists.flat());
-      setProducts(productLists.flat()); // объединяем все массивы
+        setProducts(productLists.flat());
+        setProducts(productLists.flat()); // объединяем все массивы
 
-      // 3. Загрузка стилей
-      const stylesData = await presetAPI.getAllDetailed();
-      setStyles(stylesData);
+        // 3. Загрузка стилей
+        const stylesData = await presetAPI.getAllDetailed();
+        setStyles(stylesData);
 
-      setLoading(false);
-    } catch (err) {
-      console.error('Ошибка при загрузке данных:', err);
-      setError('Произошла ошибка при загрузке данных. Пожалуйста, попробуйте позже.');
-      setLoading(false);
-    }
-  };
+        setLoading(false);
+      } catch (err) {
+        console.error('Ошибка при загрузке данных:', err);
+        setError(
+          'Произошла ошибка при загрузке данных. Пожалуйста, попробуйте позже.',
+        );
+        setLoading(false);
+      }
+    };
 
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   // Отображение индикатора загрузки
   if (loading) {
@@ -85,7 +89,7 @@ setProducts(productLists.flat());
       <div className="error-container">
         <div className="error-icon">⚠️</div>
         <div className="error-message">{error}</div>
-        <button 
+        <button
           className="error-retry-button"
           onClick={() => window.location.reload()}
         >
@@ -95,34 +99,34 @@ setProducts(productLists.flat());
     );
   }
 
-return (
-  <Routes>
-    <Route 
-      path="/" 
-      element={
-        <MainPage 
-          categories={categories} 
-          products={products} 
-          styles={styles} 
-        />
-      } 
-    />
-    
-    <Route 
-      path="/admin" 
-      element={
-        <AdminPage 
-          categories={categories} 
-          setCategories={setCategories} 
-          products={products} 
-          setProducts={setProducts} 
-          styles={styles} 
-          setStyles={setStyles} 
-        />
-      } 
-    />
-  </Routes>
-);
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <MainPage
+            categories={categories}
+            products={products}
+            styles={styles}
+          />
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <AdminPage
+            categories={categories}
+            setCategories={setCategories}
+            products={products}
+            setProducts={setProducts}
+            styles={styles}
+            setStyles={setStyles}
+          />
+        }
+      />
+    </Routes>
+  );
 }
 
 export default App;

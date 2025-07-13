@@ -56,35 +56,40 @@ export const categoryAPI = {
   // Получить категорию по ID
   getById: (id) => apiRequest(`/category/${id}`),
 
-  // Создать категорию (требует авторизации)
-  create: (categoryData, token) =>
-    apiRequest('/admin/category', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(categoryData),
-    }),
+  create: (data, token) =>
+  apiRequest('/admin/category', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  }),
 
-  // Обновить категорию (требует авторизации)
-  update: (id, categoryData, token) =>
-    apiRequest(`/admin/category/${id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(categoryData),
-    }),
+  // 🔥 Получить все категории с parent_id
+  getAllWithParents: async () => {
+    const flat = await apiRequest('/category');
+    console.log('🔵 ШАГ 1: flat', flat);
 
-  // Удалить категорию (требует авторизации)
-  delete: (id, token) =>
-    apiRequest(`/admin/category/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }),
+    const detailed = await Promise.all(
+      flat.map(async (cat) => {
+        try {
+          const full = await apiRequest(`/category/${cat.id}`);
+          console.log('   ↳ 🔹 деталь', full); // <‑‑ вот это покажет, есть ли parent_id
+          return full;
+        } catch (err) {
+          console.error(`Не получил категорию ${cat.id}`, err);
+          return cat;
+        }
+      }),
+    );
+
+    return detailed;
+  },
+
+  // Остальные методы ...
 };
+
 // Функции для работы с атрибутами категорий
 export const categoryAttributeAPI = {
   // Получить все атрибуты категории
@@ -95,15 +100,7 @@ export const categoryAttributeAPI = {
     apiRequest(`/category/${categoryID}/attribute/${attributeID}`),
 
   // Создать один атрибут (требует авторизации)
-  create: (categoryID, attributeData, token) =>
-    apiRequest(`/admin/category/${categoryID}/attribute`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // 💥 обязательно!
-      },
-      body: JSON.stringify(attributeData),
-    }),
+
 
   // Создать несколько атрибутов сразу (batch)
   createBatch: (categoryID, attributesArray, token) =>
@@ -145,6 +142,7 @@ export const productAPI = {
   getAll: () => apiRequest('/product'),
   // Получить товары по категории
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
+  // Получить все категории с parent_id
 
   // Создать товар (требует авторизации)
   create: (productData, token) =>

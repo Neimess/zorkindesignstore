@@ -3,7 +3,8 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import StyleSelector from '../components/StyleSelector';
 import TelegramIcon from '../assets/telegram-icon.png';
-
+import { categoryAPI } from '../services/api'; // уже должен быть
+import { buildCategoryTree } from '../utils/buildCategoryTree';
 /**
  * Компонент главной страницы с конфигуратором
  *
@@ -12,8 +13,8 @@ import TelegramIcon from '../assets/telegram-icon.png';
  * @param {Array} props.products - Список товаров
  * @param {Array} props.styles - Список стилей
  */
-function MainPage({ categories, products, styles }) {
-  // Состояние для выбранных категорий и товаров
+function MainPage({ products, styles }) {
+  const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedStyle, setSelectedStyle] = useState(null);
@@ -28,6 +29,21 @@ function MainPage({ categories, products, styles }) {
       document.body.style.overflow = '';
     };
   }, [showStyleModal]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const flat = await categoryAPI.getAll(); // <-- если /category отдаёт parent_id
+        const tree = buildCategoryTree(flat);
+        console.log('🌲 tree:', tree);
+        setCategories(tree);
+      } catch (e) {
+        console.error('Ошибка при загрузке категорий:', e);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   /**
    * Обработчик выбора категории
@@ -336,6 +352,17 @@ function MainPage({ categories, products, styles }) {
                 {room.name}
               </button>
             ))}
+            {selectedRoomType?.elements.map((elem) => (
+              <button onClick={() => setSelectedElement(elem)}>
+                {elem.name}
+              </button>
+            ))}
+
+            {selectedElement?.sub_elements.map((sub) => (
+              <button onClick={() => setSelectedSubElement(sub)}>
+                {sub.name}
+              </button>
+            ))}
           </div>
 
           {/* Уровень 2: Элемент */}
@@ -388,71 +415,89 @@ function MainPage({ categories, products, styles }) {
           )}
         </div>
 
-          {/* Сюда?  */}
-
+        {/* Сюда?  */}
 
         {/* Секция выбора товаров */}
         {selectedSubElement && (
-  <div style={{ marginTop: '30px', marginBottom: '40px' }}>
-    <h2>Выберите товары</h2>
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '20px',
-        marginTop: '20px',
-      }}
-    >
-      {products
-        .filter(product => product.sub_element_id === selectedSubElement.id)
-        .map(product => {
-          const isSelected = selectedProducts.some(p => p.id === product.product_id);
-          return (
+          <div style={{ marginTop: '30px', marginBottom: '40px' }}>
+            <h2>Выберите товары</h2>
             <div
-              key={product.product_id}
               style={{
-                ...styles_ui.productCard,
-                ...(isSelected ? styles_ui.productCardHover : {}),
-                opacity: isSelected ? 0.7 : 1
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '20px',
+                marginTop: '20px',
               }}
             >
-              <div>
-                {product.image_url && (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    style={{
-                      width: '100%',
-                      height: '180px',
-                      objectFit: 'cover',
-                      borderRadius: '10px',
-                      marginBottom: '10px'
-                    }}
-                  />
-                )}
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#f1f5f9' }}>
-                  {product.name}
-                </h3>
-                <p style={{ color: '#94a3b8', marginBottom: '10px' }}>{product.description}</p>
-                <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '1.1rem' }}>
-                  {(product?.price ?? 0).toLocaleString()} ₽
-                </div>
-              </div>
-              {!isSelected && (
-                <button
-                  onClick={() => handleProductSelect({ ...product, quantity: 1 })}
-                  style={styles_ui.addButton}
-                >
-                  Добавить
-                </button>
-              )}
+              {products
+                .filter(
+                  (product) => product.sub_element_id === selectedSubElement.id,
+                )
+                .map((product) => {
+                  const isSelected = selectedProducts.some(
+                    (p) => p.id === product.product_id,
+                  );
+                  return (
+                    <div
+                      key={product.product_id}
+                      style={{
+                        ...styles_ui.productCard,
+                        ...(isSelected ? styles_ui.productCardHover : {}),
+                        opacity: isSelected ? 0.7 : 1,
+                      }}
+                    >
+                      <div>
+                        {product.image_url && (
+                          <img
+                            src={product.image_url}
+                            alt={product.name}
+                            style={{
+                              width: '100%',
+                              height: '180px',
+                              objectFit: 'cover',
+                              borderRadius: '10px',
+                              marginBottom: '10px',
+                            }}
+                          />
+                        )}
+                        <h3
+                          style={{
+                            fontSize: '1.2rem',
+                            marginBottom: '10px',
+                            color: '#f1f5f9',
+                          }}
+                        >
+                          {product.name}
+                        </h3>
+                        <p style={{ color: '#94a3b8', marginBottom: '10px' }}>
+                          {product.description}
+                        </p>
+                        <div
+                          style={{
+                            color: '#f1f5f9',
+                            fontWeight: 600,
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          {(product?.price ?? 0).toLocaleString()} ₽
+                        </div>
+                      </div>
+                      {!isSelected && (
+                        <button
+                          onClick={() =>
+                            handleProductSelect({ ...product, quantity: 1 })
+                          }
+                          style={styles_ui.addButton}
+                        >
+                          Добавить
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
-          );
-        })}
-    </div>
-  </div>
-)}
-
+          </div>
+        )}
 
         {/* Панель выбранных товаров */}
         {selectedProducts.length > 0 && (

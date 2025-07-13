@@ -4,6 +4,7 @@ import { productAPI } from '../../services/api';
 /* ------------------------------------------------------------
  * Helpers
  * ----------------------------------------------------------*/
+
 const getProductId = (p) => p?.product_id ?? p?.id ?? null;
 
 const parseAttributes = (raw) =>
@@ -23,6 +24,7 @@ const stringifyAttributes = (arr = []) =>
 /* ============================================================
  * ProductManager
  * ==========================================================*/
+
 function ProductManager({
   categories,
   products,
@@ -31,7 +33,23 @@ function ProductManager({
   showMessage,
   styles,
 }) {
-  /* --------------------- local state ---------------------- */
+  const [roomCategory, setRoomCategory] = useState(null);
+  const [elementCategory, setElementCategory] = useState(null);
+  const [subElementCategory, setSubElementCategory] = useState(null);
+  const [roomId,     setRoomId]     = useState('');
+const [elementId,  setElementId]  = useState('');
+const [subId,      setSubId]      = useState('');
+const rooms = categories.filter(c => c.parent_id == null);
+
+const elements = categories.filter(
+  c => roomId && c.parent_id === Number(roomId)
+);
+
+const subs = categories.filter(
+  c => elementId && c.parent_id === Number(elementId)
+);
+
+/* --------------------- local state ---------------------- */
   const [form, setForm] = useState({
     name: '',
     price: '',
@@ -60,13 +78,20 @@ function ProductManager({
     background: 'rgba(34,197,94,.1)',
     color: '#4ade80',
   };
-
+  const topCategories = categories.filter((c) => c.parent_id === null);
+  const getChildren = (parentId) =>
+    categories.filter((c) => c.parent_id === parentId);
   /* ---------------- CREATE / UPDATE ----------------------- */
   const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
     try {
       const token = await getAdminToken();
       if (!token) return;
+
+      if (!subId) {
+  showMessage('Выберите подкатегорию', true);
+  return;
+}
 
       const payload = {
         name: form.name.trim(),
@@ -171,17 +196,123 @@ function ProductManager({
           onChange={(e) => setForm({ ...form, price: e.target.value })}
           style={inputStyle}
         />
+        {/* Room */}
         <select
-          value={form.categoryId}
-          onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+          value={roomCategory?.id || ''}
+          onChange={(e) => {
+            const room = categories.find(
+              (c) => c.id === Number(e.target.value),
+            );
+            setRoomCategory(room);
+            setElementCategory(null);
+            setSubElementCategory(null);
+            setForm({ ...form, categoryId: '' }); // сбросить
+          }}
           style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
         >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
+          <option value="">— Комната —</option>
+          {topCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
             </option>
           ))}
         </select>
+          {/* -- Комната -- */}
+<select
+  value={roomId}
+  onChange={(e) => {
+    setRoomId('');
+setElementId('');
+setSubId('');
+  }}
+  style={inputStyle}
+>
+  <option value="">— Комната —</option>
+  {rooms.map((r) => (
+    <option key={r.id} value={r.id}>
+      {r.name}
+    </option>
+  ))}
+</select>
+
+{/* — Элемент — */}
+<select
+  value={elementId}
+  onChange={e => {
+    setElementId(e.target.value);
+    setSubId('');
+  }}
+  disabled={!roomId}
+  style={inputStyle}
+>
+  <option value="">— Элемент —</option>
+  {elements.map(el => (
+    <option key={el.id} value={el.id}>
+      {el.name}
+    </option>
+  ))}
+</select>
+
+{/* -- Подкатегория -- */}
+<select
+  value={subId}
+  onChange={(e) => setSubId(e.target.value)}
+  disabled={!elementId}
+  style={inputStyle}
+>
+  <option value="">— Подкатегория —</option>
+  {subs.map((s) => (
+    <option key={s.id} value={s.id}>
+      {s.name}
+    </option>
+  ))}
+</select>
+
+        {/* Element */}
+        {roomCategory && (
+          <select
+            value={elementCategory?.id || ''}
+            onChange={(e) => {
+              const elem = getChildren(roomCategory.id).find(
+                (c) => c.id === Number(e.target.value),
+              );
+              setElementCategory(elem);
+              setSubElementCategory(null);
+              setForm({ ...form, categoryId: '' }); // сбросить
+            }}
+            style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
+          >
+            <option value="">— Элемент —</option>
+            {getChildren(roomCategory.id).map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {/* Sub-element */}
+        {elementCategory && (
+          <select
+            value={subElementCategory?.id || ''}
+            onChange={(e) => {
+              const sub = getChildren(elementCategory.id).find(
+                (c) => c.id === Number(e.target.value),
+              );
+              setSubElementCategory(sub);
+              setForm({ ...form, categoryId: sub?.id || '' }); // финальный выбор
+            }}
+            style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
+          >
+            <option value="">— Подкатегория —</option>
+            {getChildren(elementCategory.id).map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         <input
           value={form.image_url}
           placeholder="URL картинки"

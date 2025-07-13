@@ -10,26 +10,53 @@ function CategoryManager({
   onViewCategoryProducts,
 }) {
   const [catName, setCatName] = useState('');
-  const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
+  const [catType, setCatType] = useState('room');
 
-  const addCategory = async () => {
-    if (!catName.trim()) return;
-    try {
-      const token = await getAdminToken();
-      if (!token) return;
-      const response = await categoryAPI.create({ name: catName }, token);
-      const newCategory = {
-        id: response.id,
-        name: response.name,
-      };
-      setCategories([...categories, newCategory]);
-      setCatName('');
-      showMessage('Категория успешно добавлена');
-    } catch (error) {
-      console.error('Ошибка создания категории:', error);
-      showMessage('Ошибка при создании категории', true);
-    }
+  const [roomType, setRoomType] = useState(''); // «Спальня», «Ванная» …
+  const [parentRoom, setParentRoom] = useState('');
+  const [parentElement, setParentElement] = useState('');
+  const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
+const [isSubmitting, setIsSubmitting] = useState(false);
+  
+
+const addCategory = async () => {
+  console.log('🔔 addCategory вызван');
+
+  if (!catName.trim()) return;
+
+  const token = await getAdminToken();
+  if (!token) return;
+
+  const parent_id =
+    catType === 'room'
+      ? null
+      : catType === 'element'
+        ? Number(parentRoom)
+        : Number(parentElement);
+
+  const payload = {
+    name: catName.trim(),
+    parent_id,
+    description: catType === 'room' ? roomType.trim() : undefined,
   };
+
+  try {
+    const created = await categoryAPI.create(payload, token);
+    setCategories((prev) => [...prev, created]);
+    showMessage('Категория успешно добавлена');
+
+    // сбрасываем форму
+    setCatName('');
+    setRoomType('');
+    setCatType('room');
+    setParentRoom('');
+    setParentElement('');
+  } catch (e) {
+    console.error('Ошибка создания категории:', e);
+    showMessage(e.message || 'Ошибка при создании категории', true);
+  }
+};
+
 
   const removeCategory = async (id) => {
     console.log('Удаляем категорию с id:', id);
@@ -78,12 +105,70 @@ function CategoryManager({
           alignItems: 'center',
         }}
       >
+        <select
+          value={catType}
+          onChange={(e) => {
+            setCatType(e.target.value);
+            setParentRoom('');
+            setParentElement('');
+          }}
+          style={{ ...inputStyle }}
+        >
+          <option value="room">🏠 Комната</option>
+          <option value="element">📦 Элемент (внутри комнаты)</option>
+          <option value="sub">🔹 Подкатегория (внутри элемента)</option>
+        </select>
+
+        {catType !== 'room' && (
+          <select
+            value={parentRoom}
+            onChange={(e) => setParentRoom(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="">— Выбери комнату —</option>
+            {categories
+              .filter((c) => c.parent_id === null)
+              .map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.name}
+                </option>
+              ))}
+          </select>
+        )}
+
+        {catType === 'sub' && parentRoom && (
+          <select
+            value={parentElement}
+            onChange={(e) => setParentElement(e.target.value)}
+            style={inputStyle}
+          >
+            <option value="">— Выбери элемент —</option>
+            {categories
+              .filter((c) => c.parent_id === Number(parentRoom))
+              .map((elem) => (
+                <option key={elem.id} value={elem.id}>
+                  {elem.name}
+                </option>
+              ))}
+          </select>
+        )}
+
+        {catType === 'room' && (
+          <input
+            value={roomType}
+            onChange={(e) => setRoomType(e.target.value)}
+            placeholder="Тип комнаты (например: Гостиная)"
+            style={inputStyle}
+          />
+        )}
+
         <input
           value={catName}
           onChange={(e) => setCatName(e.target.value)}
-          placeholder="Новая категория"
+          placeholder="Название категории"
           style={inputStyle}
         />
+
         <button onClick={addCategory} style={buttonStyle}>
           Добавить
         </button>

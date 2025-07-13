@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import CategoryManager from '../components/admin/CategoryManager';
 import ProductManager from '../components/admin/ProductManager';
@@ -24,6 +24,12 @@ function AdminPage({
   const [message, setMessage] = useState('');
   const [modalProducts, setModalProducts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    type: 'room', // room | element | sub
+    parentRoom: '',
+    parentElement: '',
+  });
 
   const ADMIN_KEY = 'V2patTbDXS1wuqbqpyZGwg2vq70cem2wk3ElHO6y9l2FhfgNfN';
 
@@ -180,6 +186,16 @@ function AdminPage({
           {message.text}
         </div>
       )}
+
+      <div
+        style={{
+          background: 'rgba(30,41,59,0.5)',
+          padding: 20,
+          marginTop: 40,
+          border: '1px solid #334155',
+          borderRadius: 12,
+        }}
+      ></div>
 
       <CategoryManager
         categories={categories}

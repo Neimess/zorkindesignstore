@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import CategoryManager from '../components/admin/CategoryManager';
 import ProductManager from '../components/admin/ProductManager';
+import CoefficientManager from '../components/admin/CoefficientManager';
 import StyleAdmin from '../components/StyleAdmin';
 import { authAPI, tokenUtils, productAPI } from '../services/api';
 
@@ -210,6 +211,12 @@ function AdminPage({
         categories={categories}
         products={products}
         setProducts={setProducts}
+        getAdminToken={getAdminToken}
+        showMessage={showMessage}
+        styles={uiStyles}
+      />
+
+      <CoefficientManager
         getAdminToken={getAdminToken}
         showMessage={showMessage}
         styles={uiStyles}

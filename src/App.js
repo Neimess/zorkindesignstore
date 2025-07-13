@@ -33,31 +33,48 @@ function App() {
         setLoading(true);
 
         // 1. Загрузка категорий
+        console.log('Начинаем загрузку категорий...');
         const categoriesData = await categoryAPI.getAll();
-        setCategories(categoriesData);
+        console.log('Получены категории от API:', categoriesData);
+        
+        if (!Array.isArray(categoriesData)) {
+          console.error('Ошибка: categoriesData не является массивом:', categoriesData);
+          setCategories([]);
+        } else {
+          setCategories(categoriesData);
+          console.log('Категории установлены в state:', categoriesData);
+        }
 
         // 2. Загрузка товаров по категориям
         console.log('Загруженные категории:', categoriesData);
 
         const productLists = [];
-        for (const cat of categoriesData) {
-          try {
-            const products = await productAPI.getByCategory(cat.id);
-            productLists.push(products);
-          } catch (err) {
-            console.warn(
-              `Ошибка при загрузке товаров категории ID ${cat.id}:`,
-              err.message,
-            );
-            productLists.push([]); // чтобы не ломать структуру, даже если запрос не удался
+        if (Array.isArray(categoriesData)) {
+          for (const cat of categoriesData) {
+            try {
+              console.log(`Загрузка товаров для категории ID ${cat.id}...`);
+              const products = await productAPI.getByCategory(cat.id);
+              console.log(`Получены товары для категории ID ${cat.id}:`, products);
+              productLists.push(products);
+            } catch (err) {
+              console.warn(
+                `Ошибка при загрузке товаров категории ID ${cat.id}:`,
+                err.message,
+              );
+              productLists.push([]); // чтобы не ломать структуру, даже если запрос не удался
+            }
           }
+        } else {
+          console.error('Невозможно загрузить товары: categoriesData не является массивом');
         }
 
-        setProducts(productLists.flat());
         setProducts(productLists.flat()); // объединяем все массивы
+        console.log('Товары установлены в state:', productLists.flat());
 
         // 3. Загрузка стилей
+        console.log('Начинаем загрузку стилей...');
         const stylesData = await presetAPI.getAllDetailed();
+        console.log('Получены стили от API:', stylesData);
         setStyles(stylesData);
 
         setLoading(false);

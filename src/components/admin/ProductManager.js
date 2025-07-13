@@ -17,9 +17,24 @@ const parseAttributes = (raw) =>
       return { attribute_id, value: valuePart };
     })
     .filter(Boolean);
+    
+const parseServices = (raw) =>
+  raw
+    .split(';')
+    .map((chunk) => {
+      const [idPart, namePart, descriptionPart, pricePart] = chunk.split(':').map((s) => s.trim());
+      const id = Number(idPart);
+      const price = Number(pricePart);
+      if (!id || !namePart || !price) return null;
+      return { id, name: namePart, description: descriptionPart || '', price };
+    })
+    .filter(Boolean);
 
 const stringifyAttributes = (arr = []) =>
   arr.map((a) => `${a.attribute_id}:${a.value}`).join('; ');
+  
+const stringifyServices = (arr = []) =>
+  arr.map((s) => `${s.id}:${s.name}:${s.description}:${s.price}`).join('; ');
 
 /* ============================================================
  * ProductManager
@@ -33,21 +48,26 @@ function ProductManager({
   showMessage,
   styles,
 }) {
-  const [roomCategory, setRoomCategory] = useState(null);
-  const [elementCategory, setElementCategory] = useState(null);
-  const [subElementCategory, setSubElementCategory] = useState(null);
-  const [roomId,     setRoomId]     = useState('');
-const [elementId,  setElementId]  = useState('');
-const [subId,      setSubId]      = useState('');
-const rooms = categories.filter(c => c.parent_id == null);
+  const [roomId, setRoomId] = useState('');
+  const [elementId, setElementId] = useState('');
+  const [subId, setSubId] = useState('');
+  
+  // Добавляем отладочную информацию
+  console.log('ProductManager - Все категории:', categories);
+  
+  // Проверяем, что categories - это массив перед фильтрацией
+  const rooms = Array.isArray(categories) ? categories.filter(c => c.parent_id == null) : [];
+  console.log('ProductManager - Комнаты:', rooms);
 
-const elements = categories.filter(
-  c => roomId && c.parent_id === Number(roomId)
-);
+  const elements = Array.isArray(categories) ? categories.filter(
+    c => roomId && c.parent_id === Number(roomId)
+  ) : [];
+  console.log('ProductManager - Элементы для комнаты', roomId, ':', elements);
 
-const subs = categories.filter(
-  c => elementId && c.parent_id === Number(elementId)
-);
+  const subs = Array.isArray(categories) ? categories.filter(
+    c => elementId && c.parent_id === Number(elementId)
+  ) : [];
+  console.log('ProductManager - Подкатегории для элемента', elementId, ':', subs);
 
 /* --------------------- local state ---------------------- */
   const [form, setForm] = useState({
@@ -57,6 +77,7 @@ const subs = categories.filter(
     image_url: '',
     categoryId: categories[0]?.id ?? 1,
     attributes: '',
+    services: '',
   });
   const [editingId, setEditingId] = useState(null);
 
@@ -68,8 +89,12 @@ const subs = categories.filter(
       image_url: '',
       categoryId: categories[0]?.id ?? 1,
       attributes: '',
+      services: '',
     });
     setEditingId(null);
+    setRoomId('');
+    setElementId('');
+    setSubId('');
   };
 
   const { inputStyle, buttonStyle, deleteButtonStyle } = styles;
@@ -78,9 +103,6 @@ const subs = categories.filter(
     background: 'rgba(34,197,94,.1)',
     color: '#4ade80',
   };
-  const topCategories = categories.filter((c) => c.parent_id === null);
-  const getChildren = (parentId) =>
-    categories.filter((c) => c.parent_id === parentId);
   /* ---------------- CREATE / UPDATE ----------------------- */
   const saveProduct = async () => {
     if (!form.name.trim() || !form.price) return;
@@ -89,18 +111,21 @@ const subs = categories.filter(
       if (!token) return;
 
       if (!subId) {
-  showMessage('Выберите подкатегорию', true);
-  return;
-}
+        showMessage('Выберите подкатегорию', true);
+        return;
+      }
 
       const payload = {
         name: form.name.trim(),
         price: Number(form.price),
         description: form.description.trim(),
         image_url: form.image_url.trim(),
-        category_id: Number(form.categoryId),
+        category_id: Number(subId),
         attributes: form.attributes.trim()
           ? parseAttributes(form.attributes)
+          : [],
+        services: form.services.trim()
+          ? parseServices(form.services)
           : [],
       };
 
@@ -117,18 +142,24 @@ const subs = categories.filter(
         showMessage('Товар обновлён');
       } else {
         /* -------- CREATE ---------- */
-        const created = await productAPI.create(payload, token);
-        if (!created?.product_id) {
+        // Используем createDetailed, если есть атрибуты, иначе обычный create
+        const method = payload.attributes.length > 0 ? 'createDetailed' : 'create';
+        const created = await productAPI[method](payload, token);
+        if (!created?.product_id && !created?.id) {
           showMessage('Сервер не вернул ID', true);
           return;
         }
+        const productId = created.product_id || created.id;
         setProducts((prev) => [
           ...prev,
-          { ...created, categoryId: created.category_id },
+          { ...created, product_id: productId, categoryId: created.category_id },
         ]);
         showMessage('Товар добавлен');
       }
       resetForm();
+      setRoomId('');
+      setElementId('');
+      setSubId('');
     } catch (err) {
       console.error('saveProduct', err);
       showMessage(err.message || 'Ошибка сервера', true);
@@ -146,9 +177,15 @@ const subs = categories.filter(
 
       await productAPI.delete(id, token);
       setProducts((prev) => prev.filter((p) => getProductId(p) !== id));
-      if (editingId === id) resetForm();
+      if (editingId === id) {
+        resetForm();
+        setRoomId('');
+        setElementId('');
+        setSubId('');
+      }
       showMessage('Товар удалён');
     } catch (err) {
+      console.error('removeProduct', err);
       showMessage(err.message || 'Ошибка при удалении', true);
     }
   };
@@ -196,122 +233,121 @@ const subs = categories.filter(
           onChange={(e) => setForm({ ...form, price: e.target.value })}
           style={inputStyle}
         />
-        {/* Room */}
-        <select
-          value={roomCategory?.id || ''}
-          onChange={(e) => {
-            const room = categories.find(
-              (c) => c.id === Number(e.target.value),
-            );
-            setRoomCategory(room);
-            setElementCategory(null);
-            setSubElementCategory(null);
-            setForm({ ...form, categoryId: '' }); // сбросить
-          }}
-          style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
-        >
-          <option value="">— Комната —</option>
-          {topCategories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-          {/* -- Комната -- */}
-<select
-  value={roomId}
-  onChange={(e) => {
-    setRoomId('');
-setElementId('');
-setSubId('');
-  }}
-  style={inputStyle}
->
-  <option value="">— Комната —</option>
-  {rooms.map((r) => (
-    <option key={r.id} value={r.id}>
-      {r.name}
-    </option>
-  ))}
-</select>
-
-{/* — Элемент — */}
-<select
-  value={elementId}
-  onChange={e => {
-    setElementId(e.target.value);
-    setSubId('');
-  }}
-  disabled={!roomId}
-  style={inputStyle}
->
-  <option value="">— Элемент —</option>
-  {elements.map(el => (
-    <option key={el.id} value={el.id}>
-      {el.name}
-    </option>
-  ))}
-</select>
-
-{/* -- Подкатегория -- */}
-<select
-  value={subId}
-  onChange={(e) => setSubId(e.target.value)}
-  disabled={!elementId}
-  style={inputStyle}
->
-  <option value="">— Подкатегория —</option>
-  {subs.map((s) => (
-    <option key={s.id} value={s.id}>
-      {s.name}
-    </option>
-  ))}
-</select>
-
-        {/* Element */}
-        {roomCategory && (
+        {/* -- Комната -- */}
+        <div style={{ position: 'relative', width: '100%' }}>
           <select
-            value={elementCategory?.id || ''}
+            value={roomId}
             onChange={(e) => {
-              const elem = getChildren(roomCategory.id).find(
-                (c) => c.id === Number(e.target.value),
-              );
-              setElementCategory(elem);
-              setSubElementCategory(null);
-              setForm({ ...form, categoryId: '' }); // сбросить
+              setRoomId(e.target.value);
+              setElementId('');
+              setSubId('');
             }}
-            style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
+            style={{
+              ...inputStyle,
+              borderColor: !rooms || rooms.length === 0 ? '#ef4444' : inputStyle.borderColor
+            }}
+          >
+            <option value="">— Комната —</option>
+            {rooms && rooms.length > 0 ? (
+              rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>Нет доступных комнат</option>
+            )}
+          </select>
+          {(!rooms || rooms.length === 0) && (
+            <div style={{ 
+              color: '#ef4444', 
+              fontSize: '12px', 
+              marginTop: '4px',
+              position: 'absolute',
+              bottom: '-20px',
+              left: '0'
+            }}>
+              Необходимо создать комнаты в разделе "Категории"
+            </div>
+          )}
+        </div>
+
+        {/* — Элемент — */}
+        <div style={{ position: 'relative', width: '100%' }}>
+          <select
+            value={elementId}
+            onChange={e => {
+              setElementId(e.target.value);
+              setSubId('');
+            }}
+            disabled={!roomId}
+            style={{
+              ...inputStyle,
+              opacity: !roomId ? 0.7 : 1,
+              borderColor: roomId && (!elements || elements.length === 0) ? '#ef4444' : inputStyle.borderColor
+            }}
           >
             <option value="">— Элемент —</option>
-            {getChildren(roomCategory.id).map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
+            {elements && elements.length > 0 ? (
+              elements.map(el => (
+                <option key={el.id} value={el.id}>
+                  {el.name}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>{roomId ? 'Нет элементов для этой комнаты' : 'Сначала выберите комнату'}</option>
+            )}
           </select>
-        )}
+          {roomId && (!elements || elements.length === 0) && (
+            <div style={{ 
+              color: '#ef4444', 
+              fontSize: '12px', 
+              marginTop: '4px',
+              position: 'absolute',
+              bottom: '-20px',
+              left: '0'
+            }}>
+              Необходимо создать элементы для этой комнаты
+            </div>
+          )}
+        </div>
 
-        {/* Sub-element */}
-        {elementCategory && (
+        {/* -- Подкатегория -- */}
+        <div style={{ position: 'relative', width: '100%' }}>
           <select
-            value={subElementCategory?.id || ''}
-            onChange={(e) => {
-              const sub = getChildren(elementCategory.id).find(
-                (c) => c.id === Number(e.target.value),
-              );
-              setSubElementCategory(sub);
-              setForm({ ...form, categoryId: sub?.id || '' }); // финальный выбор
+            value={subId}
+            onChange={(e) => setSubId(e.target.value)}
+            disabled={!elementId}
+            style={{
+              ...inputStyle,
+              opacity: !elementId ? 0.7 : 1,
+              borderColor: elementId && (!subs || subs.length === 0) ? '#ef4444' : inputStyle.borderColor
             }}
-            style={{ ...inputStyle, appearance: 'none', paddingRight: 40 }}
           >
             <option value="">— Подкатегория —</option>
-            {getChildren(elementCategory.id).map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.name}
-              </option>
-            ))}
+            {subs && subs.length > 0 ? (
+              subs.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>{elementId ? 'Нет подкатегорий для этого элемента' : 'Сначала выберите элемент'}</option>
+            )}
           </select>
-        )}
+          {elementId && (!subs || subs.length === 0) && (
+            <div style={{ 
+              color: '#ef4444', 
+              fontSize: '12px', 
+              marginTop: '4px',
+              position: 'absolute',
+              bottom: '-20px',
+              left: '0'
+            }}>
+              Необходимо создать подкатегории для этого элемента
+            </div>
+          )}
+        </div>
 
         <input
           value={form.image_url}
@@ -329,6 +365,12 @@ setSubId('');
           value={form.attributes}
           placeholder="Атрибуты: 2:1.25; 3:Матовый"
           onChange={(e) => setForm({ ...form, attributes: e.target.value })}
+          style={inputStyle}
+        />
+        <input
+          value={form.services}
+          placeholder="Сервисы: 1:Монтаж:Установка изделия:1500"
+          onChange={(e) => setForm({ ...form, services: e.target.value })}
           style={inputStyle}
         />
         <button
@@ -398,19 +440,58 @@ setSubId('');
                 <div style={{ color: '#94a3b8', fontSize: 14 }}>
                   {categories.find((c) => c.id === p.categoryId)?.name || '—'}
                 </div>
+                {p.attributes && p.attributes.length > 0 && (
+                  <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>
+                    <span style={{ color: '#60a5fa' }}>Атрибуты:</span>{' '}
+                    {p.attributes.map((attr, idx) => (
+                      <span key={attr.attribute_id}>
+                        {attr.name}: {attr.value}{attr.unit ? ` ${attr.unit}` : ''}
+                        {idx < p.attributes.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {p.services && p.services.length > 0 && (
+                  <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>
+                    <span style={{ color: '#60a5fa' }}>Сервисы:</span>{' '}
+                    {p.services.map((service, idx) => (
+                      <span key={service.id}>
+                        {service.name} ({service.price} ₽)
+                        {idx < p.services.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div style={{ fontWeight: 700, color: '#38bdf8' }}>
                 {p.price} ₽
               </div>
               <button
                 onClick={() => {
+                  const categoryId = p.categoryId ?? p.category_id;
+                  const category = categories.find(c => c.id === categoryId);
+                  
+                  // Находим родительские категории
+                  if (category) {
+                    const element = categories.find(c => c.id === category.parent_id);
+                    if (element) {
+                      const room = categories.find(c => c.id === element.parent_id);
+                      
+                      // Устанавливаем значения в правильном порядке
+                      if (room) setRoomId(room.id.toString());
+                      setElementId(element.id.toString());
+                      setSubId(category.id.toString());
+                    }
+                  }
+                  
                   setForm({
                     name: p.name,
                     price: p.price,
                     description: p.description ?? '',
                     image_url: p.image_url ?? '',
-                    categoryId: p.categoryId ?? p.category_id,
+                    categoryId: categoryId,
                     attributes: stringifyAttributes(p.attributes),
+                    services: stringifyServices(p.services),
                   });
                   setEditingId(id);
                 }}

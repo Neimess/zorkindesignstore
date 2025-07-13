@@ -78,18 +78,20 @@ function StyleAdmin({ products, styles, setStyles }) {
       resetForm();
     } catch (err) {
       console.error('Ошибка при сохранении стиля:', err?.message || err);
+      alert(`Ошибка при сохранении стиля: ${err?.message || 'Неизвестная ошибка'}`);
     }
   };
 
   const removeStyle = async (id) => {
     try {
+      await presetAPI.delete(id, token);
       setStyles((prev) =>
         prev.filter((s) => normalizePreset(s).preset_id !== id),
       );
-      await presetAPI.delete(id, token);
       if (editingStyle?.preset_id === id) resetForm();
     } catch (err) {
       console.error('Ошибка при удалении:', err);
+      alert(`Ошибка при удалении стиля: ${err?.message || 'Неизвестная ошибка'}`);
     }
   };
 

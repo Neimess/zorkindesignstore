@@ -56,6 +56,7 @@ export const categoryAPI = {
   // Получить категорию по ID
   getById: (id) => apiRequest(`/category/${id}`),
 
+  // Создать категорию
   create: (data, token) =>
   apiRequest('/admin/category', {
     method: 'POST',
@@ -66,10 +67,30 @@ export const categoryAPI = {
     body: JSON.stringify(data),
   }),
 
+  // Обновить категорию
+  update: (id, data, token) =>
+  apiRequest(`/admin/category/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  }),
+
+  // Удалить категорию
+  delete: (id, token) =>
+  apiRequest(`/admin/category/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }),
+
   // 🔥 Получить все категории с parent_id
   getAllWithParents: async () => {
     const flat = await apiRequest('/category');
-    console.log('🔵 ШАГ 1: flat', flat);
+    console.log('🔵 ШАГ 1: flat', flat);
 
     const detailed = await Promise.all(
       flat.map(async (cat) => {
@@ -86,8 +107,6 @@ export const categoryAPI = {
 
     return detailed;
   },
-
-  // Остальные методы ...
 };
 
 // Функции для работы с атрибутами категорий
@@ -99,8 +118,16 @@ export const categoryAttributeAPI = {
   getById: (categoryID, attributeID) =>
     apiRequest(`/category/${categoryID}/attribute/${attributeID}`),
 
-  // Создать один атрибут (требует авторизации)
-
+  // Создать один атрибут
+  create: (categoryID, attributeData, token) =>
+    apiRequest(`/admin/category/${categoryID}/attribute`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(attributeData),
+    }),
 
   // Создать несколько атрибутов сразу (batch)
   createBatch: (categoryID, attributesArray, token) =>
@@ -108,7 +135,7 @@ export const categoryAttributeAPI = {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // 💥 обязательно!
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(attributesArray),
     }),
@@ -119,7 +146,7 @@ export const categoryAttributeAPI = {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // 💥 обязательно!
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(attributeData),
     }),
@@ -130,7 +157,6 @@ export const categoryAttributeAPI = {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', // 💥 обязательно!
       },
     }),
 };
@@ -142,7 +168,6 @@ export const productAPI = {
   getAll: () => apiRequest('/product'),
   // Получить товары по категории
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
-  // Получить все категории с parent_id
 
   // Создать товар (требует авторизации)
   create: (productData, token) =>
@@ -150,6 +175,18 @@ export const productAPI = {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    }),
+
+  // Создать товар с атрибутами
+  createDetailed: (productData, token) =>
+    apiRequest('/admin/product/detailed', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(productData),
     }),
@@ -160,6 +197,7 @@ export const productAPI = {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(productData),
     }),
@@ -174,12 +212,55 @@ export const productAPI = {
     }),
 };
 
+// Функции для работы с коэффициентами
+export const coefficientAPI = {
+  // Получить все коэффициенты
+  getAll: () => apiRequest('/admin/coefficients'),
+  
+  // Получить коэффициент по ID
+  getById: (id) => apiRequest(`/admin/coefficients/${id}`),
+  
+  // Создать коэффициент
+  create: (data, token) =>
+    apiRequest('/admin/coefficients', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }),
+  
+  // Обновить коэффициент
+  update: (id, data, token) =>
+    apiRequest(`/admin/coefficients/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }),
+  
+  // Удалить коэффициент
+  delete: (id, token) =>
+    apiRequest(`/admin/coefficients/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
+};
+
 // Функции для работы с пресетами (стилями)
 export const presetAPI = {
   create: async (data, token) =>
     await apiRequest('/admin/presets', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     }),
   delete: async (id, token) =>
@@ -190,12 +271,15 @@ export const presetAPI = {
   update: async (id, data, token) =>
     await apiRequest(`/admin/presets/${id}`, {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     }),
 
   list: async () => await apiRequest('/presets'),
-  getAllDetailed: async () => await apiRequest('/presets/detailed'), // 🔥 добавлено это
+  getAllDetailed: async () => await apiRequest('/presets/detailed'),
   getById: async (id) => await apiRequest(`/presets/${id}`),
 };
 

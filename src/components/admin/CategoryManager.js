@@ -21,8 +21,15 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 
 const addCategory = async () => {
   console.log('🔔 addCategory вызван');
+  console.log('Текущие категории:', categories);
+  console.log('Тип категории:', catType);
+  console.log('Родительская комната:', parentRoom);
+  console.log('Родительский элемент:', parentElement);
 
-  if (!catName.trim()) return;
+  if (!catName.trim()) {
+    showMessage('Введите название категории', true);
+    return;
+  }
 
   const token = await getAdminToken();
   if (!token) return;
@@ -34,15 +41,27 @@ const addCategory = async () => {
         ? Number(parentRoom)
         : Number(parentElement);
 
+  if ((catType === 'element' && !parentRoom) || (catType === 'sub' && !parentElement)) {
+    showMessage('Выберите родительскую категорию', true);
+    return;
+  }
+
   const payload = {
     name: catName.trim(),
     parent_id,
     description: catType === 'room' ? roomType.trim() : undefined,
   };
 
+  console.log('Отправляемые данные:', payload);
+
   try {
     const created = await categoryAPI.create(payload, token);
-    setCategories((prev) => [...prev, created]);
+    console.log('Созданная категория:', created);
+    setCategories((prev) => {
+      const newCategories = [...prev, created];
+      console.log('Обновленные категории:', newCategories);
+      return newCategories;
+    });
     showMessage('Категория успешно добавлена');
 
     // сбрасываем форму
@@ -68,34 +87,92 @@ const addCategory = async () => {
       showMessage('Категория успешно удалена');
     } catch (error) {
       console.error('Ошибка удаления категории:', error);
-      showMessage('Ошибка при удалении категории', true);
+      showMessage(error.message || 'Ошибка при удалении категории', true);
+    }
+  };
+
+  // Функция для создания тестовых категорий
+  const createTestCategories = async () => {
+    const token = await getAdminToken();
+    if (!token) return;
+
+    try {
+      setIsSubmitting(true);
+      showMessage('Создание тестовых категорий...');
+
+      // Создаем комнаты
+      const room1 = await categoryAPI.create({ name: 'Гостиная', parent_id: null, description: 'Гостиная' }, token);
+      const room2 = await categoryAPI.create({ name: 'Спальня', parent_id: null, description: 'Спальня' }, token);
+      
+      // Создаем элементы для комнат
+      const element1 = await categoryAPI.create({ name: 'Диван', parent_id: room1.id }, token);
+      const element2 = await categoryAPI.create({ name: 'Стол', parent_id: room1.id }, token);
+      const element3 = await categoryAPI.create({ name: 'Кровать', parent_id: room2.id }, token);
+      
+      // Создаем подкатегории для элементов
+      await categoryAPI.create({ name: 'Угловой диван', parent_id: element1.id }, token);
+      await categoryAPI.create({ name: 'Прямой диван', parent_id: element1.id }, token);
+      await categoryAPI.create({ name: 'Обеденный стол', parent_id: element2.id }, token);
+      await categoryAPI.create({ name: 'Двуспальная кровать', parent_id: element3.id }, token);
+
+      // Обновляем список категорий
+      const updatedCategories = await categoryAPI.getAll();
+      setCategories(updatedCategories);
+
+      showMessage('Тестовые категории успешно созданы!');
+    } catch (e) {
+      console.error('Ошибка создания тестовых категорий:', e);
+      showMessage('Ошибка при создании тестовых категорий', true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="AdminSection">
-      <h2
-        style={{
-          fontSize: '1.5rem',
-          color: '#f8fafc',
-          marginBottom: '20px',
-          position: 'relative',
-          paddingBottom: '10px',
-        }}
-      >
-        Категории
-        <span
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <h2
           style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: '60px',
-            height: '3px',
-            background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
-            borderRadius: '2px',
+            fontSize: '1.5rem',
+            color: '#f8fafc',
+            position: 'relative',
+            paddingBottom: '10px',
           }}
-        ></span>
-      </h2>
+        >
+          Категории
+          <span
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '60px',
+              height: '3px',
+              background: 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+              borderRadius: '2px',
+            }}
+          ></span>
+        </h2>
+        
+        <button
+          onClick={createTestCategories}
+          disabled={isSubmitting}
+          style={{
+            background: 'linear-gradient(135deg, #10b981, #059669)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+            opacity: isSubmitting ? 0.7 : 1,
+          }}
+        >
+          {isSubmitting ? 'Создание...' : 'Создать тестовые категории'}
+        </button>
+      </div>
 
       <div
         style={{
@@ -109,6 +186,7 @@ const addCategory = async () => {
           value={catType}
           onChange={(e) => {
             setCatType(e.target.value);
+            // Сбрасываем значения при изменении типа
             setParentRoom('');
             setParentElement('');
           }}
@@ -120,37 +198,77 @@ const addCategory = async () => {
         </select>
 
         {catType !== 'room' && (
-          <select
-            value={parentRoom}
-            onChange={(e) => setParentRoom(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">— Выбери комнату —</option>
-            {categories
-              .filter((c) => c.parent_id === null)
-              .map((room) => (
-                <option key={room.id} value={room.id}>
-                  {room.name}
-                </option>
-              ))}
-          </select>
+          <div style={{ position: 'relative', width: '100%' }}>
+            <select
+              value={parentRoom}
+              onChange={(e) => setParentRoom(e.target.value)}
+              style={{
+                ...inputStyle,
+                borderColor: !categories.filter(c => c.parent_id === null).length ? '#ef4444' : inputStyle.borderColor
+              }}
+            >
+              <option value="">— Выбери комнату —</option>
+              {categories
+                .filter((c) => c.parent_id === null)
+                .map((room) => (
+                  <option key={room.id} value={room.id}>
+                    {room.name}
+                  </option>
+                ))}
+              {!categories.filter(c => c.parent_id === null).length && (
+                <option value="" disabled>Нет доступных комнат</option>
+              )}
+            </select>
+            {!categories.filter(c => c.parent_id === null).length && (
+              <div style={{ 
+                color: '#ef4444', 
+                fontSize: '12px', 
+                marginTop: '4px',
+                position: 'absolute',
+                bottom: '-20px',
+                left: '0'
+              }}>
+                Сначала создайте комнаты
+              </div>
+            )}
+          </div>
         )}
 
         {catType === 'sub' && parentRoom && (
-          <select
-            value={parentElement}
-            onChange={(e) => setParentElement(e.target.value)}
-            style={inputStyle}
-          >
-            <option value="">— Выбери элемент —</option>
-            {categories
-              .filter((c) => c.parent_id === Number(parentRoom))
-              .map((elem) => (
-                <option key={elem.id} value={elem.id}>
-                  {elem.name}
-                </option>
-              ))}
-          </select>
+          <div style={{ position: 'relative', width: '100%' }}>
+            <select
+              value={parentElement}
+              onChange={(e) => setParentElement(e.target.value)}
+              style={{
+                ...inputStyle,
+                borderColor: !categories.filter(c => c.parent_id === Number(parentRoom)).length ? '#ef4444' : inputStyle.borderColor
+              }}
+            >
+              <option value="">— Выбери элемент —</option>
+              {categories
+                .filter((c) => c.parent_id === Number(parentRoom))
+                .map((elem) => (
+                  <option key={elem.id} value={elem.id}>
+                    {elem.name}
+                  </option>
+                ))}
+              {!categories.filter(c => c.parent_id === Number(parentRoom)).length && (
+                <option value="" disabled>Нет доступных элементов</option>
+              )}
+            </select>
+            {!categories.filter(c => c.parent_id === Number(parentRoom)).length && (
+              <div style={{ 
+                color: '#ef4444', 
+                fontSize: '12px', 
+                marginTop: '4px',
+                position: 'absolute',
+                bottom: '-20px',
+                left: '0'
+              }}>
+                Сначала создайте элементы в этой комнате
+              </div>
+            )}
+          </div>
         )}
 
         {catType === 'room' && (

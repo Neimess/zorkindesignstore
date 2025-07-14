@@ -9,6 +9,7 @@ function CategoryManager({
   styles,
   onViewCategoryProducts,
 }) {
+  console.log('Текущие категории:', categories);  // ← вставь сюда
   const [catName, setCatName] = useState('');
   const [catType, setCatType] = useState('room');
 
@@ -55,6 +56,7 @@ const addCategory = async () => {
   console.log('Отправляемые данные:', payload);
 
   try {
+      setIsSubmitting(true);
     const created = await categoryAPI.create(payload, token);
     console.log('Созданная категория:', created);
     setCategories((prev) => {
@@ -73,6 +75,8 @@ const addCategory = async () => {
   } catch (e) {
     console.error('Ошибка создания категории:', e);
     showMessage(e.message || 'Ошибка при создании категории', true);
+  } finally {
+    setIsSubmitting(false);
   }
 };
 
@@ -180,6 +184,7 @@ const addCategory = async () => {
           gap: 12,
           marginBottom: 24,
           alignItems: 'center',
+          flexWrap: 'wrap'
         }}
       >
         <select
@@ -190,15 +195,16 @@ const addCategory = async () => {
             setParentRoom('');
             setParentElement('');
           }}
-          style={{ ...inputStyle }}
+          style={{ ...inputStyle, minWidth: '200px' }}
         >
           <option value="room">🏠 Комната</option>
           <option value="element">📦 Элемент (внутри комнаты)</option>
           <option value="sub">🔹 Подкатегория (внутри элемента)</option>
         </select>
 
-        {catType !== 'room' && (
-          <div style={{ position: 'relative', width: '100%' }}>
+        {/* Выпадающий список для выбора комнаты при создании элемента или подкатегории */}
+        {(catType === 'element' || catType === 'sub') && (
+          <div style={{ position: 'relative', width: '100%', marginTop: '10px' }}>
             <select
               value={parentRoom}
               onChange={(e) => setParentRoom(e.target.value)}
@@ -209,12 +215,13 @@ const addCategory = async () => {
             >
               <option value="">— Выбери комнату —</option>
               {categories
-                .filter((c) => c.parent_id === null)
-                .map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.name}
-                  </option>
-                ))}
+  .filter((c) => !('parent_id' in c) || c.parent_id === null || c.parent_id === 0)
+  .map((room) => (
+    <option key={room.id} value={room.id}>
+      {room.name}
+    </option>
+  ))}
+
               {!categories.filter(c => c.parent_id === null).length && (
                 <option value="" disabled>Нет доступных комнат</option>
               )}
@@ -235,7 +242,7 @@ const addCategory = async () => {
         )}
 
         {catType === 'sub' && parentRoom && (
-          <div style={{ position: 'relative', width: '100%' }}>
+          <div style={{ position: 'relative', width: '100%', marginTop: '10px' }}>
             <select
               value={parentElement}
               onChange={(e) => setParentElement(e.target.value)}

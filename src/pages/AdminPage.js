@@ -4,7 +4,7 @@ import CategoryManager from '../components/admin/CategoryManager';
 import ProductManager from '../components/admin/ProductManager';
 import CoefficientManager from '../components/admin/CoefficientManager';
 import StyleAdmin from '../components/StyleAdmin';
-import { authAPI, tokenUtils, productAPI } from '../services/api';
+import { authAPI, tokenUtils, productAPI, categoryAPI } from '../services/api';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -34,6 +34,24 @@ function AdminPage({
 
   const ADMIN_KEY = 'V2patTbDXS1wuqbqpyZGwg2vq70cem2wk3ElHO6y9l2FhfgNfN';
 
+  useEffect(() => {
+  fetchCategories();
+}, []);
+
+const fetchCategories = async () => {
+  const token = await getAdminToken();
+  if (!token) return;
+
+  try {
+    const data = await categoryAPI.getAll();
+    setCategories(data);
+  } catch (e) {
+    console.error('Ошибка загрузки категорий:', e);
+    showMessage('Не удалось загрузить категории', true);
+  }
+};
+
+  
   const getAdminToken = async () => {
     if (adminToken) return adminToken;
 

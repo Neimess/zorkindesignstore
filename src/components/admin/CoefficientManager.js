@@ -25,17 +25,20 @@ function CoefficientManager({ getAdminToken, showMessage, styles }) {
 
   // Получение списка коэффициентов
   const fetchCoefficients = async () => {
-    try {
-      setLoading(true);
-      const data = await coefficientAPI.getAll();
-      setCoefficients(data);
-    } catch (err) {
-      console.error('Ошибка при загрузке коэффициентов:', err);
-      showMessage('Ошибка при загрузке коэффициентов: ' + (err.message || 'Неизвестная ошибка'), true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const token = await getAdminToken();
+    if (!token) return;
+    const data = await coefficientAPI.getAll(token);
+    setCoefficients(data);
+  } catch (err) {
+    console.error('Ошибка при загрузке коэффициентов:', err);
+    showMessage('Ошибка при загрузке коэффициентов: ' + (err.message || 'Неизвестная ошибка'), true);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Сброс формы
   const resetForm = () => {

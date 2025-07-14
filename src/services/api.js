@@ -215,7 +215,12 @@ export const productAPI = {
 // Функции для работы с коэффициентами
 export const coefficientAPI = {
   // Получить все коэффициенты
-  getAll: () => apiRequest('/admin/coefficients'),
+  getAll: (token) =>
+    apiRequest('/admin/coefficients', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
   
   // Получить коэффициент по ID
   getById: (id) => apiRequest(`/admin/coefficients/${id}`),

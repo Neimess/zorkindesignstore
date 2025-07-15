@@ -148,8 +148,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 
 	if err := s.repo.Delete(ctx, id); err != nil {
 		mapping := map[error]error{
-			der.ErrNotFound:               nil,
-			domProduct.ErrProductNotFound: nil,
+			der.ErrNotFound: nil,
 		}
 		return utils.ErrorHandler(log, op, err, mapping)
 	}

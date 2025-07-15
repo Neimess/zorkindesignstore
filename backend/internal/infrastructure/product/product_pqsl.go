@@ -10,6 +10,7 @@ import (
 	"github.com/lib/pq"
 
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
+	"github.com/Neimess/zorkin-store-project/pkg/app_error"
 	database "github.com/Neimess/zorkin-store-project/pkg/database"
 	tx "github.com/Neimess/zorkin-store-project/pkg/database/tx"
 
@@ -227,7 +228,7 @@ func (r *PGProductRepository) Delete(ctx context.Context, id int64) error {
 			return err
 		}
 		if cnt == 0 {
-			return prodDom.ErrProductNotFound
+			return app_error.ErrNotFound
 		}
 		return nil
 	})

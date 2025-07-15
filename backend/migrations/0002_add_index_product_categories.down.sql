@@ -1,1 +1,1 @@
-DROP INDEX idx_products_category;
+DROP INDEX IF EXISTS idx_products_category;

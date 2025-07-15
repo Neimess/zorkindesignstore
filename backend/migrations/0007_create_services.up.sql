@@ -1,4 +1,4 @@
-CREATE TABLE services (
+CREATE TABLE IF NOT EXISTS services (
     service_id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,

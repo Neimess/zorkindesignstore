@@ -1,1 +1,1 @@
-CREATE INDEX idx_prodattr_product ON product_attributes(product_id);
+CREATE INDEX IF NOT EXISTS idx_prodattr_product ON product_attributes(product_id);

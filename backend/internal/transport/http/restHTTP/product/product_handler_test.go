@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ type ProductHandlerSuite struct {
 
 func (s *ProductHandlerSuite) SetupTest() {
 	s.mockSvc = mocks.NewMockProductService(s.T())
-	dep, err := NewDeps(slog.New(slog.DiscardHandler), s.mockSvc)
+	dep, err := NewDeps(slog.New(slog.NewTextHandler(io.Discard, nil)), s.mockSvc)
 	s.Require().NoError(err)
 	s.h = New(dep)
 }
@@ -50,12 +50,10 @@ func (s *ProductHandlerSuite) TestCreate() {
 				Name:       "ValidProduct",
 				Price:      10,
 				CategoryID: 1,
-				Attributes: []dto.ProductAttributeValueRequest{
-					{AttributeID: 2, Value: "some value"},
-				},
+				Attributes: []dto.ProductAttributeRequest{{Name: "Объем", Value: "10"}},
 			},
 			svcMock: func(s *mocks.MockProductService) {
-				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, nil).Once()
+				s.EXPECT().Create(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1, Name: "ValidProduct", Price: 10, CategoryID: 1}, nil).Once()
 			},
 			wantCode: http.StatusCreated,
 			wantCheck: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -63,6 +61,7 @@ func (s *ProductHandlerSuite) TestCreate() {
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.Equal(t, int64(1), resp.ProductID)
+				assert.Equal(t, "ValidProduct", resp.Name)
 			},
 		},
 		{
@@ -77,13 +76,8 @@ func (s *ProductHandlerSuite) TestCreate() {
 				Name:       "",
 				Price:      10,
 				CategoryID: 1,
-				Attributes: []dto.ProductAttributeValueRequest{
-					{AttributeID: 2, Value: "some value"},
-				},
 			},
-			svcMock: func(s *mocks.MockProductService) {
-				// Не ожидаем вызов сервиса при ошибке валидации
-			},
+			svcMock:  nil,
 			wantCode: http.StatusUnprocessableEntity,
 			wantCheck: func(t *testing.T, w *httptest.ResponseRecorder) {
 				var resp httputils.ValidationErrorResponse
@@ -107,8 +101,7 @@ func (s *ProductHandlerSuite) TestCreate() {
 			}
 			w := httptest.NewRecorder()
 
-			shouldMock := tc.svcMock != nil && tc.wantCode == http.StatusCreated
-			if shouldMock {
+			if tc.svcMock != nil {
 				tc.svcMock(s.mockSvc)
 			}
 
@@ -118,62 +111,9 @@ func (s *ProductHandlerSuite) TestCreate() {
 			if tc.wantCheck != nil {
 				tc.wantCheck(s.T(), w)
 			}
-			if shouldMock {
+			if tc.svcMock != nil {
 				s.mockSvc.AssertExpectations(s.T())
 			}
-		})
-	}
-}
-
-func (s *ProductHandlerSuite) TestCreateWithAttributes() {
-	type testCase struct {
-		name     string
-		body     interface{}
-		svcMock  func(*mocks.MockProductService)
-		wantCode int
-	}
-
-	tests := []testCase{
-		{
-			name: "success",
-			body: dto.ProductRequest{Name: "ProductWithAttrs", Price: 10, CategoryID: 1},
-			svcMock: func(svc *mocks.MockProductService) {
-				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, nil).Once()
-			},
-			wantCode: http.StatusCreated,
-		},
-		{
-			name:     "bad JSON",
-			body:     `{`,
-			svcMock:  nil,
-			wantCode: http.StatusBadRequest,
-		},
-		{
-			name: "invalid attribute",
-			body: dto.ProductRequest{Name: "ProductWithInvalidAttr", Price: 10, CategoryID: 1},
-			svcMock: func(svc *mocks.MockProductService) {
-				svc.EXPECT().CreateWithAttrs(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 1}, prodDom.ErrInvalidAttribute).Once()
-			},
-			wantCode: http.StatusBadRequest,
-		},
-	}
-
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			s.SetupTest()
-			var req *http.Request
-			if s, ok := tc.body.(string); ok {
-				req = httptest.NewRequest(http.MethodPost, "/api/admin/product/detailed", bytes.NewReader([]byte(s)))
-			} else {
-				b, _ := json.Marshal(tc.body)
-				req = httptest.NewRequest(http.MethodPost, "/api/admin/product/detailed", bytes.NewReader(b))
-			}
-			w := httptest.NewRecorder()
-			if tc.svcMock != nil {
-				tc.svcMock(s.mockSvc)
-			}
-			s.h.CreateWithAttributes(w, req)
-			assert.Equal(s.T(), tc.wantCode, w.Code)
 		})
 	}
 }
@@ -203,9 +143,9 @@ func (s *ProductHandlerSuite) TestGetDetailed() {
 		},
 		{
 			name: "not found",
-			id:   "1",
+			id:   "2",
 			svcMock: func(svc *mocks.MockProductService) {
-				svc.EXPECT().GetDetailed(mock.Anything, int64(1)).Return(nil, prodDom.ErrProductNotFound).Once()
+				svc.EXPECT().GetDetailed(mock.Anything, int64(2)).Return(nil, prodDom.ErrProductNotFound).Once()
 			},
 			wantCode: http.StatusNotFound,
 		},
@@ -219,7 +159,7 @@ func (s *ProductHandlerSuite) TestGetDetailed() {
 				req = httptest.NewRequest(http.MethodGet, "/api/product/abc", nil)
 				req = withChiParams(req, map[string]string{"id": "abc"})
 			} else {
-				req = httptest.NewRequest(http.MethodGet, "/api/product/1", nil)
+				req = httptest.NewRequest(http.MethodGet, "/api/product/"+tc.id, nil)
 				req = withChiParams(req, map[string]string{"id": tc.id})
 			}
 			w := httptest.NewRecorder()
@@ -249,13 +189,25 @@ func (s *ProductHandlerSuite) TestListByCategory() {
 			},
 			wantCode: http.StatusOK,
 		},
+		{
+			name:     "bad id",
+			id:       "abc",
+			svcMock:  nil,
+			wantCode: http.StatusBadRequest,
+		},
 	}
 
 	for _, tc := range tests {
 		s.Run(tc.name, func() {
 			s.SetupTest()
-			req := httptest.NewRequest(http.MethodGet, "/api/product/category/"+tc.id, nil)
-			req = withChiParams(req, map[string]string{"id": tc.id})
+			var req *http.Request
+			if tc.name == "bad id" {
+				req = httptest.NewRequest(http.MethodGet, "/api/product/category/abc", nil)
+				req = withChiParams(req, map[string]string{"id": "abc"})
+			} else {
+				req = httptest.NewRequest(http.MethodGet, "/api/product/category/"+tc.id, nil)
+				req = withChiParams(req, map[string]string{"id": tc.id})
+			}
 			w := httptest.NewRecorder()
 			if tc.svcMock != nil {
 				tc.svcMock(s.mockSvc)
@@ -275,7 +227,7 @@ func (s *ProductHandlerSuite) TestUpdate() {
 	w := httptest.NewRecorder()
 
 	s.SetupTest()
-	s.mockSvc.EXPECT().Update(mock.Anything, mock.Anything).Return(validProduct(), nil).Once()
+	s.mockSvc.EXPECT().Update(mock.Anything, mock.Anything).Return(&prodDom.Product{ID: 7, Name: "UpdatedProduct", Price: 10, CategoryID: 1}, nil).Once()
 	s.h.Update(w, req)
 	assert.Equal(s.T(), http.StatusOK, w.Code)
 }
@@ -302,16 +254,4 @@ func withChiParams(r *http.Request, params map[string]string) *http.Request {
 	}
 	ctx := context.WithValue(r.Context(), chi.RouteCtxKey, routeCtx)
 	return r.WithContext(ctx)
-}
-
-func validProduct() *prodDom.Product {
-	desc := "Test Description"
-	return &prodDom.Product{
-		ID:          1,
-		Name:        "Test Product",
-		Description: &desc,
-		Price:       100.0,
-		CategoryID:  1,
-		CreatedAt:   time.Now(),
-	}
 }

@@ -78,7 +78,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		h.handleServiceError(w, err)
 		return
 	}
-	w.Header().Set("Location", "/api/category/"+fmt.Sprint(created.ID))
+	w.Header().Set("Location", fmt.Sprintf("/api/category/%d", created.ID))
 	httputils.WriteJSON(w, http.StatusCreated, dto.ToDTOResponse(created))
 }
 

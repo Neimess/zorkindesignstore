@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/pkg/httputils"
@@ -53,8 +52,8 @@ func New(d Deps) *Handler {
 }
 
 // CreateProduct godoc
-// @Summary Создать продукт
-// @Description  Creates a new product and returns its ID
+// @Summary Создать продукт вместе с аттрибутами
+// @Description  Creates a new product with it's attributes and returns its ID
 // @Tags         products
 // @Accept       json
 // @Produce      json
@@ -75,66 +74,20 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.Create")
 
-	input, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
 	if !ok {
 		return
 	}
-	product := dto.MapCreateReqToDomain(input)
+	domainProduct := req.MapCreateToDomain()
 
-	product, err := h.srv.Create(ctx, product)
+	product, err := h.srv.Create(ctx, domainProduct)
 	if err != nil {
 		h.handleServiceError(w, err)
 		return
 	}
 	resp := dto.MapDomainToProductResponse(product)
-	w.Header().Set("Location", fmt.Sprintf("/api/admin/product/%d", resp.ProductID))
+	w.Header().Set("Location", fmt.Sprintf("/api/product/%d", resp.ProductID))
 	httputils.WriteJSON(w, http.StatusCreated, resp)
-}
-
-// CreateWithAttributes godoc
-// @Summary      Create product with attributes
-// @Description  Creates a new product with its attributes and returns the created ID.
-// @Tags         products
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        product  body      dto.ProductRequest  true  "Product to create"
-// @Success      201	"No Content"
-// @Failure      400      {object}  httputils.ErrorResponse "Bad request"
-// @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
-// @Failure      403      {object}  httputils.ErrorResponse "Forbidden access"
-// @Failure      404      {object}  httputils.ErrorResponse "Not found"
-// @Failure      405	  {object}  httputils.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      409      {object}  httputils.ErrorResponse "Conflict, e.g. duplicate product"
-// @Failure      500      {object}  httputils.ErrorResponse "Internal server error"
-// @Router       /api/admin/product/detailed [post]
-func (h *Handler) CreateWithAttributes(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := h.log.With("op", "transport.http.restHTTP.product.GetDetailed")
-
-	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
-	if !ok {
-		return
-	}
-	domainProd := dto.MapCreateReqToDomain(req)
-
-	_, err := h.srv.CreateWithAttrs(ctx, domainProd)
-	if err != nil {
-		switch {
-		case errors.Is(err, prodDom.ErrInvalidAttribute):
-			log.Warn("validation failed",
-				slog.String("reason", "invalid attribute_id"),
-			)
-			httputils.WriteError(w, http.StatusBadRequest, "invalid product data")
-			return
-		default:
-			log.Error("unexpected service error", slog.Any("error", err))
-			httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusCreated)
 }
 
 // GetDetailedProduct godoc
@@ -169,7 +122,6 @@ func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.MapDomainToProductResponse(product)
-
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
@@ -246,10 +198,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4) map to domain
-	p := dto.MapUpdateReqToDomain(id, req)
-
-	// 5) execute service
+	p := req.MapUpdateToDomain(id)
 	prodRes, err := h.srv.Update(ctx, p)
 	if err != nil {
 		h.handleServiceError(w, err)
@@ -292,10 +241,12 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, prodDom.ErrBadCategoryID) || errors.Is(err, catDom.ErrCategoryNotFound):
+	case errors.Is(err, prodDom.ErrBadCategoryID):
 		h.log.Warn("invalid category reference", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusBadRequest, "invalid or missing category")
-
+	case errors.Is(err, prodDom.ErrBadServiceID):
+		h.log.Warn("invalid category reference", slog.Any("error", err))
+		httputils.WriteError(w, http.StatusBadRequest, "invalid service id")
 	case errors.Is(err, prodDom.ErrInvalidAttribute):
 		h.log.Warn("invalid attribute reference", slog.Any("error", err))
 		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")

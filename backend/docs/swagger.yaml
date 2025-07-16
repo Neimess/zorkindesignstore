@@ -179,16 +179,23 @@ definitions:
         example: 499
         type: number
     type: object
-  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest:
+  github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeRequest:
     properties:
-      attribute_id:
-        example: 2
-        type: integer
+      name:
+        example: Объём
+        maxLength: 255
+        minLength: 2
+        type: string
+      unit:
+        example: л
+        maxLength: 50
+        minLength: 1
+        type: string
       value:
         example: "1.25"
         type: string
     required:
-    - attribute_id
+    - name
     - value
     type: object
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueResponse:
@@ -209,26 +216,31 @@ definitions:
   github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest:
     properties:
       attributes:
+        description: required:false
         items:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest'
+          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeRequest'
         type: array
       category_id:
         example: 1
         type: integer
       description:
         example: Прочный плиточный материал
+        maxLength: 1000
+        minLength: 2
         type: string
       image_url:
         example: https://example.com/image.png
         type: string
       name:
         example: Керамогранит
+        maxLength: 255
         minLength: 2
         type: string
       price:
         example: 3490
         type: number
       services:
+        description: required:false
         items:
           $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceRequest'
         type: array
@@ -886,7 +898,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new product and returns its ID
+      description: Creates a new product with it's attributes and returns its ID
       parameters:
       - description: Product to create (may contain services)
         in: body
@@ -939,7 +951,7 @@ paths:
             $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Создать продукт
+      summary: Создать продукт вместе с аттрибутами
       tags:
       - products
   /api/admin/product/{id}:
@@ -1013,57 +1025,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Обновить продукт
-      tags:
-      - products
-  /api/admin/product/detailed:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new product with its attributes and returns the created
-        ID.
-      parameters:
-      - description: Product to create
-        in: body
-        name: product
-        required: true
-        schema:
-          $ref: '#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: No Content
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "401":
-          description: Unauthorized access
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "403":
-          description: Forbidden access
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "404":
-          description: Not found
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "405":
-          description: Method not allowed, e.g. POST on GET endpoint
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "409":
-          description: Conflict, e.g. duplicate product
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Create product with attributes
       tags:
       - products
   /api/admin/services:

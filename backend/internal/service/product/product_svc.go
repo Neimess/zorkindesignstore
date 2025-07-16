@@ -8,6 +8,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	"github.com/Neimess/zorkin-store-project/internal/domain/service"
 	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
@@ -15,7 +16,7 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
 	CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
-	GetWithAttrs(ctx context.Context, id int64) (*domProduct.Product, error)
+	Get(ctx context.Context, id int64) (*domProduct.Product, error)
 	ListByCategory(ctx context.Context, catID int64) ([]domProduct.Product, error)
 	UpdateWithAttrs(ctx context.Context, p *domProduct.Product) (*domProduct.Product, error)
 	Delete(ctx context.Context, id int64) error
@@ -51,10 +52,11 @@ func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduc
 	const op = "service.product.Create"
 	log := s.log.With("op", op)
 
-	prod, err := s.repo.Create(ctx, p)
+	prod, err := s.repo.CreateWithAttrs(ctx, p)
 	if err != nil {
 		mapping := map[error]error{
 			der.ErrNotFound:              domProduct.ErrBadCategoryID,
+			service.ErrServiceNotFound:   domProduct.ErrBadServiceID,
 			category.ErrCategoryNotFound: domProduct.ErrBadCategoryID,
 			der.ErrValidation:            domProduct.ErrInvalidAttribute,
 			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
@@ -91,7 +93,7 @@ func (s *Service) GetDetailed(ctx context.Context, id int64) (*domProduct.Produc
 	const op = "service.product.GetDetailed"
 	log := s.log.With("op", op)
 
-	product, err := s.repo.GetWithAttrs(ctx, id)
+	product, err := s.repo.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, der.ErrNotFound) {
 			return nil, domProduct.ErrProductNotFound

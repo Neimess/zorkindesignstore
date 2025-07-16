@@ -10,10 +10,12 @@ import (
 	"github.com/lib/pq"
 
 	repoError "github.com/Neimess/zorkin-store-project/internal/infrastructure/error"
+	"github.com/Neimess/zorkin-store-project/internal/infrastructure/service"
 	"github.com/Neimess/zorkin-store-project/pkg/app_error"
 	database "github.com/Neimess/zorkin-store-project/pkg/database"
 	tx "github.com/Neimess/zorkin-store-project/pkg/database/tx"
 
+	attrDom "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	serviceDom "github.com/Neimess/zorkin-store-project/internal/domain/service"
 )
@@ -65,30 +67,56 @@ func (r *PGProductRepository) Create(ctx context.Context, p *prodDom.Product) (*
 	return p, nil
 }
 
-// CreateWithAttrs runs product and attribute insert in one transaction
-func (r *PGProductRepository) CreateWithAttrs(ctx context.Context, p *prodDom.Product) (*prodDom.Product, error) {
+// CreateWithAttrs создаёт продукт, заводит все переданные атрибуты
+// и связывает их с продуктом в одной транзакции.
+func (r *PGProductRepository) CreateWithAttrs(
+	ctx context.Context,
+	p *prodDom.Product,
+) (*prodDom.Product, error) {
 	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (*prodDom.Product, error) {
-		id, err := r.insertProductTx(ctx, tx, p)
+		prodID, err := r.insertProductTx(ctx, tx, p)
 		if err != nil {
 			return nil, err
 		}
+
+		var createdAttrs []prodDom.ProductAttribute
 		if len(p.Attributes) > 0 {
-			if err := r.insertAttributesTx(ctx, tx, id, p.Attributes); err != nil {
+			r.log.Debug("Creating attributes", slog.Any("attrs", p.Attributes))
+			createdAttrs, err = r.insertNewAttributesTx(ctx, tx, p.Attributes)
+			if err != nil {
+				return nil, err
+			}
+
+			r.log.Debug("Linking attributes to product", slog.Any("created_attrs", createdAttrs))
+			if err := r.insertProductAttributesTx(ctx, tx, prodID, createdAttrs); err != nil {
 				return nil, err
 			}
 		}
+
 		if len(p.Services) > 0 {
-			if err := r.insertServicesTx(ctx, tx, id, p.Services); err != nil {
+			svcIDs := make([]int64, len(p.Services))
+			for i, s := range p.Services {
+				svcIDs[i] = s.ID
+			}
+
+			if err := r.validateServiceIDs(ctx, tx, svcIDs); err != nil {
+				return nil, err
+			}
+
+			if err := r.insertServicesTx(ctx, tx, prodID, p.Services); err != nil {
 				return nil, err
 			}
 		}
-		p.ID = id
+
+		p.ID = prodID
+		p.Attributes = createdAttrs
+
 		return p, nil
 	})
 }
 
 // GetWithAttrs retrieves a product and its attributes
-func (r *PGProductRepository) GetWithAttrs(ctx context.Context, id int64) (*prodDom.Product, error) {
+func (r *PGProductRepository) Get(ctx context.Context, id int64) (*prodDom.Product, error) {
 	prod, err := r.fetchProduct(ctx, id)
 	if err != nil {
 		return nil, err
@@ -98,6 +126,12 @@ func (r *PGProductRepository) GetWithAttrs(ctx context.Context, id int64) (*prod
 		return nil, err
 	}
 	prod.Attributes = attrs
+	services, err := r.fetchServices(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	prod.Services = services
+	r.log.Debug("Product fetched", slog.Any("Product", prod))
 	return prod, nil
 }
 
@@ -107,7 +141,6 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 		SELECT product_id, name, price, description, category_id, image_url, created_at
 		FROM products WHERE category_id = $1
 	`
-
 	var raws []productRow
 	err := r.withQuery(ctx, query, func() error {
 		return r.db.SelectContext(ctx, &raws, query, catID)
@@ -248,7 +281,61 @@ func (r *PGProductRepository) insertProductTx(ctx context.Context, tx *sqlx.Tx, 
 	return id, nil
 }
 
-func (r *PGProductRepository) insertAttributesTx(
+// insertNewAttributesTx создаёт сразу несколько записей в attributes
+// и возвращает сгенерированные ID вместе с именами и unit.
+// Разрешено вызывать только внутри tx.
+func (r *PGProductRepository) insertNewAttributesTx(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	newAttrs []prodDom.ProductAttribute,
+) ([]prodDom.ProductAttribute, error) {
+	if len(newAttrs) == 0 {
+		return nil, nil
+	}
+
+	names := make([]string, len(newAttrs))
+	units := make([]*string, len(newAttrs))
+	categories := make([]int64, len(newAttrs))
+	values := make([]string, len(newAttrs))
+	for i, a := range newAttrs {
+		names[i] = a.Attribute.Name
+		units[i] = a.Attribute.Unit
+		categories[i] = a.Attribute.CategoryID
+		values[i] = a.Value
+	}
+
+	const q = `
+        INSERT INTO attributes (name, unit, category_id)
+		SELECT x, y, z
+		FROM UNNEST($1::text[], $2::text[], $3::bigint[]) AS t(x, y, z)
+        RETURNING attribute_id, name, unit
+    `
+	var rows []struct {
+		ID   int64   `db:"attribute_id"`
+		Name string  `db:"name"`
+		Unit *string `db:"unit"`
+	}
+
+	if err := tx.SelectContext(ctx, &rows, q, pq.Array(names), pq.Array(units), pq.Array(categories)); err != nil {
+		return nil, r.mapPostgreSQLError(err)
+	}
+
+	result := make([]prodDom.ProductAttribute, len(rows))
+	for i, row := range rows {
+		result[i] = prodDom.ProductAttribute{
+			AttributeID: row.ID,
+			Attribute: attrDom.Attribute{
+				ID:   row.ID,
+				Name: row.Name,
+				Unit: row.Unit,
+			},
+			Value: values[i],
+		}
+	}
+	return result, nil
+}
+
+func (r *PGProductRepository) insertProductAttributesTx(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	prodID int64,
@@ -287,18 +374,29 @@ func (r *PGProductRepository) insertAttributesTx(
 	return nil
 }
 
-func (r *PGProductRepository) insertServicesTx(ctx context.Context, tx *sqlx.Tx, prodID int64, services []serviceDom.Service) error {
+func (r *PGProductRepository) insertServicesTx(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	prodID int64,
+	services []serviceDom.Service,
+) error {
 	if len(services) == 0 {
 		return nil
 	}
+
 	prodIDs := make([]int64, len(services))
 	svcIDs := make([]int64, len(services))
 	for i, s := range services {
 		prodIDs[i] = prodID
 		svcIDs[i] = s.ID
 	}
-	const query = `INSERT INTO product_services (product_id, service_id) SELECT * FROM UNNEST($1::bigint[], $2::bigint[]) ON CONFLICT DO NOTHING`
-	_, err := tx.ExecContext(ctx, query, pq.Array(prodIDs), pq.Array(svcIDs))
+
+	const q = `
+        INSERT INTO product_services (product_id, service_id)
+        SELECT * FROM UNNEST($1::bigint[], $2::bigint[])
+        ON CONFLICT DO NOTHING
+    `
+	_, err := tx.ExecContext(ctx, q, pq.Array(prodIDs), pq.Array(svcIDs))
 	if err != nil {
 		return r.mapPostgreSQLError(err)
 	}
@@ -351,13 +449,8 @@ func (r *PGProductRepository) fetchAttributesBatch(ctx context.Context, ids []in
 }
 
 func (r *PGProductRepository) fetchServices(ctx context.Context, prodID int64) ([]serviceDom.Service, error) {
-	const q = `SELECT s.service_id, s.name, s.description, s.price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
-	var rows []struct {
-		ID          int64   `db:"service_id"`
-		Name        string  `db:"name"`
-		Description *string `db:"description"`
-		Price       float64 `db:"price"`
-	}
+	const q = `SELECT s.service_id, s.name, s.description, s.base_price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
+	var rows []service.ServiceDB
 	err := r.db.SelectContext(ctx, &rows, q, prodID)
 	if err != nil {
 		return nil, r.mapPostgreSQLError(err)
@@ -372,6 +465,27 @@ func (r *PGProductRepository) fetchServices(ctx context.Context, prodID int64) (
 		})
 	}
 	return services, nil
+}
+
+func (r *PGProductRepository) validateServiceIDs(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	serviceIDs []int64,
+) error {
+	if len(serviceIDs) == 0 {
+		return nil
+	}
+
+	const q = `SELECT service_id FROM services WHERE service_id = ANY($1)`
+	var existing []int64
+	if err := tx.SelectContext(ctx, &existing, q, pq.Array(serviceIDs)); err != nil {
+		return r.mapPostgreSQLError(err)
+	}
+
+	if len(existing) != len(serviceIDs) {
+		return serviceDom.ErrServiceNotFound
+	}
+	return nil
 }
 
 func (r *PGProductRepository) withQuery(ctx context.Context, query string, fn func() error, extras ...slog.Attr) error {

@@ -46,82 +46,6 @@ func validProduct() *domProduct.Product {
 	}
 }
 
-func (s *ProductServiceSuite) TestCreate() {
-	type testCase struct {
-		name      string
-		input     *domProduct.Product
-		mockSetup func()
-		expectErr error
-	}
-
-	tests := []testCase{
-		{
-			name:  "success",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(validProduct(), nil).Once()
-			},
-			expectErr: nil,
-		},
-		{
-			name:  "bad category",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(nil, der.ErrNotFound).Once()
-			},
-			expectErr: domProduct.ErrBadCategoryID,
-		},
-		{
-			name:  "bad category (category.ErrCategoryNotFound)",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(nil, catdomain.ErrCategoryNotFound).Once()
-			},
-			expectErr: domProduct.ErrBadCategoryID,
-		},
-		{
-			name:  "invalid attribute",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(nil, der.ErrValidation).Once()
-			},
-			expectErr: domProduct.ErrInvalidAttribute,
-		},
-		{
-			name:  "invalid attribute (bad request)",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(nil, der.ErrBadRequest).Once()
-			},
-			expectErr: domProduct.ErrInvalidAttribute,
-		},
-		{
-			name:  "repo error",
-			input: validProduct(),
-			mockSetup: func() {
-				s.mockRepo.On("Create", mock.Anything, mock.AnythingOfType("*product.Product")).Return(nil, errors.New("db fail")).Once()
-			},
-			expectErr: errors.New("db fail"),
-		},
-	}
-
-	for _, tc := range tests {
-		s.Run(tc.name, func() {
-			s.SetupTest()
-			tc.mockSetup()
-			prod, err := s.svc.Create(context.Background(), tc.input)
-			if tc.expectErr == nil {
-				s.NoError(err)
-				s.NotNil(prod)
-				s.Equal(int64(1), prod.ID)
-			} else {
-				s.Error(err)
-				s.Nil(prod)
-			}
-		})
-	}
-}
-
 func (s *ProductServiceSuite) TestCreateWithAttrs() {
 	type testCase struct {
 		name      string
@@ -211,7 +135,7 @@ func (s *ProductServiceSuite) TestGetDetailed() {
 			name: "success",
 			id:   1,
 			mockSetup: func() {
-				s.mockRepo.On("GetWithAttrs", mock.Anything, int64(1)).Return(p, nil).Once()
+				s.mockRepo.On("Get", mock.Anything, int64(1)).Return(p, nil).Once()
 			},
 			expectErr: nil,
 		},
@@ -219,7 +143,7 @@ func (s *ProductServiceSuite) TestGetDetailed() {
 			name: "not found",
 			id:   2,
 			mockSetup: func() {
-				s.mockRepo.On("GetWithAttrs", mock.Anything, int64(2)).Return(nil, der.ErrNotFound).Once()
+				s.mockRepo.On("Get", mock.Anything, int64(2)).Return(nil, der.ErrNotFound).Once()
 			},
 			expectErr: domProduct.ErrProductNotFound,
 		},
@@ -227,7 +151,7 @@ func (s *ProductServiceSuite) TestGetDetailed() {
 			name: "repo error",
 			id:   3,
 			mockSetup: func() {
-				s.mockRepo.On("GetWithAttrs", mock.Anything, int64(3)).Return(nil, errors.New("db fail")).Once()
+				s.mockRepo.On("Get", mock.Anything, int64(3)).Return(nil, errors.New("db fail")).Once()
 			},
 			expectErr: errors.New("db fail"),
 		},

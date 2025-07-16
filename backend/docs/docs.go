@@ -890,7 +890,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new product and returns its ID",
+                "description": "Creates a new product with it's attributes and returns its ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -900,7 +900,7 @@ const docTemplate = `{
                 "tags": [
                     "products"
                 ],
-                "summary": "Создать продукт",
+                "summary": "Создать продукт вместе с аттрибутами",
                 "parameters": [
                     {
                         "description": "Product to create (may contain services)",
@@ -963,84 +963,6 @@ const docTemplate = `{
                     },
                     "429": {
                         "description": "Too many requests, e.g. rate limiting",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/admin/product/detailed": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new product with its attributes and returns the created ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "products"
-                ],
-                "summary": "Create product with attributes",
-                "parameters": [
-                    {
-                        "description": "Product to create",
-                        "name": "product",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized access",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden access",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not found",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "405": {
-                        "description": "Method not allowed, e.g. POST on GET endpoint",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict, e.g. duplicate product",
                         "schema": {
                             "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
                         }
@@ -2086,16 +2008,24 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest": {
+        "github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeRequest": {
             "type": "object",
             "required": [
-                "attribute_id",
+                "name",
                 "value"
             ],
             "properties": {
-                "attribute_id": {
-                    "type": "integer",
-                    "example": 2
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2,
+                    "example": "Объём"
+                },
+                "unit": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1,
+                    "example": "л"
                 },
                 "value": {
                     "type": "string",
@@ -2133,9 +2063,10 @@ const docTemplate = `{
             ],
             "properties": {
                 "attributes": {
+                    "description": "required:false",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeValueRequest"
+                        "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductAttributeRequest"
                     }
                 },
                 "category_id": {
@@ -2144,6 +2075,8 @@ const docTemplate = `{
                 },
                 "description": {
                     "type": "string",
+                    "maxLength": 1000,
+                    "minLength": 2,
                     "example": "Прочный плиточный материал"
                 },
                 "image_url": {
@@ -2152,6 +2085,7 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string",
+                    "maxLength": 255,
                     "minLength": 2,
                     "example": "Керамогранит"
                 },
@@ -2160,6 +2094,7 @@ const docTemplate = `{
                     "example": 3490
                 },
                 "services": {
+                    "description": "required:false",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_internal_transport_http_restHTTP_product_dto.ProductServiceRequest"

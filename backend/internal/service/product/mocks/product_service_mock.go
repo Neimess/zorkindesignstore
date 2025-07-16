@@ -231,12 +231,12 @@ func (_c *MockProductRepository_Delete_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// GetWithAttrs provides a mock function for the type MockProductRepository
-func (_mock *MockProductRepository) GetWithAttrs(ctx context.Context, id int64) (*product.Product, error) {
+// Get provides a mock function for the type MockProductRepository
+func (_mock *MockProductRepository) Get(ctx context.Context, id int64) (*product.Product, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetWithAttrs")
+		panic("no return value specified for Get")
 	}
 
 	var r0 *product.Product
@@ -259,19 +259,19 @@ func (_mock *MockProductRepository) GetWithAttrs(ctx context.Context, id int64) 
 	return r0, r1
 }
 
-// MockProductRepository_GetWithAttrs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetWithAttrs'
-type MockProductRepository_GetWithAttrs_Call struct {
+// MockProductRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockProductRepository_Get_Call struct {
 	*mock.Call
 }
 
-// GetWithAttrs is a helper method to define mock.On call
+// Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id int64
-func (_e *MockProductRepository_Expecter) GetWithAttrs(ctx interface{}, id interface{}) *MockProductRepository_GetWithAttrs_Call {
-	return &MockProductRepository_GetWithAttrs_Call{Call: _e.mock.On("GetWithAttrs", ctx, id)}
+func (_e *MockProductRepository_Expecter) Get(ctx interface{}, id interface{}) *MockProductRepository_Get_Call {
+	return &MockProductRepository_Get_Call{Call: _e.mock.On("Get", ctx, id)}
 }
 
-func (_c *MockProductRepository_GetWithAttrs_Call) Run(run func(ctx context.Context, id int64)) *MockProductRepository_GetWithAttrs_Call {
+func (_c *MockProductRepository_Get_Call) Run(run func(ctx context.Context, id int64)) *MockProductRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -289,12 +289,12 @@ func (_c *MockProductRepository_GetWithAttrs_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockProductRepository_GetWithAttrs_Call) Return(product1 *product.Product, err error) *MockProductRepository_GetWithAttrs_Call {
+func (_c *MockProductRepository_Get_Call) Return(product1 *product.Product, err error) *MockProductRepository_Get_Call {
 	_c.Call.Return(product1, err)
 	return _c
 }
 
-func (_c *MockProductRepository_GetWithAttrs_Call) RunAndReturn(run func(ctx context.Context, id int64) (*product.Product, error)) *MockProductRepository_GetWithAttrs_Call {
+func (_c *MockProductRepository_Get_Call) RunAndReturn(run func(ctx context.Context, id int64) (*product.Product, error)) *MockProductRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }

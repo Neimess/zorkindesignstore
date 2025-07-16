@@ -7,37 +7,41 @@ import (
 	ve "github.com/Neimess/zorkin-store-project/pkg/httputils"
 	"github.com/go-playground/validator/v10"
 
+	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	serviceDom "github.com/Neimess/zorkin-store-project/internal/domain/service"
 )
 
-var validate *validator.Validate = validator.New()
+var validate = validator.New()
 
-//swagger:model ProductCreateRequest
+// ProductRequest описывает базовый payload для создания или обновления продукта.
+// swagger:model ProductCreateRequest
 type ProductRequest struct {
-	Name        string                         `json:"name" example:"Керамогранит" validate:"required,min=2"`
-	Price       float64                        `json:"price" example:"3490" validate:"required,gt=0"`
-	Description *string                        `json:"description,omitempty" example:"Прочный плиточный материал"`
-	CategoryID  int64                          `json:"category_id" example:"1" validate:"required,gt=0"`
-	ImageURL    *string                        `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"omitempty,url"`
-	Attributes  []ProductAttributeValueRequest `json:"attributes,omitempty" validate:"dive"`
-	Services    []ProductServiceRequest        `json:"services,omitempty"`
+	Name        string                    `json:"name" example:"Керамогранит" validate:"required,min=2,max=255"`
+	Price       float64                   `json:"price" example:"3490" validate:"required,gt=0"`
+	Description *string                   `json:"description,omitempty" example:"Прочный плиточный материал" validate:"omitempty,min=2,max=1000"`
+	CategoryID  int64                     `json:"category_id" example:"1" validate:"required,gt=0"`
+	ImageURL    *string                   `json:"image_url,omitempty" example:"https://example.com/image.png" validate:"omitempty,url"`
+	Attributes  []ProductAttributeRequest `json:"attributes,omitempty" validate:"omitempty,dive"` // required:false
+	Services    []ProductServiceRequest   `json:"services,omitempty" validate:"omitempty,dive"`   // required:false
 }
 
-//swagger:model ProductAttributeValueRequest
-type ProductAttributeValueRequest struct {
-	AttributeID int64  `json:"attribute_id" example:"2" validate:"required,gt=1"`
-	Value       string `json:"value" example:"1.25" validate:"required"`
+// ProductAttributeRequest описывает новый атрибут для создания.
+// swagger:model ProductAttributeRequest
+type ProductAttributeRequest struct {
+	Name  string  `json:"name" example:"Объём" validate:"required,min=2,max=255"`
+	Unit  *string `json:"unit,omitempty" example:"л" validate:"omitempty,min=1,max=50"`
+	Value string  `json:"value" example:"1.25" validate:"required"`
 }
 
-// ProductServiceRequest описывает услугу для продукта
-//
-//swagger:model ProductServiceRequest
+// ProductServiceRequest описывает привязку услуги.
+// swagger:model ProductServiceRequest
 type ProductServiceRequest struct {
 	ServiceID int64 `json:"service_id" example:"1" validate:"required,gt=0"`
 }
 
-//swagger:model ProductResponse
+// ProductResponse описывает ответ API при получении продукта.
+// swagger:model ProductResponse
 type ProductResponse struct {
 	ProductID   int64                           `json:"product_id" example:"10"`
 	Name        string                          `json:"name" example:"Керамогранит"`
@@ -50,7 +54,8 @@ type ProductResponse struct {
 	Services    []ProductServiceResponse        `json:"services,omitempty"`
 }
 
-//swagger:model ProductAttributeValueResponse
+// ProductAttributeValueResponse отвечает за элемент атрибута в ответе.
+// swagger:model ProductAttributeValueResponse
 type ProductAttributeValueResponse struct {
 	AttributeID int64   `json:"attribute_id" example:"2"`
 	Name        string  `json:"name" example:"Объём"`
@@ -58,9 +63,8 @@ type ProductAttributeValueResponse struct {
 	Value       string  `json:"value" example:"1.25"`
 }
 
-// ProductServiceResponse описывает услугу в ответе
-//
-//swagger:model ProductServiceResponse
+// ProductServiceResponse отвечает за элемент услуги в ответе.
+// swagger:model ProductServiceResponse
 type ProductServiceResponse struct {
 	ID          int64   `json:"id" example:"1"`
 	Name        string  `json:"name" example:"Монтаж"`
@@ -68,40 +72,48 @@ type ProductServiceResponse struct {
 	Price       float64 `json:"price" example:"1500.00"`
 }
 
+// Validate проверяет поля ProductRequest.
 func (r ProductRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
-		if _, ok := err.(*validator.InvalidValidationError); ok {
-			return err
+		if inv, ok := err.(*validator.InvalidValidationError); ok {
+			return inv
 		}
-		validationErrors := err.(validator.ValidationErrors)
-		for _, e := range validationErrors {
+		for _, e := range err.(validator.ValidationErrors) {
+			var msg string
 			switch e.Field() {
 			case "Name":
-				errs = append(errs, ve.FieldError{Field: "name", Message: "name is required and must be at least 2 characters"})
+				msg = "name is required and must be 2-255 chars"
 			case "Price":
-				errs = append(errs, ve.FieldError{Field: "price", Message: "price is required and must be greater than 0"})
+				msg = "price is required and must be >0"
 			case "CategoryID":
-				errs = append(errs, ve.FieldError{Field: "category_id", Message: "category_id is required and must be greater than 0"})
+				msg = "category_id is required and must be >0"
+			case "Description":
+				msg = "description must be 2-1000 chars if set"
 			case "ImageURL":
-				errs = append(errs, ve.FieldError{Field: "image_url", Message: "image_url must be a valid URL"})
+				msg = "image_url must be valid URL if set"
 			case "Attributes":
-				errs = append(errs, ve.FieldError{Field: "attributes", Message: "invalid attributes"})
+				msg = "invalid existing attributes"
+			case "Services":
+				msg = "invalid services"
 			default:
-				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
+				msg = "invalid field"
+			}
+			errs = append(errs, ve.FieldError{Field: e.Field(), Message: msg})
+		}
+	}
+	// вложенная валидация
+	for i, a := range r.Attributes {
+		if err := a.Validate(); err != nil {
+			for _, fe := range err.(ve.ValidationErrorResponse).Errors {
+				fe.Field = fmt.Sprintf("attributes[%d].%s", i, fe.Field)
+				errs = append(errs, fe)
 			}
 		}
 	}
-	for idx, attr := range r.Attributes {
-		if err := attr.Validate(); err != nil {
-			if veResp, ok := err.(ve.ValidationErrorResponse); ok {
-				for _, ferr := range veResp.Errors {
-					ferr.Field = fmt.Sprintf("attributes[%d].%s", idx, ferr.Field)
-					errs = append(errs, ferr)
-				}
-			} else {
-				errs = append(errs, ve.FieldError{Field: fmt.Sprintf("attributes[%d]", idx), Message: err.Error()})
-			}
+	for i, s := range r.Services {
+		if err := s.Validate(); err != nil {
+			errs = append(errs, ve.FieldError{Field: fmt.Sprintf("services[%d]", i), Message: err.Error()})
 		}
 	}
 	if len(errs) > 0 {
@@ -110,21 +122,36 @@ func (r ProductRequest) Validate() error {
 	return nil
 }
 
-func (r ProductAttributeValueRequest) Validate() error {
+// Validate проверяет один ProductAttributeRequest.
+func (r ProductAttributeRequest) Validate() error {
 	var errs []ve.FieldError
 	if err := validate.Struct(r); err != nil {
-		if _, ok := err.(*validator.InvalidValidationError); ok {
-			return err
-		}
-		validationErrors := err.(validator.ValidationErrors)
-		for _, e := range validationErrors {
+		for _, e := range err.(validator.ValidationErrors) {
+			var msg string
 			switch e.Field() {
-			case "AttributeID":
-				errs = append(errs, ve.FieldError{Field: "attribute_id", Message: "attribute_id is required and must be greater than 1"})
+			case "Name":
+				msg = "name required 2-255 chars"
+			case "Unit":
+				msg = "unit must be 1-50 chars if set"
 			case "Value":
-				errs = append(errs, ve.FieldError{Field: "value", Message: "value is required"})
-			default:
-				errs = append(errs, ve.FieldError{Field: e.Field(), Message: "invalid field"})
+				msg = "value is required"
+			}
+			errs = append(errs, ve.FieldError{Field: e.Field(), Message: msg})
+		}
+	}
+	if len(errs) > 0 {
+		return ve.ValidationErrorResponse{Errors: errs}
+	}
+	return nil
+}
+
+// Validate проверяет один ProductServiceRequest.
+func (r ProductServiceRequest) Validate() error {
+	var errs []ve.FieldError
+	if err := validate.Struct(r); err != nil {
+		for _, e := range err.(validator.ValidationErrors) {
+			if e.Field() == "ServiceID" {
+				errs = append(errs, ve.FieldError{Field: "service_id", Message: "service_id must be >0"})
 			}
 		}
 	}
@@ -134,29 +161,39 @@ func (r ProductAttributeValueRequest) Validate() error {
 	return nil
 }
 
-func MapCreateReqToDomain(req *ProductRequest) *prodDom.Product {
+// MapCreateToDomain конвертирует ProductRequest в доменную модель.
+func (r ProductRequest) MapCreateToDomain() *prodDom.Product {
 	p := &prodDom.Product{
-		Name:        req.Name,
-		Price:       req.Price,
-		CategoryID:  req.CategoryID,
-		Description: req.Description,
-		ImageURL:    req.ImageURL,
+		Name:        r.Name,
+		Price:       r.Price,
+		CategoryID:  r.CategoryID,
+		Description: r.Description,
+		ImageURL:    r.ImageURL,
 	}
-
-	for _, a := range req.Attributes {
+	for _, a := range r.Attributes {
 		p.Attributes = append(p.Attributes, prodDom.ProductAttribute{
-			AttributeID: a.AttributeID,
-			Value:       a.Value,
+			Attribute: attr.Attribute{
+				Name:       a.Name,
+				Unit:       a.Unit,
+				CategoryID: r.CategoryID,
+			},
+			Value: a.Value,
 		})
 	}
-	if req.Services != nil {
-		for _, s := range req.Services {
-			p.Services = append(p.Services, serviceDom.Service{ID: s.ServiceID})
-		}
+	for _, s := range r.Services {
+		p.Services = append(p.Services, serviceDom.Service{ID: s.ServiceID})
 	}
 	return p
 }
 
+// MapUpdateToDomain конвертирует ProductRequest в домен для обновления.
+func (r *ProductRequest) MapUpdateToDomain(id int64) *prodDom.Product {
+	p := r.MapCreateToDomain()
+	p.ID = id
+	return p
+}
+
+// MapDomainToProductResponse строит ProductResponse из доменной модели.
 func MapDomainToProductResponse(p *prodDom.Product) *ProductResponse {
 	resp := &ProductResponse{
 		ProductID:   p.ID,
@@ -168,46 +205,10 @@ func MapDomainToProductResponse(p *prodDom.Product) *ProductResponse {
 		CreatedAt:   p.CreatedAt,
 	}
 	for _, pa := range p.Attributes {
-		resp.Attributes = append(resp.Attributes, ProductAttributeValueResponse{
-			AttributeID: pa.AttributeID,
-			Name:        pa.Attribute.Name,
-			Unit:        pa.Attribute.Unit,
-			Value:       pa.Value,
-		})
+		resp.Attributes = append(resp.Attributes, ProductAttributeValueResponse{AttributeID: pa.AttributeID, Name: pa.Attribute.Name, Unit: pa.Attribute.Unit, Value: pa.Value})
 	}
 	for _, s := range p.Services {
-		resp.Services = append(resp.Services, ProductServiceResponse{
-			ID:          s.ID,
-			Name:        s.Name,
-			Description: s.Description,
-			Price:       s.Price,
-		})
+		resp.Services = append(resp.Services, ProductServiceResponse{ID: s.ID, Name: s.Name, Description: s.Description, Price: s.Price})
 	}
 	return resp
-}
-
-func MapUpdateReqToDomain(id int64, req *ProductRequest) *prodDom.Product {
-	p := &prodDom.Product{
-		ID:          id,
-		Name:        req.Name,
-		Price:       req.Price,
-		Description: req.Description,
-		ImageURL:    req.ImageURL,
-		CategoryID:  req.CategoryID,
-	}
-
-	if req.Attributes != nil {
-		for _, a := range req.Attributes {
-			p.Attributes = append(p.Attributes, prodDom.ProductAttribute{
-				AttributeID: a.AttributeID,
-				Value:       a.Value,
-			})
-		}
-	}
-	if req.Services != nil {
-		for _, s := range req.Services {
-			p.Services = append(p.Services, serviceDom.Service{ID: s.ServiceID})
-		}
-	}
-	return p
 }

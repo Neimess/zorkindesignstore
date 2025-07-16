@@ -37,7 +37,7 @@ func (r *PGServiceRepository) Create(ctx context.Context, s *domService.Service)
 
 func (r *PGServiceRepository) Get(ctx context.Context, id int64) (*domService.Service, error) {
 	const q = `SELECT service_id, name, description, price FROM services WHERE service_id = $1`
-	var raw serviceDB
+	var raw ServiceDB
 	err := r.db.GetContext(ctx, &raw, q, id)
 	if err != nil {
 		return nil, repoError.MapPostgreSQLError(r.log, err)
@@ -47,7 +47,7 @@ func (r *PGServiceRepository) Get(ctx context.Context, id int64) (*domService.Se
 
 func (r *PGServiceRepository) List(ctx context.Context) ([]domService.Service, error) {
 	const q = `SELECT service_id, name, description, price FROM services`
-	var raws []serviceDB
+	var raws []ServiceDB
 	err := r.db.SelectContext(ctx, &raws, q)
 	if err != nil {
 		return nil, repoError.MapPostgreSQLError(r.log, err)
@@ -92,7 +92,7 @@ func (r *PGServiceRepository) AddServicesToProduct(ctx context.Context, productI
 
 func (r *PGServiceRepository) GetServicesByProduct(ctx context.Context, productID int64) ([]domService.Service, error) {
 	const q = `SELECT s.service_id, s.name, s.description, s.price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
-	var raws []serviceDB
+	var raws []ServiceDB
 	err := r.db.SelectContext(ctx, &raws, q, productID)
 	if err != nil {
 		return nil, repoError.MapPostgreSQLError(r.log, err)

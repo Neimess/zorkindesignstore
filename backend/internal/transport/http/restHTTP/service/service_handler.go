@@ -77,18 +77,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 
-// Get godoc
+// PublicGet godoc
 // @Summary      Get service by ID
 // @Description  Получить услугу по ID
 // @Tags         services
 // @Produce      json
-// @Security     BearerAuth
 // @Param        id path int true "Service ID"
 // @Success      200 {object} dto.ServiceResponse
 // @Failure      400 {object} httputils.ErrorResponse
 // @Failure      404 {object} httputils.ErrorResponse
 // @Failure      500 {object} httputils.ErrorResponse
-// @Router       /api/admin/services/{id} [get]
+// @Router       /api/services/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := httputils.IDFromURL(r, "id")
@@ -105,15 +104,14 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	httputils.WriteJSON(w, http.StatusOK, resp)
 }
 
-// List godoc
-// @Summary      List services
-// @Description  Получить список услуг
+// PublicList godoc
+// @Summary      List services (public)
+// @Description  Получить публичный список услуг
 // @Tags         services
 // @Produce      json
-// @Security     BearerAuth
 // @Success      200 {array} dto.ServiceResponse
 // @Failure      500 {object} httputils.ErrorResponse
-// @Router       /api/admin/services [get]
+// @Router       /api/services [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	list, err := h.srv.List(ctx)

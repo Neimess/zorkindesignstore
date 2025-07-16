@@ -10,7 +10,7 @@ var validate *validator.Validate = validator.New()
 // swagger:model CategoryRequest
 type CategoryRequest struct {
 	Name     string `json:"name" validate:"required,max=255"`
-	ParentID *int64 `json:"parent_id,omitempty"`
+	ParentID *int64 `json:"parent_id,omitempty" validate:"omitempty,gt=1"`
 }
 
 func (r CategoryRequest) Validate() error {
@@ -28,6 +28,11 @@ func (r CategoryRequest) Validate() error {
 				errs = append(errs, ve.FieldError{
 					Field:   "name",
 					Message: "name is required and must be between 2 and 255 characters",
+				})
+			case "ParentID":
+				errs = append(errs, ve.FieldError{
+					Field:   "parent_id",
+					Message: "parent_id may be does not exists",
 				})
 			default:
 				errs = append(errs, ve.FieldError{

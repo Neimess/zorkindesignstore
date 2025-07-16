@@ -8,7 +8,7 @@ type ServiceDB struct {
 	ID          int64   `db:"service_id"`
 	Name        string  `db:"name"`
 	Description *string `db:"description"`
-	Price       float64 `db:"base_price"`
+	Price       float64 `db:"price"`
 }
 
 func (s ServiceDB) toDomain() *domService.Service {

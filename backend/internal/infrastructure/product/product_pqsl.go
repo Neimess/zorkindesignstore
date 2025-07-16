@@ -449,7 +449,7 @@ func (r *PGProductRepository) fetchAttributesBatch(ctx context.Context, ids []in
 }
 
 func (r *PGProductRepository) fetchServices(ctx context.Context, prodID int64) ([]serviceDom.Service, error) {
-	const q = `SELECT s.service_id, s.name, s.description, s.base_price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
+	const q = `SELECT s.service_id, s.name, s.description, s.price FROM services s JOIN product_services ps ON s.service_id = ps.service_id WHERE ps.product_id = $1`
 	var rows []service.ServiceDB
 	err := r.db.SelectContext(ctx, &rows, q, prodID)
 	if err != nil {

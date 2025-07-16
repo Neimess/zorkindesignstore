@@ -75,6 +75,7 @@ func NewRouter(deps Deps) chi.Router {
 		registerProductPublicRoutes(r, deps.handlers.ProductHandler)
 		registerCategoryWithAttrsPublicRoutes(r, deps.handlers.CategoryHandler, deps.handlers.AttributeHandler)
 		registerPresetPublicRoutes(r, deps.handlers.PresetHandler)
+		registerServicePublicRoutes(r, deps.handlers.ServiceHandler)
 		// ── admin zone ──────────────────────────────────────────────────
 		r.Route("/admin", func(r chi.Router) {
 			// one‑time login link

@@ -59,7 +59,7 @@ type Service struct {
 }
 
 func New(d Deps) (*Service, error) {
-	prodDeps, err := product.NewDeps(d.ProductRepo, d.Logger)
+	prodDeps, err := product.NewDeps(d.ProductRepo, d.ServiceRepo, d.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("product service init: %w", err)
 	}

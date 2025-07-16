@@ -8,7 +8,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/domain/category"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
-	"github.com/Neimess/zorkin-store-project/internal/domain/service"
+	domService "github.com/Neimess/zorkin-store-project/internal/domain/service"
 	utils "github.com/Neimess/zorkin-store-project/internal/utils/svc"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
 )
@@ -22,29 +22,39 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
+type ServiceRepository interface {
+	Get(ctx context.Context, id int64) (*domService.Service, error)
+}
+
 type Service struct {
-	repo ProductRepository
-	log  *slog.Logger
+	repoPrd ProductRepository
+	repoSvc ServiceRepository
+	log     *slog.Logger
 }
 
 type Deps struct {
-	repo ProductRepository
-	log  *slog.Logger
+	repoPrd ProductRepository
+	repoSvc ServiceRepository
+	log     *slog.Logger
 }
 
-func NewDeps(repo ProductRepository, log *slog.Logger) (*Deps, error) {
-	if repo == nil {
+func NewDeps(repoPrd ProductRepository, repoSvc ServiceRepository, log *slog.Logger) (*Deps, error) {
+	if repoPrd == nil {
 		return nil, errors.New("product service: missing ProductRepository")
+	}
+	if repoSvc == nil {
+		return nil, errors.New("product service: missing ServiceRepository")
 	}
 	if log == nil {
 		return nil, errors.New("product service: missing logger")
 	}
-	return &Deps{repo: repo, log: log.With("component", "service.product")}, nil
+	return &Deps{repoPrd: repoPrd, repoSvc: repoSvc, log: log.With("component", "service.product")}, nil
 }
 func New(d *Deps) *Service {
 	return &Service{
-		repo: d.repo,
-		log:  d.log,
+		repoPrd: d.repoPrd,
+		repoSvc: d.repoSvc,
+		log:     d.log,
 	}
 }
 
@@ -52,19 +62,25 @@ func (s *Service) Create(ctx context.Context, p *domProduct.Product) (*domProduc
 	const op = "service.product.Create"
 	log := s.log.With("op", op)
 
-	prod, err := s.repo.CreateWithAttrs(ctx, p)
+	prod, err := s.repoPrd.CreateWithAttrs(ctx, p)
 	if err != nil {
 		mapping := map[error]error{
-			der.ErrNotFound:              domProduct.ErrBadCategoryID,
-			service.ErrServiceNotFound:   domProduct.ErrBadServiceID,
-			category.ErrCategoryNotFound: domProduct.ErrBadCategoryID,
-			der.ErrValidation:            domProduct.ErrInvalidAttribute,
-			der.ErrBadRequest:            domProduct.ErrInvalidAttribute,
+			der.ErrNotFound:               domProduct.ErrBadCategoryID,
+			domService.ErrServiceNotFound: domProduct.ErrBadServiceID,
+			category.ErrCategoryNotFound:  domProduct.ErrBadCategoryID,
+			der.ErrValidation:             domProduct.ErrInvalidAttribute,
+			der.ErrBadRequest:             domProduct.ErrInvalidAttribute,
 		}
 		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
-	log.Info("product created", slog.Int64("product_id", p.ID))
+	if err := s.fetchServices(ctx, prod); err != nil {
+		mapping := map[error]error{
+			der.ErrNotFound: domService.ErrServiceNotFound,
+		}
+		return nil, utils.ErrorHandler(log, op, err, mapping)
+	}
+	log.Info("product created", slog.Int64("product_id", prod.ID))
 	return prod, nil
 }
 
@@ -74,7 +90,7 @@ func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*
 	const op = "service.product.CreateWithAttrs"
 	log := s.log.With("op", op)
 
-	prod, err := s.repo.CreateWithAttrs(ctx, p)
+	prod, err := s.repoPrd.CreateWithAttrs(ctx, p)
 	if err != nil {
 		mapping := map[error]error{
 			der.ErrNotFound:              domProduct.ErrBadCategoryID,
@@ -85,6 +101,12 @@ func (s *Service) CreateWithAttrs(ctx context.Context, p *domProduct.Product) (*
 		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
+	if err := s.fetchServices(ctx, prod); err != nil {
+		mapping := map[error]error{
+			der.ErrNotFound: domService.ErrServiceNotFound,
+		}
+		return nil, utils.ErrorHandler(log, op, err, mapping)
+	}
 	log.Info("product with attributes created", slog.Int64("product_id", prod.ID))
 	return prod, nil
 }
@@ -93,12 +115,12 @@ func (s *Service) GetDetailed(ctx context.Context, id int64) (*domProduct.Produc
 	const op = "service.product.GetDetailed"
 	log := s.log.With("op", op)
 
-	product, err := s.repo.Get(ctx, id)
+	product, err := s.repoPrd.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, der.ErrNotFound) {
 			return nil, domProduct.ErrProductNotFound
 		}
-		log.Error("repo failed", slog.Int64("product_id", id), slog.Any("error", err))
+		log.Error("repoPrd failed", slog.Int64("product_id", id), slog.Any("error", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -110,12 +132,12 @@ func (s *Service) GetByCategoryID(ctx context.Context, catID int64) ([]domProduc
 	const op = "service.product.GetByCategoryID"
 	log := s.log.With("op", op)
 
-	products, err := s.repo.ListByCategory(ctx, catID)
+	products, err := s.repoPrd.ListByCategory(ctx, catID)
 	if err != nil {
 		if errors.Is(err, der.ErrNotFound) || errors.Is(err, category.ErrCategoryNotFound) {
 			return nil, domProduct.ErrBadCategoryID
 		}
-		log.Error("repo failed", slog.Any("error", err))
+		log.Error("repoPrd failed", slog.Any("error", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -129,7 +151,7 @@ func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduc
 	const op = "service.product.Update"
 	log := s.log.With("op", op)
 
-	prod, err := s.repo.UpdateWithAttrs(ctx, p)
+	prod, err := s.repoPrd.UpdateWithAttrs(ctx, p)
 	if err != nil {
 		mapping := map[error]error{
 			der.ErrNotFound:               domProduct.ErrProductNotFound,
@@ -140,6 +162,12 @@ func (s *Service) Update(ctx context.Context, p *domProduct.Product) (*domProduc
 		return nil, utils.ErrorHandler(log, op, err, mapping)
 	}
 
+	if err := s.fetchServices(ctx, prod); err != nil {
+		mapping := map[error]error{
+			der.ErrNotFound: domService.ErrServiceNotFound,
+		}
+		return nil, utils.ErrorHandler(log, op, err, mapping)
+	}
 	log.Info("product updated with attributes", slog.Int64("product_id", p.ID))
 	return prod, nil
 }
@@ -148,7 +176,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	const op = "service.product.Delete"
 	log := s.log.With("op", op)
 
-	if err := s.repo.Delete(ctx, id); err != nil {
+	if err := s.repoPrd.Delete(ctx, id); err != nil {
 		mapping := map[error]error{
 			der.ErrNotFound: nil,
 		}
@@ -156,5 +184,18 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	}
 
 	log.Info("product deleted", slog.Int64("product_id", id))
+	return nil
+}
+
+func (s *Service) fetchServices(ctx context.Context, p *domProduct.Product) error {
+	var services []domService.Service
+	for _, svc := range p.Services {
+		service, err := s.repoSvc.Get(ctx, svc.ID)
+		if err != nil {
+			return err
+		}
+		services = append(services, *service)
+	}
+	p.Services = services
 	return nil
 }

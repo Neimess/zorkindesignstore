@@ -10,6 +10,7 @@ import (
 
 	catdomain "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
+	domService "github.com/Neimess/zorkin-store-project/internal/domain/service"
 	productservice "github.com/Neimess/zorkin-store-project/internal/service/product"
 	"github.com/Neimess/zorkin-store-project/internal/service/product/mocks"
 	der "github.com/Neimess/zorkin-store-project/pkg/app_error"
@@ -24,10 +25,16 @@ type ProductServiceSuite struct {
 	logger   *slog.Logger
 }
 
+type Mock struct{}
+
+func (m *Mock) Get(ctx context.Context, id int64) (*domService.Service, error) {
+	return nil, nil
+}
+
 func (s *ProductServiceSuite) SetupTest() {
 	s.mockRepo = new(mocks.MockProductRepository)
 	s.logger = slog.New(slog.DiscardHandler)
-	deps, _ := productservice.NewDeps(s.mockRepo, s.logger)
+	deps, _ := productservice.NewDeps(s.mockRepo, &Mock{}, s.logger)
 	s.svc = productservice.New(deps)
 }
 

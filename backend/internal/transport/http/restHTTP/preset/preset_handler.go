@@ -81,7 +81,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.MapDomainToDto(preset)
-	w.Header().Set("Location", fmt.Sprintf("/api/admin/presets/%d", resp.PresetID))
+	w.Header().Set("Location", fmt.Sprintf("/api/presets/%d", resp.PresetID))
 	httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 

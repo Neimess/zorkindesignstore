@@ -73,7 +73,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.MapToResponse(created)
-	w.Header().Set("Location", fmt.Sprintf("/api/admin/services/%d", resp.ID))
+	w.Header().Set("Location", fmt.Sprintf("/api/services/%d", resp.ID))
 	httputils.WriteJSON(w, http.StatusCreated, resp)
 }
 

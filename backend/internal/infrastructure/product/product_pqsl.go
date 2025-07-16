@@ -79,38 +79,13 @@ func (r *PGProductRepository) CreateWithAttrs(
 			return nil, err
 		}
 
-		var createdAttrs []prodDom.ProductAttribute
-		if len(p.Attributes) > 0 {
-			r.log.Debug("Creating attributes", slog.Any("attrs", p.Attributes))
-			createdAttrs, err = r.insertNewAttributesTx(ctx, tx, p.Attributes)
-			if err != nil {
-				return nil, err
-			}
-
-			r.log.Debug("Linking attributes to product", slog.Any("created_attrs", createdAttrs))
-			if err := r.insertProductAttributesTx(ctx, tx, prodID, createdAttrs); err != nil {
-				return nil, err
-			}
-		}
-
-		if len(p.Services) > 0 {
-			svcIDs := make([]int64, len(p.Services))
-			for i, s := range p.Services {
-				svcIDs[i] = s.ID
-			}
-
-			if err := r.validateServiceIDs(ctx, tx, svcIDs); err != nil {
-				return nil, err
-			}
-
-			if err := r.insertServicesTx(ctx, tx, prodID, p.Services); err != nil {
-				return nil, err
-			}
+		created, err := r.saveAttrsAndServices(ctx, tx, prodID, p.Attributes, p.Services)
+		if err != nil {
+			return nil, err
 		}
 
 		p.ID = prodID
-		p.Attributes = createdAttrs
-
+		p.Attributes = created
 		return p, nil
 	})
 }
@@ -185,65 +160,41 @@ func (r *PGProductRepository) ListByCategory(ctx context.Context, catID int64) (
 	return prods, nil
 }
 
-// UpdateWithAttrs updates product fields and replaces attributes
-func (r *PGProductRepository) UpdateWithAttrs(ctx context.Context, p *prodDom.Product) (*prodDom.Product, error) {
+func (r *PGProductRepository) UpdateWithAttrs(
+	ctx context.Context,
+	p *prodDom.Product,
+) (*prodDom.Product, error) {
 	return tx.RunInTx(ctx, r.db, func(tx *sqlx.Tx) (*prodDom.Product, error) {
 		const upd = `
-			UPDATE products
-			SET name = $1,
-				price = $2,
-				description = $3,
-				category_id = $4,
-				image_url = $5
-			WHERE product_id = $6
-		`
-		res, err := tx.ExecContext(ctx, upd, p.Name, p.Price, p.Description, p.CategoryID, p.ImageURL, p.ID)
+            UPDATE products
+               SET name=$1, price=$2, description=$3,
+                   category_id=$4, image_url=$5
+             WHERE product_id=$6
+        `
+		res, err := tx.ExecContext(
+			ctx, upd,
+			p.Name, p.Price, p.Description, p.CategoryID, p.ImageURL, p.ID,
+		)
 		if err != nil {
 			return nil, r.mapPostgreSQLError(err)
 		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, err
-		}
-		if rows == 0 {
+		if cnt, _ := res.RowsAffected(); cnt == 0 {
 			return nil, prodDom.ErrProductNotFound
 		}
 
-		// Чистим старые атрибуты
-		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM product_attributes WHERE product_id = $1`, p.ID); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM product_attributes WHERE product_id=$1`, p.ID); err != nil {
 			return nil, r.mapPostgreSQLError(err)
 		}
-		// Чистим старые услуги
-		if _, err := tx.ExecContext(ctx,
-			`DELETE FROM product_services WHERE product_id = $1`, p.ID); err != nil {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM product_services   WHERE product_id=$1`, p.ID); err != nil {
 			return nil, r.mapPostgreSQLError(err)
 		}
-		// Если есть новые атрибуты — вставляем
-		if len(p.Attributes) > 0 {
-			ids := make([]int64, len(p.Attributes))
-			aids := make([]int64, len(p.Attributes))
-			vals := make([]string, len(p.Attributes))
-			for i, a := range p.Attributes {
-				ids[i], aids[i], vals[i] = p.ID, a.AttributeID, a.Value
-			}
 
-			const ins = `
-				INSERT INTO product_attributes (product_id, attribute_id, value)
-				SELECT * FROM UNNEST($1::bigint[], $2::bigint[], $3::text[])
-			`
-			if _, err := tx.ExecContext(ctx, ins,
-				pq.Array(ids), pq.Array(aids), pq.Array(vals)); err != nil {
-				return nil, r.mapPostgreSQLError(err)
-			}
+		created, err := r.saveAttrsAndServices(ctx, tx, p.ID, p.Attributes, p.Services)
+		if err != nil {
+			return nil, err
 		}
-		// Если есть новые услуги — вставляем
-		if len(p.Services) > 0 {
-			if err := r.insertServicesTx(ctx, tx, p.ID, p.Services); err != nil {
-				return nil, err
-			}
-		}
+
+		p.Attributes = created
 		return p, nil
 	})
 }
@@ -494,4 +445,43 @@ func (r *PGProductRepository) withQuery(ctx context.Context, query string, fn fu
 
 func (r *PGProductRepository) mapPostgreSQLError(err error) error {
 	return repoError.MapPostgreSQLError(r.log, err)
+}
+
+func (r *PGProductRepository) saveAttrsAndServices(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	prodID int64,
+	attrs []prodDom.ProductAttribute,
+	svcs []serviceDom.Service,
+) ([]prodDom.ProductAttribute, error) {
+	var created []prodDom.ProductAttribute
+	if len(attrs) > 0 {
+		r.log.Debug("Creating attributes", slog.Any("attrs", attrs))
+		var err error
+		created, err = r.insertNewAttributesTx(ctx, tx, attrs)
+		if err != nil {
+			return nil, err
+		}
+
+		r.log.Debug("Linking attributes", slog.Any("created", created))
+		if err := r.insertProductAttributesTx(ctx, tx, prodID, created); err != nil {
+			return nil, err
+		}
+	}
+
+	if len(svcs) > 0 {
+		ids := make([]int64, len(svcs))
+		for i, s := range svcs {
+			ids[i] = s.ID
+		}
+		if err := r.validateServiceIDs(ctx, tx, ids); err != nil {
+			return nil, err
+		}
+		r.log.Debug("Linking services", slog.Any("svcs", svcs))
+		if err := r.insertServicesTx(ctx, tx, prodID, svcs); err != nil {
+			return nil, err
+		}
+	}
+
+	return created, nil
 }

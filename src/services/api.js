@@ -163,13 +163,10 @@ export const categoryAttributeAPI = {
 
 // Функции для работы с товарами
 export const productAPI = {
-  // Получить товар по ID
   getById: (id) => apiRequest(`/product/${id}`),
   getAll: () => apiRequest('/product'),
-  // Получить товары по категории
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
 
-  // Создать товар (требует авторизации)
   create: (productData, token) =>
     apiRequest('/admin/product', {
       method: 'POST',
@@ -180,18 +177,18 @@ export const productAPI = {
       body: JSON.stringify(productData),
     }),
 
-  // Создать товар с атрибутами
-  createDetailed: (productData, token) =>
+  // если у тебя реально есть отдельный createDetailed — оставь;
+  // иначе используй create
+  createDetailed: (data, token) =>
     apiRequest('/admin/product/detailed', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(productData),
+      body: JSON.stringify(data),
     }),
 
-  // Обновить товар (требует авторизации)
   update: (id, productData, token) =>
     apiRequest(`/admin/product/${id}`, {
       method: 'PUT',
@@ -202,30 +199,13 @@ export const productAPI = {
       body: JSON.stringify(productData),
     }),
 
-  // Удалить товар (требует авторизации)
   delete: (id, token) =>
     apiRequest(`/admin/product/${id}`, {
       method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }),
-
-    // Обновить товар *без* атрибутов/услуг
-  update: (id, data, token) =>
-    apiRequest(`/admin/product/${id}`, { /* … */ }),
-
-  // ➕ Обновить товар С атрибутами и услугами
-  updateDetailed: (id, data, token) =>
-    apiRequest(`/admin/product/detailed/${id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
+      headers: { Authorization: `Bearer ${token}` },
     }),
 };
+
 
 // Функции для работы с коэффициентами
 export const coefficientAPI = {

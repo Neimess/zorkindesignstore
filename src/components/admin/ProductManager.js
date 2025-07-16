@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { productAPI, categoryAttributeAPI } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { productAPI, categoryAttributeAPI, serviceAPI } from '../../services/api';
 
 /* ------------------------------------------------------------
  * Helpers
@@ -33,8 +33,14 @@ const parseServices = (input) => {
 };
 
 const stringifyAttributes = (arr = []) =>
-  arr.map((a) => `${a.attribute_id}:${a.value}`).join('; ');
-  
+  arr
+    .map((a) => {
+      // если с бэка пришло имя, показываем его, иначе fallback на id
+      const label = a.name || a.attribute_name || a.attribute_id;
+      return `${label}:${a.value}`;
+    })
+    .join('; ');
+
 const stringifyServices = (arr = []) =>
   arr.map((s) => `${s.id}:${s.name}:${s.description}:${s.price}`).join('; ');
 
@@ -54,7 +60,36 @@ function ProductManager({
   const [elementId, setElementId] = useState('');
   const [subId, setSubId] = useState('');
 
-  
+  const [availableServices, setAvailableServices] = useState([]);
+
+useEffect(() => {
+  const fetchServices = async () => {
+    try {
+      const token = await getAdminToken();
+      if (!token) return;
+      const data = await serviceAPI.getAll(token); // <-- правильный API
+      setAvailableServices(data || []);
+    } catch (err) {
+      console.error('Ошибка загрузки сервисов:', err);
+    }
+  };
+  fetchServices();
+}, []);
+
+const [allowedAttrs, setAllowedAttrs] = useState([]);
+
+useEffect(() => {
+  if (!subId) return;
+  (async () => {
+    try {
+      const arr = await categoryAttributeAPI.getAll(subId);
+      setAllowedAttrs(arr);      // [{id, name, unit}, ...]
+    } catch (e) {
+      console.error('Не смог получить атрибуты подкатегории', e);
+    }
+  })();
+}, [subId]);
+
   
   // Добавляем отладочную информацию
   console.log('ProductManager - Все категории:', categories);
@@ -75,14 +110,15 @@ function ProductManager({
 
 /* --------------------- local state ---------------------- */
   const [form, setForm] = useState({
-    name: '',
-    price: '',
-    description: '',
-    image_url: '',
-    categoryId: categories[0]?.id ?? 1,
-    attributes: '',
-    services: '',
-  });
+  name: '',
+  price: '',
+  description: '',
+  image_url: '',
+  categoryId: categories[0]?.id ?? 1,
+  attributes: '',      // пока строкой
+  services: [],        // <-- массив
+});
+
   const [editingId, setEditingId] = useState(null);
 
   const resetForm = () => {
@@ -93,7 +129,7 @@ function ProductManager({
       image_url: '',
       categoryId: categories[0]?.id ?? 1,
       attributes: '',
-      services: '',
+      services: [],
     });
     setEditingId(null);
     setRoomId('');
@@ -140,7 +176,9 @@ const attributesForApi = preparedAttributes.map(a => {
     name: a.name.trim(),
     value: a.value.trim(),
   };
+ 
 
+  
   // unit добавляем ТОЛЬКО если не пустая строка
   if (a.unit && a.unit.trim().length > 0) {
     attr.unit = a.unit.trim();
@@ -155,10 +193,9 @@ const attributesForApi = preparedAttributes.map(a => {
 
     // Парсинг услуг
     const preparedServices = Array.isArray(form.services)
-  ? form.services.map(id => ({ service_id: Number(id) }))
-  : form.services.trim()
-      ? form.services.split(',').map(id => ({ service_id: Number(id.trim()) }))
-      : [];
+  ? form.services.map((id) => ({ service_id: Number(id) }))
+  : [];
+
 
 console.log('ATTR', preparedAttributes);
   console.log('SERV', preparedServices);
@@ -200,7 +237,7 @@ const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
       
       // UPDATE
     const method = hasExtras ? 'updateDetailed' : 'update';
-    const updated = await productAPI[method](editingId, payload, token);
+    const updated = await productAPI.update(editingId, payload, token);
       setProducts(prev =>
         prev.map(p =>
           getProductId(p) === editingId
@@ -440,12 +477,23 @@ const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
           onChange={(e) => setForm({ ...form, attributes: e.target.value })}
           style={inputStyle}
         />
-        <input
-          value={form.services}
-          placeholder="Сервисы: 1:Монтаж:Установка изделия:1500"
-          onChange={(e) => setForm({ ...form, services: e.target.value })}
-          style={inputStyle}
-        />
+        <select
+  multiple
+  value={form.services}
+  onChange={(e) => {
+    const selected = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+    setForm({ ...form, services: selected });
+  }}
+  style={inputStyle}
+>
+  {availableServices.map((s) => (
+    <option key={s.id} value={s.id}>
+      {s.name} ({s.price} ₽)
+    </option>
+  ))}
+</select>
+
+
         <button
           onClick={saveProduct}
           style={{
@@ -558,14 +606,15 @@ const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
                   }
                   
                   setForm({
-                    name: p.name,
-                    price: p.price,
-                    description: p.description ?? '',
-                    image_url: p.image_url ?? '',
-                    categoryId: categoryId,
-                    attributes: stringifyAttributes(p.attributes),
-                    services: stringifyServices(p.services),
-                  });
+  name: p.name,
+  price: p.price,
+  description: p.description ?? '',
+  image_url: p.image_url ?? '',
+  categoryId: categoryId,
+  attributes: stringifyAttributes(p.attributes),   // пока оставим строкой
+  services: (p.services || []).map((s) => String(s.id)), // <-- массив строк
+});
+
                   setEditingId(id);
                 }}
                 style={editBtnStyle}

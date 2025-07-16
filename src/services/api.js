@@ -210,6 +210,21 @@ export const productAPI = {
         Authorization: `Bearer ${token}`,
       },
     }),
+
+    // Обновить товар *без* атрибутов/услуг
+  update: (id, data, token) =>
+    apiRequest(`/admin/product/${id}`, { /* … */ }),
+
+  // ➕ Обновить товар С атрибутами и услугами
+  updateDetailed: (id, data, token) =>
+    apiRequest(`/admin/product/detailed/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    }),
 };
 
 // Функции для работы с коэффициентами
@@ -319,3 +334,37 @@ export const tokenUtils = {
     return !!localStorage.getItem('admin_token');
   },
 };
+// API для работы с услугами
+export const serviceAPI = {
+  getAll: (token) =>
+    apiRequest('/admin/services', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  create: (data, token) =>
+    apiRequest('/admin/services', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }),
+
+  update: (id, data, token) =>
+    apiRequest(`/admin/services/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }),
+
+  remove: (id, token) =>
+    apiRequest(`/admin/services/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+};
+

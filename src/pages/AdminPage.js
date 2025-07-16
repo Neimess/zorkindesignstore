@@ -5,6 +5,7 @@ import ProductManager from '../components/admin/ProductManager';
 import CoefficientManager from '../components/admin/CoefficientManager';
 import StyleAdmin from '../components/StyleAdmin';
 import { authAPI, tokenUtils, productAPI, categoryAPI } from '../services/api';
+import ServicesManager from '../components/admin/ServicesManager';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -37,6 +38,8 @@ function AdminPage({
   useEffect(() => {
   fetchCategories();
 }, []);
+
+
 
 const fetchCategories = async () => {
   const token = await getAdminToken();
@@ -239,6 +242,12 @@ const fetchCategories = async () => {
         showMessage={showMessage}
         styles={uiStyles}
       />
+
+      <ServicesManager
+  getAdminToken={getAdminToken}
+  showMessage={showMessage}
+  styles={uiStyles}
+/>
 
       <StyleAdmin products={products} styles={styles} setStyles={setStyles} />
 

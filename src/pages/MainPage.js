@@ -22,6 +22,16 @@ function MainPage({ products, styles }) {
   const [selectedRoomType, setSelectedRoomType] = useState(null);
   const [selectedElement, setSelectedElement] = useState(null);
   const [selectedSubElement, setSelectedSubElement] = useState(null);
+  const [modalProduct, setModalProduct] = useState(null);
+
+// "Комнаты" (нет parent_id)
+const rooms = categories.filter(c => !('parent_id' in c) || c.parent_id === null || c.parent_id === 0);
+
+// Элементы внутри выбранной комнаты
+const elements = categories.filter(c => String(c.parent_id) === String(selectedRoomType?.id));
+
+// Подкатегории внутри выбранного элемента
+const subElements = categories.filter(c => String(c.parent_id) === String(selectedElement?.id));
 
   useEffect(() => {
     document.body.style.overflow = showStyleModal ? 'hidden' : '';
@@ -30,20 +40,34 @@ function MainPage({ products, styles }) {
     };
   }, [showStyleModal]);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const flat = await categoryAPI.getAll(); // <-- если /category отдаёт parent_id
-        const tree = buildCategoryTree(flat);
-        console.log('🌲 tree:', tree);
-        setCategories(tree);
-      } catch (e) {
-        console.error('Ошибка при загрузке категорий:', e);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const flat = await categoryAPI.getAll(); // <-- если /category отдаёт parent_id
+  //       const tree = buildCategoryTree(flat);
+  //       console.log('🌲 tree:', tree);
+  //       setCategories(tree);
+  //     } catch (e) {
+  //       console.error('Ошибка при загрузке категорий:', e);
+  //     }
+  //   };
 
-    fetchCategories();
-  }, []);
+  //   fetchCategories();
+  // }, []);
+// Получение плоского списка категорий
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const flat = await categoryAPI.getAll();
+      console.log('Загруженные категории:', flat);
+      setCategories(flat); // Храним плоский массив, не дерево
+    } catch (e) {
+      console.error('Ошибка при загрузке категорий:', e);
+    }
+  };
+
+  fetchCategories();
+}, []);
 
   /**
    * Обработчик выбора категории
@@ -89,22 +113,39 @@ function MainPage({ products, styles }) {
     setSelectedStyle(style);
     setShowStyleModal(true);
   };
-  const confirmStyle = () => {
-    const newProducts = (selectedStyle.items || [])
-      .map((item) => item.product)
-      .filter(
-        (product) =>
-          product && !selectedProducts.some((p) => p.product_id === product.id),
-      )
-      .map((product) => ({
-        ...product,
-        product_id: product.id,
-      }));
+  // const confirmStyle = () => {
+  //   const newProducts = (selectedStyle.items || [])
+  //     .map((item) => item.product)
+  //     .filter(
+  //       (product) =>
+  //         product && !selectedProducts.some((p) => p.product_id === product.id),
+  //     )
+  //     .map((product) => ({
+  //       ...product,
+  //       product_id: product.id,
+  //     }));
 
-    setSelectedProducts((prev) => [...prev, ...newProducts]);
-    setShowStyleModal(false);
-    setSelectedStyle(null);
-  };
+  //   setSelectedProducts((prev) => [...prev, ...newProducts]);
+  //   setShowStyleModal(false);
+  //   setSelectedStyle(null);
+  // };
+  const confirmStyle = () => {
+  const newProducts = (selectedStyle.items || [])
+    .map(item => item.product)
+    .filter(product => product)
+    .filter(product => !selectedProducts.some(p => p.product_id === product.id))
+    .map(product => ({
+      ...product,
+      product_id: product.id,           // унифицированный идентификатор
+      quantity: 1,                       // начальное количество
+      price: product.price ?? 0          // цена по умолчанию
+    }));
+
+  setSelectedProducts(prev => [...prev, ...newProducts]);
+  setShowStyleModal(false);
+  setSelectedStyle(null);
+};
+
   /**
    * Обработчик выбора стиля
    * @param {Object} style - Объект стиля
@@ -125,10 +166,15 @@ function MainPage({ products, styles }) {
   };
 
   // Вычисляем общую стоимость выбранных товаров
-  const totalPrice = selectedProducts.reduce(
-    (sum, product) => sum + product.price * product.quantity,
-    0,
-  );
+  // const totalPrice = selectedProducts.reduce(
+  //   (sum, product) => sum + product.price * product.quantity,
+  //   0,
+  // );
+const totalPrice = selectedProducts.reduce(
+  (sum, product) =>
+    sum + (Number(product.price) || 0) * (Number(product.quantity) || 1),
+  0
+);
 
   // Стили для элементов интерфейса
   const styles_ui = {
@@ -330,174 +376,184 @@ function MainPage({ products, styles }) {
 
         {/* Секция выбора категорий */}
         <div style={{ marginBottom: '30px' }}>
-          <h2>Выберите категории</h2>
           <h2>Выберите комнату, элемент и подкатегорию</h2>
 
-          {/* Уровень 1: Комната */}
-          <div
-            style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '20px' }}
-          >
-            {categories.map((room) => (
-              <button
-                key={room.id}
-                onClick={() => {
-                  setSelectedRoomType(room);
-                  setSelectedElement(null);
-                  setSelectedSubElement(null);
-                }}
-                style={styles_ui.categoryButton(
-                  selectedRoomType?.id === room.id,
-                )}
-              >
-                {room.name}
-              </button>
-            ))}
-            {selectedRoomType?.elements.map((elem) => (
-              <button onClick={() => setSelectedElement(elem)}>
-                {elem.name}
-              </button>
-            ))}
+             {/* Комнаты */}
+{rooms.map(room => (
+  <button
+    key={room.id}
+    onClick={() => {
+      setSelectedRoomType(room);
+      setSelectedElement(null);
+      setSelectedSubElement(null);
+    }}
+    style={styles_ui.categoryButton(selectedRoomType?.id === room.id)}
+  >
+    {room.name}
+  </button>
+))}
 
-            {selectedElement?.sub_elements.map((sub) => (
-              <button onClick={() => setSelectedSubElement(sub)}>
-                {sub.name}
-              </button>
-            ))}
-          </div>
+{/* Элементы */}
+{selectedRoomType && (
+  <>
+    <h3>Выберите элемент</h3>
+    {elements.map(elem => (
+      <button
+        key={elem.id}
+        onClick={() => {
+          setSelectedElement(elem);
+          setSelectedSubElement(null);
+        }}
+        style={styles_ui.categoryButton(selectedElement?.id === elem.id)}
+      >
+        {elem.name}
+      </button>
+    ))}
+  </>
+)}
 
-          {/* Уровень 2: Элемент */}
-          {selectedRoomType && (
-            <>
-              <h3>Выберите элемент</h3>
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  marginBottom: '20px',
-                }}
-              >
-                {selectedRoomType.elements?.map((elem) => (
-                  <button
-                    key={elem.id}
-                    onClick={() => {
-                      setSelectedElement(elem);
-                      setSelectedSubElement(null);
-                    }}
-                    style={styles_ui.categoryButton(
-                      selectedElement?.id === elem.id,
-                    )}
-                  >
-                    {elem.name}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Уровень 3: Подкатегория */}
-          {selectedElement && (
-            <>
-              <h3>Выберите подкатегорию</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                {selectedElement.sub_elements?.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => setSelectedSubElement(sub)}
-                    style={styles_ui.categoryButton(
-                      selectedSubElement?.id === sub.id,
-                    )}
-                  >
-                    {sub.name}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+{/* Подкатегории */}
+{selectedElement && (
+  <>
+    <h3>Выберите подкатегорию</h3>
+    {subElements.map(sub => (
+      <button
+        key={sub.id}
+        onClick={() => setSelectedSubElement(sub)}
+        style={styles_ui.categoryButton(selectedSubElement?.id === sub.id)}
+      >
+        {sub.name}
+      </button>
+    ))}
+  </>
+)}
+ 
+          
         </div>
 
         {/* Сюда?  */}
 
         {/* Секция выбора товаров */}
         {selectedSubElement && (
-          <div style={{ marginTop: '30px', marginBottom: '40px' }}>
-            <h2>Выберите товары</h2>
+  <div style={{ marginTop: '30px', marginBottom: '40px' }}>
+    <h2>Выберите товары</h2>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+        gap: '20px',
+        marginTop: '20px',
+      }}
+    >
+      {/* {products
+        .filter(product => product.category_id === selectedSubElement?.id)
+        .map(product => {
+          const isSelected = selectedProducts.some(
+            (p) => p.id === product.product_id
+          );
+
+          return (
             <div
+              key={product.product_id}
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '20px',
-                marginTop: '20px',
+                ...styles_ui.productCard,
+                ...(isSelected ? styles_ui.productCardHover : {}),
+                opacity: isSelected ? 0.7 : 1,
               }}
             >
-              {products
-                .filter(
-                  (product) => product.sub_element_id === selectedSubElement.id,
-                )
-                .map((product) => {
-                  const isSelected = selectedProducts.some(
-                    (p) => p.id === product.product_id,
-                  );
-                  return (
-                    <div
-                      key={product.product_id}
-                      style={{
-                        ...styles_ui.productCard,
-                        ...(isSelected ? styles_ui.productCardHover : {}),
-                        opacity: isSelected ? 0.7 : 1,
-                      }}
-                    >
-                      <div>
-                        {product.image_url && (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            style={{
-                              width: '100%',
-                              height: '180px',
-                              objectFit: 'cover',
-                              borderRadius: '10px',
-                              marginBottom: '10px',
-                            }}
-                          />
-                        )}
-                        <h3
-                          style={{
-                            fontSize: '1.2rem',
-                            marginBottom: '10px',
-                            color: '#f1f5f9',
-                          }}
-                        >
-                          {product.name}
-                        </h3>
-                        <p style={{ color: '#94a3b8', marginBottom: '10px' }}>
-                          {product.description}
-                        </p>
-                        <div
-                          style={{
-                            color: '#f1f5f9',
-                            fontWeight: 600,
-                            fontSize: '1.1rem',
-                          }}
-                        >
-                          {(product?.price ?? 0).toLocaleString()} ₽
-                        </div>
-                      </div>
-                      {!isSelected && (
-                        <button
-                          onClick={() =>
-                            handleProductSelect({ ...product, quantity: 1 })
-                          }
-                          style={styles_ui.addButton}
-                        >
-                          Добавить
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div>
+                {product.image_url && (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    style={{
+                      width: '100%',
+                      height: '180px',
+                      objectFit: 'cover',
+                      borderRadius: '10px',
+                      marginBottom: '10px',
+                    }}
+                  />
+                )}
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#f1f5f9' }}>
+                  {product.name}
+                </h3>
+                <p style={{ color: '#94a3b8', marginBottom: '10px' }}>
+                  {product.description}
+                </p>
+                <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '1.1rem' }}>
+                  {(product?.price ?? 0).toLocaleString()} ₽
+                </div>
+              </div>
+              {!isSelected && (
+                <button
+                  onClick={() => handleProductSelect({ ...product, quantity: 1 })}
+                  style={styles_ui.addButton}
+                >
+                  Добавить
+                </button>
+              )}
             </div>
+          );
+        })} */}
+        {products
+  .filter(product => product.category_id === selectedSubElement?.id)
+  .map(product => {
+    const isSelected = selectedProducts.some(
+      (p) => p.product_id === product.product_id
+    );
+
+    return (
+      <div
+        key={product.product_id}
+        onClick={() => setModalProduct(product)}
+        style={{
+          ...styles_ui.productCard,
+          ...(isSelected ? styles_ui.productCardHover : {}),
+          opacity: isSelected ? 0.7 : 1,
+          cursor: 'pointer',
+        }}
+      >
+        <div>
+          {product.image_url && (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              style={{
+                width: '100%',
+                height: '180px',
+                objectFit: 'cover',
+                borderRadius: '10px',
+                marginBottom: '10px',
+              }}
+            />
+          )}
+          <h3>{product.name}</h3>
+          <p>{product.description}</p>
+          <div style={{ fontWeight: 'bold' }}>
+            {(product.price ?? 0).toLocaleString()} ₽
           </div>
+        </div>
+
+        {!isSelected && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // важно: чтобы клик по кнопке не открыл модалку
+              handleProductSelect({ ...product, quantity: 1 });
+            }}
+            style={styles_ui.addButton}
+          >
+            Добавить
+          </button>
         )}
+      </div>
+    );
+  })}
+
+    </div>
+  </div>
+)}
+
 
         {/* Панель выбранных товаров */}
         {selectedProducts.length > 0 && (
@@ -543,14 +599,25 @@ function MainPage({ products, styles }) {
                     type="number"
                     min="1"
                     value={product.quantity}
+                    // onChange={(e) => {
+                    //   const newQty = parseInt(e.target.value, 10) || 1;
+                    //   setSelectedProducts((prev) =>
+                    //     prev.map((p) =>
+                    //       p.id === product.id ? { ...p, quantity: newQty } : p,
+                    //     ),
+                    //   );
+                    // }}
                     onChange={(e) => {
-                      const newQty = parseInt(e.target.value, 10) || 1;
-                      setSelectedProducts((prev) =>
-                        prev.map((p) =>
-                          p.id === product.id ? { ...p, quantity: newQty } : p,
-                        ),
-                      );
-                    }}
+  const newQty = parseInt(e.target.value, 10) || 1;
+  setSelectedProducts(prev =>
+    prev.map(p =>
+      p.product_id === product.product_id
+        ? { ...p, quantity: newQty }
+        : p
+    )
+  );
+}}
+
                     style={{
                       width: '60px',
                       padding: '5px',
@@ -851,8 +918,109 @@ function MainPage({ products, styles }) {
             </div>
           </div>
         </div>
+        
       )}
+      {modalProduct && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      backdropFilter: 'blur(2px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 9999,
+    }}
+    onClick={() => setModalProduct(null)} // клик вне закрывает модалку
+  >
+    <div
+      style={{
+        background: '#1e293b',
+        padding: '30px',
+        borderRadius: '16px',
+        maxWidth: '600px',
+        width: '90%',
+        color: '#f1f5f9',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+      }}
+      onClick={(e) => e.stopPropagation()} // клик внутри — не закрывает
+    >
+      <h2 style={{ fontSize: '1.4rem', marginBottom: '10px' }}>{modalProduct.name}</h2>
+
+      {modalProduct.image_url && (
+        <img
+          src={modalProduct.image_url}
+          alt={modalProduct.name}
+          style={{
+            width: '100%',
+            height: '200px',
+            objectFit: 'cover',
+            borderRadius: '8px',
+            marginBottom: '15px',
+          }}
+        />
+      )}
+
+      <p style={{ marginBottom: '15px' }}>
+        {modalProduct.description || 'Описание отсутствует.'}
+      </p>
+
+      <div style={{ fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '20px' }}>
+        {(modalProduct.price ?? 0).toLocaleString()} ₽
+      </div>
+
+      {Array.isArray(modalProduct.attributes) && modalProduct.attributes.length > 0 && (
+  <div style={{ marginBottom: '20px' }}>
+    <h3 style={{ fontSize: '1rem', marginBottom: '10px' }}>Характеристики:</h3>
+    <ul>
+      {modalProduct.attributes.map((attr, index) => (
+        <li key={index}>
+          {attr.name}: {attr.value}
+          {attr.unit ? ` ${attr.unit}` : ''}
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+
+      {Array.isArray(modalProduct.services) && modalProduct.services.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '10px' }}>Сопутствующие услуги:</h3>
+          <ul>
+            {modalProduct.services.map(service => (
+              <li key={service.service_id}>Услуга ID: {service.service_id}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <button
+        onClick={() => setModalProduct(null)}
+        style={{
+          marginTop: '10px',
+          padding: '10px 16px',
+          background: '#475569',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          width: '100%',
+        }}
+      >
+        Закрыть
+      </button>
     </div>
+  </div>
+)}
+
+
+    </div>
+    
   );
 }
 

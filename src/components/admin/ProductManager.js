@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { productAPI } from '../../services/api';
+import { productAPI, categoryAttributeAPI } from '../../services/api';
 
 /* ------------------------------------------------------------
  * Helpers
@@ -7,28 +7,30 @@ import { productAPI } from '../../services/api';
 
 const getProductId = (p) => p?.product_id ?? p?.id ?? null;
 
-const parseAttributes = (raw) =>
-  raw
-    .split(';')
-    .map((chunk) => {
-      const [idPart, valuePart] = chunk.split(':').map((s) => s.trim());
-      const attribute_id = Number(idPart);
-      if (!attribute_id || !valuePart) return null;
-      return { attribute_id, value: valuePart };
-    })
-    .filter(Boolean);
+const parseAttributes = (input) => {
+  if (!input.trim()) return [];
+
+  return input.split(';').map((item) => {
+    const [namePart, valuePart] = item.split(':');
+
+    return {
+      name: namePart ? namePart.trim() : '',
+      unit: '', // Или добавляй единицы измерения, если нужно
+      value: valuePart ? valuePart.trim() : '',
+    };
+  });
+};
+
+
+
     
-const parseServices = (raw) =>
-  raw
-    .split(';')
-    .map((chunk) => {
-      const [idPart, namePart, descriptionPart, pricePart] = chunk.split(':').map((s) => s.trim());
-      const id = Number(idPart);
-      const price = Number(pricePart);
-      if (!id || !namePart || !price) return null;
-      return { id, name: namePart, description: descriptionPart || '', price };
-    })
-    .filter(Boolean);
+const parseServices = (input) => {
+  if (!input.trim()) return [];
+
+  return input.split(',').map((id) => ({
+    service_id: Number(id.trim())
+  }));
+};
 
 const stringifyAttributes = (arr = []) =>
   arr.map((a) => `${a.attribute_id}:${a.value}`).join('; ');
@@ -51,6 +53,8 @@ function ProductManager({
   const [roomId, setRoomId] = useState('');
   const [elementId, setElementId] = useState('');
   const [subId, setSubId] = useState('');
+
+  
   
   // Добавляем отладочную информацию
   console.log('ProductManager - Все категории:', categories);
@@ -103,68 +107,137 @@ function ProductManager({
     background: 'rgba(34,197,94,.1)',
     color: '#4ade80',
   };
-  /* ---------------- CREATE / UPDATE ----------------------- */
-  const saveProduct = async () => {
-    if (!form.name.trim() || !form.price) return;
-    try {
-      const token = await getAdminToken();
-      if (!token) return;
+ 
+const prepareAttributes = (rawAttributes) => {
+  return rawAttributes.map((attr) => ({
+    name: attr.name.trim(),
+    unit: attr.unit.trim(),
+    value: attr.value.toString().trim(),
+  }));
+};
 
-      if (!subId) {
-        showMessage('Выберите подкатегорию', true);
-        return;
-      }
+const saveProduct = async () => {
+  if (!form.name.trim() || !form.price) return;
 
-      const payload = {
-        name: form.name.trim(),
-        price: Number(form.price),
-        description: form.description.trim(),
-        image_url: form.image_url.trim(),
-        category_id: Number(subId),
-        attributes: form.attributes.trim()
-          ? parseAttributes(form.attributes)
-          : [],
-        services: form.services.trim()
-          ? parseServices(form.services)
-          : [],
-      };
+  try {
+    const token = await getAdminToken();
+    if (!token) return;
 
-      if (editingId) {
-        /* -------- UPDATE ---------- */
-        const updated = await productAPI.update(editingId, payload, token);
-        setProducts((prev) =>
-          prev.map((p) =>
-            getProductId(p) === editingId
-              ? { ...updated, categoryId: updated.category_id }
-              : p,
-          ),
-        );
-        showMessage('Товар обновлён');
-      } else {
-        /* -------- CREATE ---------- */
-        // Используем createDetailed, если есть атрибуты, иначе обычный create
-        const method = payload.attributes.length > 0 ? 'createDetailed' : 'create';
-        const created = await productAPI[method](payload, token);
-        if (!created?.product_id && !created?.id) {
-          showMessage('Сервер не вернул ID', true);
-          return;
-        }
-        const productId = created.product_id || created.id;
-        setProducts((prev) => [
-          ...prev,
-          { ...created, product_id: productId, categoryId: created.category_id },
-        ]);
-        showMessage('Товар добавлен');
-      }
-      resetForm();
-      setRoomId('');
-      setElementId('');
-      setSubId('');
-    } catch (err) {
-      console.error('saveProduct', err);
-      showMessage(err.message || 'Ошибка сервера', true);
+    if (!subId) {
+      showMessage('Выберите подкатегорию', true);
+      return;
     }
+
+    const rawAttributes = Array.isArray(form.attributes) ? form.attributes : [];
+    // Парсинг атрибутов
+    // 🔻 внутри saveProduct (или где формируешь payload)
+const preparedAttributes = Array.isArray(form.attributes)
+  ? form.attributes
+  : parseAttributes(form.attributes);   // ← твой парсер строки "Цвет: белый"
+
+const attributesForApi = preparedAttributes.map(a => {
+  const attr = {
+    name: a.name.trim(),
+    value: a.value.trim(),
   };
+
+  // unit добавляем ТОЛЬКО если не пустая строка
+  if (a.unit && a.unit.trim().length > 0) {
+    attr.unit = a.unit.trim();
+  }
+
+  return attr;
+});
+
+
+
+
+
+    // Парсинг услуг
+    const preparedServices = Array.isArray(form.services)
+  ? form.services.map(id => ({ service_id: Number(id) }))
+  : form.services.trim()
+      ? form.services.split(',').map(id => ({ service_id: Number(id.trim()) }))
+      : [];
+
+console.log('ATTR', preparedAttributes);
+  console.log('SERV', preparedServices);
+
+  // Получаем допустимые attribute_id для выбранной подкатегории
+const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
+  .then(arr => {
+    console.log('API ATTRIBUTES:', arr);
+    return arr.map(a => a.id);
+  })
+  .catch(err => {
+    console.error('Ошибка получения атрибутов:', err);
+    return [];
+  });
+
+
+
+
+
+   const payload = {
+  name        : form.name.trim(),
+  price       : Number(form.price),
+  description : form.description.trim(),
+  image_url   : form.image_url.trim(),
+  category_id : Number(subId),
+  attributes  : attributesForApi,           // ← уже без пустого unit
+  services    : preparedServices            // как раньше
+};
+
+
+ console.log("ЧЕНКНИ запрос", payload)
+
+  /* ─── вызов API ──────────────────────────────────────────── */
+  const hasExtras = payload.attributes.length || payload.services.length;
+  // console.log('payload:', payload);
+
+    if (editingId) {
+      // -------- UPDATE ----------
+      
+      // UPDATE
+    const method = hasExtras ? 'updateDetailed' : 'update';
+    const updated = await productAPI[method](editingId, payload, token);
+      setProducts(prev =>
+        prev.map(p =>
+          getProductId(p) === editingId
+            ? { ...updated, categoryId: updated.category_id }
+            : p
+        )
+      );
+      showMessage('Товар обновлён');
+    } else {
+      // -------- CREATE ----------
+      const method = hasExtras ? 'createDetailed' : 'create';
+     const created = await productAPI.create(payload, token);
+
+      if (!created?.product_id && !created?.id) {
+      showMessage('Сервер не вернул ID', true);
+      return;
+    }
+
+      const productId = created.product_id || created.id;
+      setProducts((prev) => [
+      ...prev,
+      { ...created, product_id: productId, categoryId: created.category_id },
+    ]);
+
+    showMessage('Товар добавлен');
+   resetForm();
+    setRoomId('');
+    setElementId('');
+    setSubId('');  
+  }
+
+
+  } catch (err) {
+    console.error('saveProduct', err);
+    showMessage(err.message || 'Ошибка сервера', true);
+  }
+};
 
   /* --------------------- DELETE --------------------------- */
   const removeProduct = async (prod) => {

@@ -1,5 +1,5 @@
 ALTER TABLE preset_items
-DROP CONSTRAINT preset_items_product_id_fkey;
+DROP CONSTRAINT IF EXISTS preset_items_product_id_fkey;
 
 ALTER TABLE preset_items
 ADD CONSTRAINT preset_items_product_id_fkey

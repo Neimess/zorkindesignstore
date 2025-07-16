@@ -149,7 +149,7 @@ func (s *PresetHandlerSuite) TestCreatePreset() {
 			if tc.wantLocation {
 				loc := w.Header().Get("Location")
 				id := strconv.Itoa(int(tc.svcReturn.p.ID))
-				assert.Equal(s.T(), "/api/admin/presets/"+id, loc)
+				assert.Equal(s.T(), "/api/presets/"+id, loc)
 			}
 
 			if shouldMock {

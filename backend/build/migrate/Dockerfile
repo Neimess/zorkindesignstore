@@ -13,6 +13,7 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
+COPY pkg/migrator ./pkg/migrator
 COPY cmd/migrate ./cmd/migrate
 COPY migrations ./migrations
 

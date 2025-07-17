@@ -2,6 +2,8 @@ package testsuite
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"io"
 	"log"
 	"testing"
@@ -53,8 +55,10 @@ func StartDBContainer(t *testing.T, dbC *dbConfig) *testContainer {
 			"POSTGRES_PASSWORD": dbC.password,
 			"POSTGRES_DB":       dbC.dbName,
 		},
-		WaitingFor: wait.ForListeningPort(nat.Port(pgPort)).WithStartupTimeout(30 * time.Second),
+		WaitingFor: wait.ForListeningPort(nat.Port(pgPort)).
+			WithStartupTimeout(60 * time.Second),
 	}
+
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
@@ -67,11 +71,42 @@ func StartDBContainer(t *testing.T, dbC *dbConfig) *testContainer {
 	port, err := container.MappedPort(ctx, pgPort)
 	require.NoError(t, err)
 
+	t.Logf("Postgres container started on %s:%s", host, port.Port())
+
+	dsn := buildDSN(dbC.user, dbC.password, dbC.dbName, host, port.Port())
+	t.Logf("Attempting to ping DB: %s", dsn)
+
+	err = waitForPostgresReady(dsn, 60*time.Second)
+	require.NoError(t, err, "Postgres is not ready after container start")
+
 	return &testContainer{
 		container: container,
 		Host:      host,
 		Port:      port.Int(),
 	}
+}
+
+func buildDSN(user, pass, dbName, host, port string) string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, port, dbName)
+}
+
+func waitForPostgresReady(dsn string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		db, err := sql.Open("postgres", dsn)
+		if err == nil {
+			defer func() {
+				if closeErr := db.Close(); closeErr != nil {
+					log.Printf("Failed to close DB connection: %v", closeErr)
+				}
+			}()
+			if pingErr := db.Ping(); pingErr == nil {
+				return nil
+			}
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	return fmt.Errorf("timeout waiting for Postgres to be ready at %s", dsn)
 }
 
 func (tc *testContainer) Terminate(t *testing.T) {

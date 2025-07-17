@@ -32,7 +32,6 @@ func RunTestServer(t *testing.T) *TestServer {
 			ConfigPath: fmt.Sprintf("%s/configs/test.yaml", root),
 		},
 	)
-	fmt.Println(cfg)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{}))
 
 	tc := StartDBContainer(t, New(

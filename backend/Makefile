@@ -18,3 +18,8 @@ doc:
 
 build:
 	go build -ldflags="$(LDFLAGS)" -o build/$(APP_NAME) ./cmd/main.go
+
+gocheck:
+	- gofmt -w .
+	- golangci-lint run ./... --fix
+	- go test -v -race -count=1 ./... | grep -v '\[no test files\]'

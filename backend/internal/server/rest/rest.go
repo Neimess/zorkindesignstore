@@ -85,3 +85,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.log.Info("http server shutdown initiated")
 	return s.httpServer.Shutdown(ctx)
 }
+
+func (s *Server) Handler() http.Handler {
+	return s.httpServer.Handler
+}

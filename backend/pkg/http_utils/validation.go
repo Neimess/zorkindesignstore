@@ -1,5 +1,5 @@
-// pkg/httputils/validation.go
-package httputils
+// pkg/http_utils/validation.go
+package http_utils
 
 import (
 	"encoding/json"

@@ -10,7 +10,7 @@ import (
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	http_utils "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type AttributeService interface {
@@ -63,9 +63,9 @@ func New(d Deps) *Handler {
 // @Param        categoryID path int true "Category ID"
 // @Param        data body dto.CreateAttributesBatchRequest true "Batch input"
 // @Success      204 "No Content"
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      422 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      422 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/category/{categoryID}/attribute/batch [post]
 func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -74,7 +74,7 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	req, ok := httputils.DecodeAndValidate[dto.CreateAttributesBatchRequest](w, r, h.log)
+	req, ok := http_utils.DecodeAndValidate[dto.CreateAttributesBatchRequest](w, r, h.log)
 	if !ok {
 		return
 	}
@@ -98,9 +98,9 @@ func (h *Handler) CreateAttributesBatch(w http.ResponseWriter, r *http.Request) 
 // @Param        categoryID path int true "Category ID"
 // @Param        data body dto.AttributeRequest true "Attribute data"
 // @Success      201 "Created"
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      422 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      422 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/category/{categoryID}/attribute [post]
 func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -109,7 +109,7 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, ok := httputils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
+	req, ok := http_utils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
 	if !ok {
 		return
 	}
@@ -121,7 +121,7 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/api/admin/category/%d/attribute/%d", categoryID, created.ID))
-	httputils.WriteJSON(w, http.StatusCreated, dto.MapToAttributeResponse(created))
+	http_utils.WriteJSON(w, http.StatusCreated, dto.MapToAttributeResponse(created))
 }
 
 // ListAttributes godoc
@@ -131,9 +131,9 @@ func (h *Handler) CreateAttribute(w http.ResponseWriter, r *http.Request) {
 // @Param        categoryID path int true "Category ID"
 // @Produce      json
 // @Success      200 {array}  dto.AttributeResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      404 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      404 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/category/{categoryID}/attribute [get]
 func (h *Handler) ListAttributes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -157,7 +157,7 @@ func (h *Handler) ListAttributes(w http.ResponseWriter, r *http.Request) {
 			CategoryID: a.CategoryID,
 		}
 	}
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GetAttribute godoc
@@ -168,9 +168,9 @@ func (h *Handler) ListAttributes(w http.ResponseWriter, r *http.Request) {
 // @Param        id path int true "Attribute ID"
 // @Produce      json
 // @Success      200 {object} dto.AttributeResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      404 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      404 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/category/{categoryID}/attribute/{id} [get]
 func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -195,7 +195,7 @@ func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 		Unit:       attr.Unit,
 		CategoryID: attr.CategoryID,
 	}
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // UpdateAttribute godoc
@@ -208,9 +208,9 @@ func (h *Handler) GetAttribute(w http.ResponseWriter, r *http.Request) {
 // @Param        id path int true "Attribute ID"
 // @Param        data body dto.AttributeRequest true "Attribute data"
 // @Success      200 {object} dto.AttributeResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      422 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      422 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/category/{categoryID}/attribute/{id} [put]
 func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -223,7 +223,7 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, ok := httputils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
+	req, ok := http_utils.DecodeAndValidate[dto.AttributeRequest](w, r, h.log)
 	if !ok {
 		return
 	}
@@ -236,7 +236,7 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 		h.handleServiceError(w, err)
 		return
 	}
-	httputils.WriteJSON(w, http.StatusOK, dto.MapToAttributeResponse(updated))
+	http_utils.WriteJSON(w, http.StatusOK, dto.MapToAttributeResponse(updated))
 }
 
 // DeleteAttribute godoc
@@ -247,9 +247,9 @@ func (h *Handler) UpdateAttribute(w http.ResponseWriter, r *http.Request) {
 // @Param        categoryID path int true "Category ID"
 // @Param        id path int true "Attribute ID"
 // @Success      204 "No Content"
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      404 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      404 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/category/{categoryID}/attribute/{id} [delete]
 func (h *Handler) DeleteAttribute(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -57,7 +58,7 @@ type Storage struct {
 }
 
 type JWTConfig struct {
-	JWTSecret string `yaml:"secret" env:"JWT_SECRET" env-required:"true"`
+	JWTSecret string `yaml:"jwt_secret" env:"JWT_SECRET" env-required:"true"`
 	Issuer    string `yaml:"issuer" env:"JWT_ISSUER" env-required:"true"`
 	Audience  string `yaml:"audience" env:"JWT_AUDIENCE" env-required:"true"`
 	Algorithm string `yaml:"algorithm" env:"JWT_ALGORITHM" env-default:"HS256"`
@@ -96,4 +97,15 @@ func fetchConfigPath(a *args.Args) string {
 	default:
 		return "./configs/config.yaml"
 	}
+}
+
+func (s *Storage) DSN() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		s.User,
+		s.Password,
+		s.Host,
+		s.Port,
+		s.DBName,
+	)
 }

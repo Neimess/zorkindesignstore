@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	ve "github.com/Neimess/zorkin-store-project/pkg/httputils"
+	ve "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 	"github.com/go-playground/validator/v10"
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
@@ -30,7 +30,7 @@ type ProductRequest struct {
 // swagger:model ProductAttributeRequest
 type ProductAttributeRequest struct {
 	Name  string  `json:"name" example:"Объём" validate:"required,min=2,max=255"`
-	Unit  *string `json:"unit,omitempty" example:"л" validate:"omitempty,min=1,max=50"`
+	Unit  *string `json:"unit,omitempty" example:"л"`
 	Value string  `json:"value" example:"1.25" validate:"required"`
 }
 
@@ -131,8 +131,6 @@ func (r ProductAttributeRequest) Validate() error {
 			switch e.Field() {
 			case "Name":
 				msg = "name required 2-255 chars"
-			case "Unit":
-				msg = "unit must be 1-50 chars if set"
 			case "Value":
 				msg = "value is required"
 			}

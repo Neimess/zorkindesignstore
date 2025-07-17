@@ -1,4 +1,4 @@
-package httputils
+package http_utils
 
 import (
 	"encoding/json"
@@ -18,8 +18,8 @@ func DecodeAndValidate[T Validatable](w http.ResponseWriter, r *http.Request, lo
 		return nil, false
 	}
 	if err := req.Validate(); err != nil {
-		log.Warn("validation failed", slog.Any("error", err))
 		if ve, ok := err.(ValidationErrorResponse); ok {
+			log.Warn("validation failed", slog.Any("validation_errors", ve.Errors))
 			WriteValidationError(w, http.StatusUnprocessableEntity, ve)
 			return nil, false
 		}

@@ -9,7 +9,7 @@ import (
 
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type ProductService interface {
@@ -60,21 +60,21 @@ func New(d Deps) *Handler {
 // @Security     BearerAuth
 // @Param        product  body      dto.ProductRequest  true  "Product to create (may contain services)"
 // @Success      201	  {object}  dto.ProductResponse
-// @Failure      400      {object}  httputils.ErrorResponse "Bad request"
-// @Failure      401      {object}  httputils.ErrorResponse "Unauthorized access"
-// @Failure      403      {object}  httputils.ErrorResponse "Forbidden access"
-// @Failure      405	  {object}  httputils.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      404      {object}  httputils.ErrorResponse "Not found"
-// @Failure      409      {object}  httputils.ErrorResponse "Conflict, e.g. duplicate product"
-// @Failure      422      {object}  httputils.ErrorResponse "Unprocessable entity, e.g. validation error"
-// @Failure      429      {object}  httputils.ErrorResponse "Too many requests, e.g. rate limiting"
-// @Failure      500      {object}  httputils.ErrorResponse "Internal server error"
+// @Failure      400      {object}  http_utils.ErrorResponse "Bad request"
+// @Failure      401      {object}  http_utils.ErrorResponse "Unauthorized access"
+// @Failure      403      {object}  http_utils.ErrorResponse "Forbidden access"
+// @Failure      405	  {object}  http_utils.ErrorResponse "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      404      {object}  http_utils.ErrorResponse "Not found"
+// @Failure      409      {object}  http_utils.ErrorResponse "Conflict, e.g. duplicate product"
+// @Failure      422      {object}  http_utils.ErrorResponse "Unprocessable entity, e.g. validation error"
+// @Failure      429      {object}  http_utils.ErrorResponse "Too many requests, e.g. rate limiting"
+// @Failure      500      {object}  http_utils.ErrorResponse "Internal server error"
 // @Router       /api/admin/product [post]
 func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.Create")
 
-	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	req, ok := http_utils.DecodeAndValidate[dto.ProductRequest](w, r, log)
 	if !ok {
 		return
 	}
@@ -87,7 +87,7 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := dto.MapDomainToProductResponse(product)
 	w.Header().Set("Location", fmt.Sprintf("/api/product/%d", resp.ProductID))
-	httputils.WriteJSON(w, http.StatusCreated, resp)
+	http_utils.WriteJSON(w, http.StatusCreated, resp)
 }
 
 // GetDetailedProduct godoc
@@ -98,20 +98,20 @@ func (h Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id   path      int  true  "Product ID"
 // @Success      200  {object}  dto.ProductResponse  "Returns product details"
-// @Failure      400  {object}  httputils.ErrorResponse  "Invalid ID"
-// @Failure      404  {object}  httputils.ErrorResponse  "Not found"
-// @Failure      500  {object}  httputils.ErrorResponse  "Internal server error"
+// @Failure      400  {object}  http_utils.ErrorResponse  "Invalid ID"
+// @Failure      404  {object}  http_utils.ErrorResponse  "Not found"
+// @Failure      500  {object}  http_utils.ErrorResponse  "Internal server error"
 // @Router       /api/product/{id} [get]
 func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.GetDetailed")
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 
 	if err != nil || id <= 0 {
 		log.Warn("parse id error",
 			slog.Any("product_id", id),
 			slog.String("error", err.Error()))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid product ID")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid product ID")
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.MapDomainToProductResponse(product)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // ListProductsByCategory godoc
@@ -132,23 +132,23 @@ func (h *Handler) GetDetailed(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        id   path      int  true  "Category ID"
 // @Success      200  {array}   dto.ProductResponse  "List of products"
-// @Failure      400  {object}  httputils.ErrorResponse    "Invalid ID"
-// @Failure      401  {object}  httputils.ErrorResponse    "Unauthorized access"
-// @Failure      403  {object}  httputils.ErrorResponse    "Forbidden access"
-// @Failure      404  {object}  httputils.ErrorResponse    "Category not found"
-// @Failure      405  {object}  httputils.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
-// @Failure      500  {object}  httputils.ErrorResponse    "Internal server error"
+// @Failure      400  {object}  http_utils.ErrorResponse    "Invalid ID"
+// @Failure      401  {object}  http_utils.ErrorResponse    "Unauthorized access"
+// @Failure      403  {object}  http_utils.ErrorResponse    "Forbidden access"
+// @Failure      404  {object}  http_utils.ErrorResponse    "Category not found"
+// @Failure      405  {object}  http_utils.ErrorResponse    "Method not allowed, e.g. POST on GET endpoint"
+// @Failure      500  {object}  http_utils.ErrorResponse    "Internal server error"
 // @Router       /api/product/category/{id} [get]
 func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.GetByCategoryID")
-	categoryID, err := httputils.IDFromURL(r, "id")
+	categoryID, err := http_utils.IDFromURL(r, "id")
 
 	if err != nil || categoryID <= 0 {
 		log.Warn("parse category_id error",
 			slog.Any("category_id", categoryID),
 			slog.String("error", err.Error()))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid category ID")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid category ID")
 		return
 	}
 
@@ -163,7 +163,7 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 		resp = append(resp, *dto.MapDomainToProductResponse(&p))
 	}
 
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // UpdateProduct godoc
@@ -176,24 +176,24 @@ func (h *Handler) ListByCategory(w http.ResponseWriter, r *http.Request) {
 // @Param        id       path      int                         true  "Product ID"
 // @Param        product  body      dto.ProductRequest    true  "Product data to update (may contain services)"
 // @Success      200      {object}  dto.ProductResponse
-// @Failure      400      {object}  httputils.ErrorResponse   "Bad request"
-// @Failure      404      {object}  httputils.ErrorResponse   "Not found"
-// @Failure      422      {object}  httputils.ErrorResponse   "Validation error"
-// @Failure      500      {object}  httputils.ErrorResponse   "Internal server error"
+// @Failure      400      {object}  http_utils.ErrorResponse   "Bad request"
+// @Failure      404      {object}  http_utils.ErrorResponse   "Not found"
+// @Failure      422      {object}  http_utils.ErrorResponse   "Validation error"
+// @Failure      500      {object}  http_utils.ErrorResponse   "Internal server error"
 // @Router       /api/admin/product/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.Update")
 
 	// 1) parse ID
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
 		log.Warn("invalid product ID", slog.Any("id", id), slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid product ID")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid product ID")
 		return
 	}
 
-	req, ok := httputils.DecodeAndValidate[dto.ProductRequest](w, r, log)
+	req, ok := http_utils.DecodeAndValidate[dto.ProductRequest](w, r, log)
 	if !ok {
 		return
 	}
@@ -206,7 +206,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := dto.MapDomainToProductResponse(prodRes)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Delete godoc
@@ -216,18 +216,18 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Param        id   path      int  true  "Product ID"
 // @Success      204  "No Content"
-// @Failure      400  {object}  httputils.ErrorResponse  "Invalid ID"
-// @Failure      404  {object}  httputils.ErrorResponse  "Not found"
-// @Failure      500  {object}  httputils.ErrorResponse  "Internal server error"
+// @Failure      400  {object}  http_utils.ErrorResponse  "Invalid ID"
+// @Failure      404  {object}  http_utils.ErrorResponse  "Not found"
+// @Failure      500  {object}  http_utils.ErrorResponse  "Internal server error"
 // @Router       /api/admin/product/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "transport.http.restHTTP.product.Delete")
 
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
 		log.Warn("invalid product ID", slog.Any("id", id), slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid product ID")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid product ID")
 		return
 	}
 
@@ -243,20 +243,20 @@ func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, prodDom.ErrBadCategoryID):
 		h.log.Warn("invalid category reference", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid or missing category")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid or missing category")
 	case errors.Is(err, prodDom.ErrBadServiceID):
 		h.log.Warn("invalid category reference", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusBadRequest, "invalid service id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid service id")
 	case errors.Is(err, prodDom.ErrInvalidAttribute):
 		h.log.Warn("invalid attribute reference", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
+		http_utils.WriteError(w, http.StatusUnprocessableEntity, "invalid attribute data")
 
 	case errors.Is(err, prodDom.ErrProductNotFound):
 		h.log.Warn("product not found", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusNotFound, "product not found")
+		http_utils.WriteError(w, http.StatusNotFound, "product not found")
 
 	default:
 		h.log.Error("unhandled service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
+		http_utils.WriteError(w, http.StatusInternalServerError, "internal server error")
 	}
 }

@@ -12,7 +12,7 @@ import (
 
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth/mocks"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +39,7 @@ func TestLogin(t *testing.T) {
 			mockToken:  "",
 			mockErr:    errors.New("something went wrong"),
 			wantStatus: http.StatusInternalServerError,
-			wantBodyStruct: &httputils.ErrorResponse{
+			wantBodyStruct: &http_utils.ErrorResponse{
 				Message: "failed to generate token",
 			},
 		},
@@ -72,8 +72,8 @@ func TestLogin(t *testing.T) {
 				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 				assert.Equal(t, want, &got)
 
-			case *httputils.ErrorResponse:
-				var got httputils.ErrorResponse
+			case *http_utils.ErrorResponse:
+				var got http_utils.ErrorResponse
 				require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 				assert.Equal(t, want, &got)
 			}

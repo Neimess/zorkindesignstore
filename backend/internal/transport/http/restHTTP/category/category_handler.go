@@ -9,7 +9,7 @@ import (
 
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	http_utils "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type CategoryService interface {
@@ -59,15 +59,15 @@ func New(deps Deps) *Handler {
 //	 @Security       BearerAuth
 //		@Param			category	body		dto.CategoryRequest	true	"Category to create"
 //		@Success		201	 		{object}	dto.CategoryResponse
-//		@Failure		400			{object}	httputils.ErrorResponse
-//		@Failure		409			{object}	httputils.ErrorResponse
-//		@Failure		500			{object}	httputils.ErrorResponse
+//		@Failure		400			{object}	http_utils.ErrorResponse
+//		@Failure		409			{object}	http_utils.ErrorResponse
+//		@Failure		500			{object}	http_utils.ErrorResponse
 //		@Router			/api/admin/category [post]
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "category.Create")
 
-	req, ok := httputils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
+	req, ok := http_utils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
 	if !ok {
 		return
 	}
@@ -79,7 +79,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", fmt.Sprintf("/api/category/%d", created.ID))
-	httputils.WriteJSON(w, http.StatusCreated, dto.ToDTOResponse(created))
+	http_utils.WriteJSON(w, http.StatusCreated, dto.ToDTOResponse(created))
 }
 
 // -----------------------------------------------------------------------------
@@ -91,15 +91,15 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 //
 // @Param			id	path	int	true	"Category ID"
 // @Success		200	{object}	dto.CategoryResponse
-// @Failure		400	{object}	httputils.ErrorResponse
-// @Failure		404	{object}	httputils.ErrorResponse
-// @Failure		500	{object}	httputils.ErrorResponse
+// @Failure		400	{object}	http_utils.ErrorResponse
+// @Failure		404	{object}	http_utils.ErrorResponse
+// @Failure		500	{object}	http_utils.ErrorResponse
 // @Router			/api/category/{id} [get]
 func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	cat, err := h.srv.GetCategory(ctx, id)
@@ -108,7 +108,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.ToDTOResponse(cat)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // -----------------------------------------------------------------------------
@@ -118,7 +118,7 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 //	@Tags			categories
 //	@Produce		json
 //	@Success		200	{array}		dto.CategoryResponse
-//	@Failure		500	{object}	httputils.ErrorResponse
+//	@Failure		500	{object}	http_utils.ErrorResponse
 //	@Router			/api/category [get]
 func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -131,7 +131,7 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	for _, c := range cats {
 		resp = append(resp, dto.ToDTOResponse(&c))
 	}
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // -----------------------------------------------------------------------------
@@ -145,20 +145,20 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 //		@Param			id			path	int							true	"Category ID"
 //		@Param			category	body	dto.CategoryRequest	true	"New name"
 //		@Success		200	{object}	dto.CategoryResponse
-//		@Failure		400	{object}	httputils.ErrorResponse
-//		@Failure		404	{object}	httputils.ErrorResponse
-//		@Failure		500	{object}	httputils.ErrorResponse
+//		@Failure		400	{object}	http_utils.ErrorResponse
+//		@Failure		404	{object}	http_utils.ErrorResponse
+//		@Failure		500	{object}	http_utils.ErrorResponse
 //		@Router			/api/admin/category/{id} [put]
 func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "UpdateCategory")
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid category id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid category id")
 		return
 	}
 
-	req, ok := httputils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
+	req, ok := http_utils.DecodeAndValidate[dto.CategoryRequest](w, r, log)
 	if !ok {
 		return
 	}
@@ -170,7 +170,7 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 		h.handleServiceError(w, err)
 		return
 	}
-	httputils.WriteJSON(w, http.StatusOK, dto.ToDTOResponse(updated))
+	http_utils.WriteJSON(w, http.StatusOK, dto.ToDTOResponse(updated))
 }
 
 // -----------------------------------------------------------------------------
@@ -182,15 +182,15 @@ func (h *Handler) UpdateCategory(w http.ResponseWriter, r *http.Request) {
 //	 	@Security       BearerAuth
 //		@Param			id	path	int	true	"Category ID"
 //		@Success		204
-//		@Failure		400	{object}	httputils.ErrorResponse
-//		@Failure		404	{object}	httputils.ErrorResponse
-//		@Failure		500	{object}	httputils.ErrorResponse
+//		@Failure		400	{object}	http_utils.ErrorResponse
+//		@Failure		404	{object}	http_utils.ErrorResponse
+//		@Failure		500	{object}	http_utils.ErrorResponse
 //		@Router			/api/admin/category/{id} [delete]
 func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid category id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid category id")
 		return
 	}
 	if err := h.srv.DeleteCategory(ctx, id); err != nil {
@@ -203,23 +203,23 @@ func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, catDom.ErrCategoryNotFound):
-		httputils.WriteError(w, http.StatusNotFound, "category not found")
+		http_utils.WriteError(w, http.StatusNotFound, "category not found")
 
 	case errors.Is(err, catDom.ErrCategoryNameEmpty):
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "category name cannot be empty")
+		http_utils.WriteError(w, http.StatusUnprocessableEntity, "category name cannot be empty")
 
 	// Слишком длинное имя
 	case errors.Is(err, catDom.ErrCategoryNameTooLong):
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "category name must be at most 255 characters")
+		http_utils.WriteError(w, http.StatusUnprocessableEntity, "category name must be at most 255 characters")
 
 	// Попытка удалить категорию, которая используется
 	case errors.Is(err, catDom.ErrCategoryInUse):
-		httputils.WriteError(w, http.StatusConflict, "category is in use and cannot be deleted")
+		http_utils.WriteError(w, http.StatusConflict, "category is in use and cannot be deleted")
 	case errors.Is(err, catDom.ErrCategoryNameExists):
-		httputils.WriteError(w, http.StatusConflict, "category name already exist")
+		http_utils.WriteError(w, http.StatusConflict, "category name already exist")
 	// Всё прочее — Internal Server Error
 	default:
 		h.log.Error("service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
+		http_utils.WriteError(w, http.StatusInternalServerError, "internal server error")
 	}
 }

@@ -28,7 +28,7 @@ type Application struct {
 func NewApplication(dep *Deps) (*Application, error) {
 	log := dep.Logger.With(slog.String("component", "app"))
 	logNew := log.With(slog.String("op", "app.new"))
-
+	fmt.Println(dep.Config)
 	start := time.Now()
 	db, err := psql.New(
 		context.Background(),
@@ -172,4 +172,12 @@ func (a *Application) Shutdown(ctx context.Context) error {
 	log.Info("shutdown completed successfully")
 	return nil
 
+}
+
+func (a *Application) ServerHandler() http.Handler {
+	return a.server.Handler()
+}
+
+func (a *Application) DB() *sqlx.DB {
+	return a.db
 }

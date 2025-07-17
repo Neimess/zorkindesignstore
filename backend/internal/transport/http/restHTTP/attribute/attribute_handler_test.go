@@ -18,7 +18,7 @@ import (
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/attribute/mocks"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 func newHandler(mockSvc *mocks.MockAttributeService) *Handler {
@@ -141,12 +141,12 @@ func TestCreateAttributesBatch_Errors(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 
 			if tc.wantValidation {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)
 			} else {
-				var resp httputils.ErrorResponse
+				var resp http_utils.ErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				assert.Equal(t, tc.wantMsg, resp.Message)
@@ -202,7 +202,7 @@ func TestCreateAttribute_ValidationError(t *testing.T) {
 	h.CreateAttribute(w, req)
 
 	assert.Equal(t, http.StatusUnprocessableEntity, w.Code)
-	var resp httputils.ValidationErrorResponse
+	var resp http_utils.ValidationErrorResponse
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	assert.NotEmpty(t, resp.Errors)
 }

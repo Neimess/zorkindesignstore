@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/auth/dto"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	http_utils "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type AuthService interface {
@@ -51,8 +51,8 @@ func New(d Deps) *Handler {
 // @Produce      json
 // @Param        secret_admin_key  path      string  true  "Secret admin key for login, injected via route"
 // @Success      201  {object}  dto.TokenResponse  "Returns generated token"
-// @Failure      401  {object}  httputils.ErrorResponse  "Unauthorized access"
-// @Failure      500  {object}  httputils.ErrorResponse  "Internal server error"
+// @Failure      401  {object}  http_utils.ErrorResponse  "Unauthorized access"
+// @Failure      500  {object}  http_utils.ErrorResponse  "Internal server error"
 // @Router       /api/admin/auth/{secret_admin_key} [get]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	const op = "handler.auth.CreateToken"
@@ -62,11 +62,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := h.srv.GenerateToken(userID)
 	if err != nil {
 		log.Error("failed to generate token", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "failed to generate token")
+		http_utils.WriteError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
-	httputils.WriteJSON(w, http.StatusCreated, dto.TokenResponse{
+	http_utils.WriteJSON(w, http.StatusCreated, dto.TokenResponse{
 		Token: token,
 	})
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
-	ve "github.com/Neimess/zorkin-store-project/pkg/httputils"
+	ve "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 	"github.com/go-playground/validator/v10"
 )
 

@@ -19,7 +19,7 @@ import (
 	catDom "github.com/Neimess/zorkin-store-project/internal/domain/category"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/category/mocks"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 func newHandler(mockSvc *mocks.MockCategoryService) *Handler {
@@ -119,12 +119,12 @@ func TestCreate_Errors(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 
 			if tc.wantValidation {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)
 			} else {
-				var resp httputils.ErrorResponse
+				var resp http_utils.ErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.Contains(t, resp.Message, tc.wantMsg)
@@ -190,7 +190,7 @@ func TestGetCategory_Errors(t *testing.T) {
 			h.GetCategory(w, req)
 			assert.Equal(t, tc.wantCode, w.Code)
 
-			var resp httputils.ErrorResponse
+			var resp http_utils.ErrorResponse
 			_ = json.Unmarshal(w.Body.Bytes(), &resp)
 			assert.Equal(t, tc.wantMsg, resp.Message)
 		})
@@ -250,7 +250,7 @@ func TestDeleteCategory_Errors(t *testing.T) {
 			h.DeleteCategory(w, req)
 			assert.Equal(t, tc.wantCode, w.Code)
 
-			var resp httputils.ErrorResponse
+			var resp http_utils.ErrorResponse
 			_ = json.Unmarshal(w.Body.Bytes(), &resp)
 			// for 204 there is no body
 			if tc.wantCode != http.StatusNoContent {
@@ -322,12 +322,12 @@ func TestUpdate_Errors(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 
 			if tc.wantValidation {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)
 			} else {
-				var resp httputils.ErrorResponse
+				var resp http_utils.ErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.Contains(t, resp.Message, tc.wantMsg)

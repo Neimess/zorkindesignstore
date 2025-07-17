@@ -16,7 +16,7 @@ import (
 	domPreset "github.com/Neimess/zorkin-store-project/internal/domain/preset"
 	domProduct "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/preset/mocks"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -480,12 +480,12 @@ func TestCreate_Errors(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 
 			if tc.wantValidation {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)
 			} else {
-				var resp httputils.ErrorResponse
+				var resp http_utils.ErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.Contains(t, resp.Message, tc.wantMsg)
@@ -551,12 +551,12 @@ func TestUpdate_Errors(t *testing.T) {
 			assert.Equal(t, tc.wantCode, w.Code)
 
 			if tc.wantValidation {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)
 			} else {
-				var resp httputils.ErrorResponse
+				var resp http_utils.ErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.Contains(t, resp.Message, tc.wantMsg)

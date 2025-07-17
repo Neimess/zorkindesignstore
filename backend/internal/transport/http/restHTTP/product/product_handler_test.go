@@ -18,7 +18,7 @@ import (
 	prodDom "github.com/Neimess/zorkin-store-project/internal/domain/product"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/dto"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/product/mocks"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	"github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type ProductHandlerSuite struct {
@@ -80,7 +80,7 @@ func (s *ProductHandlerSuite) TestCreate() {
 			svcMock:  nil,
 			wantCode: http.StatusUnprocessableEntity,
 			wantCheck: func(t *testing.T, w *httptest.ResponseRecorder) {
-				var resp httputils.ValidationErrorResponse
+				var resp http_utils.ValidationErrorResponse
 				err := json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NoError(t, err)
 				assert.NotEmpty(t, resp.Errors)

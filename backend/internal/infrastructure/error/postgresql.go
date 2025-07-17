@@ -16,7 +16,9 @@ func MapPostgreSQLError(logger *slog.Logger, err error) error {
 	if err == nil {
 		return nil
 	}
-
+	logger.Error("mapping PostgreSQL error",
+		slog.String("error", err.Error()),
+	)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		// Логируем все поля PG-ошибки
@@ -62,6 +64,15 @@ func MapPostgreSQLError(logger *slog.Logger, err error) error {
 		return app_error.ErrTimeout
 	}
 
+	if errors.Is(err, app_error.ErrBadRequest) {
+		logger.Debug("bad request error", slog.String("error", err.Error()))
+		return app_error.ErrBadRequest
+	}
+
+	if errors.Is(err, app_error.ErrNotFound) {
+		logger.Debug("not found error", slog.String("error", err.Error()))
+		return app_error.ErrNotFound
+	}
 	// Всё прочее — внутренняя ошибка хранилища
 	logger.Error("unexpected database error", slog.String("error", err.Error()))
 	return app_error.ErrInternal

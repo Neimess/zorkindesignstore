@@ -44,13 +44,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized access",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -94,19 +94,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -155,19 +155,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -216,19 +216,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -284,19 +284,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -335,19 +335,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -398,19 +398,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -444,19 +444,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -490,7 +490,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -533,25 +533,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -591,19 +591,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -653,25 +653,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -703,19 +703,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -760,25 +760,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -803,6 +803,13 @@ const docTemplate = `{
                 "summary": "Update preset info",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Preset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "description": "Preset data",
                         "name": "preset",
                         "in": "body",
@@ -822,19 +829,19 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -865,19 +872,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -922,55 +929,55 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized access",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden access",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "405": {
                         "description": "Method not allowed, e.g. POST on GET endpoint",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict, e.g. duplicate product",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity, e.g. validation error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "429": {
                         "description": "Too many requests, e.g. rate limiting",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1022,25 +1029,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Validation error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1072,19 +1079,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1129,25 +1136,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1199,25 +1206,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1249,19 +1256,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1289,7 +1296,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1327,19 +1334,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1381,19 +1388,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1427,19 +1434,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1467,7 +1474,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1495,7 +1502,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1529,19 +1536,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1579,37 +1586,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized access",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden access",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Category not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "405": {
                         "description": "Method not allowed, e.g. POST on GET endpoint",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1647,19 +1654,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1688,7 +1695,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -1723,19 +1730,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse"
+                            "$ref": "#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse"
                         }
                     }
                 }
@@ -2017,8 +2024,6 @@ const docTemplate = `{
                 },
                 "unit": {
                     "type": "string",
-                    "maxLength": 50,
-                    "minLength": 1,
                     "example": "л"
                 },
                 "value": {
@@ -2213,7 +2218,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse": {
+        "github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse": {
             "type": "object",
             "properties": {
                 "message": {

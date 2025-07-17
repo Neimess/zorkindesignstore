@@ -1,26 +1,26 @@
 env: test
-version: "e2e"
-httpServer:
+version: "integration_test"
+http_server:
   address: ":8080"
-  readTimeout: 5s
-  writeTimeout: 5s
-  idleTimeout: 30s
-  maxHeaderBytes: 1048576
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 30s
+  max_header_bytes: 1048576
 storage:
   host: localhost
   port: 5432
   user: testuser
   password: testpassword
-  dbName: testdb
-  sslMode: disable
-  connMaxLifetime: 1h
-  maxOpenConns: 10
-jwtConfig:
-  jwtSecret: "testsecret"
+  dbname: testdb
+  sslmode: disable
+  conn_max_timeout: 1h
+  max_open_conns: 10
+jwt_config:
+  jwt_secret: "testsecret"
   issuer: "test"
   audience: "test"
   algorithm: "HS256"
 swagger:
   host: "localhost:8080"
   schemes: ["http"]
-  version: "e2e"
+  version: "integration_test"

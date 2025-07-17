@@ -7,6 +7,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type JWTConfig struct {
+	Secret    string
+	Algorithm string
+	Issuer    string
+	Audience  string
+}
+
 type JWTGenerator struct {
 	cfg JWTConfig
 }
@@ -34,11 +41,4 @@ func (g *JWTGenerator) Generate(userID string) (string, error) {
 		return "", fmt.Errorf("sign token: %w", err)
 	}
 	return signed, nil
-}
-
-type JWTConfig struct {
-	Secret    string
-	Algorithm string
-	Issuer    string
-	Audience  string
 }

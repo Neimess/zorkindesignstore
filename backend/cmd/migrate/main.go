@@ -1,19 +1,13 @@
+// cmd/migrate/main.go
 package main
 
 import (
-	"database/sql"
-	_ "embed"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/Neimess/zorkin-store-project/migrations"
-	_ "github.com/lib/pq"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/Neimess/zorkin-store-project/pkg/migrator"
 )
 
 func main() {
@@ -24,53 +18,28 @@ func main() {
 		dsn   = flag.String("dsn", os.Getenv("DSN"), "Database DSN (can also be set via DSN env var)")
 	)
 	flag.Parse()
+
 	if *dsn == "" {
-		log.Fatal("Missing DSN. Set via --dsn or DSN environment variable")
+		log.Fatal("Missing DSN. Set via --dsn or DSN env var")
 	}
 
-	db, err := sql.Open("postgres", *dsn)
-	if err != nil {
-		log.Fatalf("failed to open DB: %v", err)
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Fatalf("create postgres driver: %v", err)
-	}
-
-	src, err := iofs.New(migrations.FS, ".")
-	if err != nil {
-		log.Fatalf("create iofs source: %v", err)
-	}
-
-	m, err := migrate.NewWithInstance("iofs", src, "postgres", driver)
-	if err != nil {
-		log.Fatalf("init migrate: %v", err)
-	}
-
+	var mode migrator.Mode
 	switch {
-	case *force != 0:
-		if err := m.Force(*force); err != nil {
-			log.Fatalf("force: %v", err)
-		}
-		fmt.Printf("✔ Forced to version %d\n", *force)
-
-	case *down:
-		if err := m.Steps(-1); err != nil && err != migrate.ErrNoChange {
-			log.Fatalf("down: %v", err)
-		}
-		fmt.Println("✔ Rolled back one step")
-
 	case *up:
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-			log.Fatalf("up: %v", err)
-		}
-		version, _, _ := m.Version()
-		fmt.Printf("✔ Migrated to version %d\n", version)
-
+		mode = migrator.Up
+	case *down:
+		mode = migrator.DownOne
+	case *force != 0:
+		mode = migrator.ForceTo
 	default:
 		fmt.Println("No action specified. Use -up, -down or -force N")
+		return
+	}
+
+	if err := migrator.Run(*dsn, migrator.Options{
+		Mode:    mode,
+		Version: *force,
+	}); err != nil {
+		log.Fatalf("migrate: %v", err)
 	}
 }

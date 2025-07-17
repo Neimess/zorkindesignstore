@@ -10,7 +10,7 @@ import (
 	_ "github.com/Neimess/zorkin-store-project/docs"
 	"github.com/Neimess/zorkin-store-project/internal/config"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP"
-	customMiddlewares "github.com/Neimess/zorkin-store-project/pkg/httputils/middleware"
+	customMiddlewares "github.com/Neimess/zorkin-store-project/pkg/http_utils/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"

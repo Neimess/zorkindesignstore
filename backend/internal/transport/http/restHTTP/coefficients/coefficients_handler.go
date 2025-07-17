@@ -9,7 +9,7 @@ import (
 
 	domCoeff "github.com/Neimess/zorkin-store-project/internal/domain/coefficients"
 	"github.com/Neimess/zorkin-store-project/internal/transport/http/restHTTP/coefficients/dto"
-	"github.com/Neimess/zorkin-store-project/pkg/httputils"
+	http_utils "github.com/Neimess/zorkin-store-project/pkg/http_utils"
 )
 
 type CoefficientService interface {
@@ -53,16 +53,16 @@ func New(d Deps) *Handler {
 // @Security     BearerAuth
 // @Param        data body dto.CoefficientRequest true "Coefficient data"
 // @Success      201 {object} dto.CoefficientResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      409 {object} httputils.ErrorResponse
-// @Failure      422 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      409 {object} http_utils.ErrorResponse
+// @Failure      422 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/coefficients [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := h.log.With("op", "Create")
 
-	req, ok := httputils.DecodeAndValidate[dto.CoefficientRequest](w, r, log)
+	req, ok := http_utils.DecodeAndValidate[dto.CoefficientRequest](w, r, log)
 	if !ok {
 		return
 	}
@@ -74,7 +74,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := dto.MapToResponse(created)
 	w.Header().Set("Location", fmt.Sprintf("/api/admin/coefficients/%d", resp.ID))
-	httputils.WriteJSON(w, http.StatusCreated, resp)
+	http_utils.WriteJSON(w, http.StatusCreated, resp)
 }
 
 // Get godoc
@@ -85,15 +85,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Param        id path int true "Coefficient ID"
 // @Success      200 {object} dto.CoefficientResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      404 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      404 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/coefficients/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	coeff, err := h.srv.Get(ctx, id)
@@ -102,7 +102,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.MapToResponse(coeff)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // List godoc
@@ -112,18 +112,18 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200 {array} dto.CoefficientResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/coefficients [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	list, err := h.srv.List(ctx)
 	if err != nil {
 		h.log.Error("service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal error")
+		http_utils.WriteError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	resp := dto.MapToResponseList(list)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Update godoc
@@ -136,19 +136,19 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 // @Param        id path int true "Coefficient ID"
 // @Param        data body dto.CoefficientRequest true "Coefficient data"
 // @Success      200 {object} dto.CoefficientResponse
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      409 {object} httputils.ErrorResponse
-// @Failure      422 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      409 {object} http_utils.ErrorResponse
+// @Failure      422 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/coefficients/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
-	req, ok := httputils.DecodeAndValidate[dto.CoefficientRequest](w, r, h.log)
+	req, ok := http_utils.DecodeAndValidate[dto.CoefficientRequest](w, r, h.log)
 	if !ok {
 		return
 	}
@@ -160,7 +160,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := dto.MapToResponse(updated)
-	httputils.WriteJSON(w, http.StatusOK, resp)
+	http_utils.WriteJSON(w, http.StatusOK, resp)
 }
 
 // Delete godoc
@@ -170,15 +170,15 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Param        id path int true "Coefficient ID"
 // @Success      204
-// @Failure      400 {object} httputils.ErrorResponse
-// @Failure      404 {object} httputils.ErrorResponse
-// @Failure      500 {object} httputils.ErrorResponse
+// @Failure      400 {object} http_utils.ErrorResponse
+// @Failure      404 {object} http_utils.ErrorResponse
+// @Failure      500 {object} http_utils.ErrorResponse
 // @Router       /api/admin/coefficients/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, err := httputils.IDFromURL(r, "id")
+	id, err := http_utils.IDFromURL(r, "id")
 	if err != nil || id <= 0 {
-		httputils.WriteError(w, http.StatusBadRequest, "invalid id")
+		http_utils.WriteError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
 	err = h.srv.Delete(ctx, id)
@@ -192,15 +192,15 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domCoeff.ErrCoefficientNotFound):
-		httputils.WriteError(w, http.StatusNotFound, "coefficient not found")
+		http_utils.WriteError(w, http.StatusNotFound, "coefficient not found")
 	case errors.Is(err, domCoeff.ErrCoefficientAlreadyExists):
-		httputils.WriteError(w, http.StatusConflict, "coefficient already exists")
+		http_utils.WriteError(w, http.StatusConflict, "coefficient already exists")
 	case errors.Is(err, domCoeff.ErrEmptyName):
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "name must not be empty")
+		http_utils.WriteError(w, http.StatusUnprocessableEntity, "name must not be empty")
 	case errors.Is(err, domCoeff.ErrNameTooLong):
-		httputils.WriteError(w, http.StatusUnprocessableEntity, "name is too long")
+		http_utils.WriteError(w, http.StatusUnprocessableEntity, "name is too long")
 	default:
 		h.log.Error("service error", slog.Any("error", err))
-		httputils.WriteError(w, http.StatusInternalServerError, "internal server error")
+		http_utils.WriteError(w, http.StatusInternalServerError, "internal server error")
 	}
 }

@@ -188,8 +188,6 @@ definitions:
         type: string
       unit:
         example: л
-        maxLength: 50
-        minLength: 1
         type: string
       value:
         example: "1.25"
@@ -331,7 +329,7 @@ definitions:
         example: 1500
         type: number
     type: object
-  github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse:
+  github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse:
     properties:
       message:
         example: Invalid request
@@ -360,11 +358,11 @@ paths:
         "401":
           description: Unauthorized access
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Login user
       tags:
       - auth
@@ -389,15 +387,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create category
@@ -428,15 +426,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create an attribute
@@ -462,15 +460,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete an attribute
@@ -505,15 +503,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update an attribute
@@ -544,15 +542,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Batch create attributes
@@ -574,15 +572,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete category
@@ -613,15 +611,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update category
@@ -642,7 +640,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List coefficients
@@ -669,19 +667,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create coefficient
@@ -702,15 +700,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete coefficient
@@ -734,15 +732,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get coefficient by ID
@@ -774,19 +772,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update coefficient
@@ -814,19 +812,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new preset
@@ -846,15 +844,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete preset
@@ -864,6 +862,11 @@ paths:
       consumes:
       - application/json
       parameters:
+      - description: Preset ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: Preset data
         in: body
         name: preset
@@ -880,15 +883,15 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update preset info
@@ -916,39 +919,39 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "401":
           description: Unauthorized access
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "403":
           description: Forbidden access
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "405":
           description: Method not allowed, e.g. POST on GET endpoint
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict, e.g. duplicate product
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable entity, e.g. validation error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "429":
           description: Too many requests, e.g. rate limiting
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Создать продукт вместе с аттрибутами
@@ -969,15 +972,15 @@ paths:
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a product
@@ -1009,19 +1012,19 @@ paths:
         "400":
           description: Bad request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Validation error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Обновить продукт
@@ -1049,19 +1052,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create service
@@ -1082,15 +1085,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete service
@@ -1122,19 +1125,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update service
@@ -1154,7 +1157,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: List categories
       tags:
       - categories
@@ -1179,15 +1182,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get all attributes for a category
       tags:
       - categories
@@ -1215,15 +1218,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get single attribute
       tags:
       - categories
@@ -1245,15 +1248,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get category by ID
       tags:
       - categories
@@ -1271,7 +1274,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: List presets basic info
       tags:
       - Preset
@@ -1293,15 +1296,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get preset by ID
       tags:
       - Preset
@@ -1319,7 +1322,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: List presets with items
       tags:
       - Preset
@@ -1344,15 +1347,15 @@ paths:
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get product
       tags:
       - products
@@ -1377,27 +1380,27 @@ paths:
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "401":
           description: Unauthorized access
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "403":
           description: Forbidden access
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Category not found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "405":
           description: Method not allowed, e.g. POST on GET endpoint
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: List products by category
       tags:
       - products
@@ -1416,7 +1419,7 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: List services (public)
       tags:
       - services
@@ -1439,15 +1442,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_httputils.ErrorResponse'
+            $ref: '#/definitions/github_com_Neimess_zorkin-store-project_pkg_http_utils.ErrorResponse'
       summary: Get service by ID
       tags:
       - services

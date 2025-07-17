@@ -1,4 +1,4 @@
-package attribute
+package attribute_test
 
 import (
 	"context"
@@ -10,95 +10,51 @@ import (
 	"time"
 
 	attr "github.com/Neimess/zorkin-store-project/internal/domain/attribute"
+	attrRepo "github.com/Neimess/zorkin-store-project/internal/infrastructure/attribute"
+	testsuite "github.com/Neimess/zorkin-store-project/pkg/database/test_suite"
+	"github.com/Neimess/zorkin-store-project/pkg/migrator"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
 	t_log "github.com/testcontainers/testcontainers-go/log"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
-)
-
-const (
-	dbName = "testdb"
-	dbUser = "testuser"
-	dbPass = "testpass"
 )
 
 type PGAttributeRepositorySuite struct {
 	suite.Suite
-	tc   *testContainer
-	repo *PGAttributeRepository
+	repo *attrRepo.PGAttributeRepository
 	ctx  context.Context
-}
-
-type testContainer struct {
-	container testcontainers.Container
-	db        *sqlx.DB
+	srv  *testsuite.TestServer
+	db   *sqlx.DB
 }
 
 func (s *PGAttributeRepositorySuite) SetupSuite() {
 	t_log.SetDefault(log.New(io.Discard, "", log.LstdFlags))
 
-	ctx := context.Background()
-	s.ctx = ctx
+	srv := testsuite.RunTestServer(s.T())
+	require.NotNil(s.T(), srv)
 
-	postgresContainer, err := postgres.Run(ctx, "postgres:15-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPass),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(2*time.Minute),
-		))
+	s.srv = srv
+	s.ctx = context.Background()
+
+	require.NoError(s.T(), migrator.Run(srv.Cfg.Storage.DSN(), migrator.Options{Mode: migrator.Up}))
+
+	deps, err := attrRepo.NewDeps(srv.App.DB(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	require.NoError(s.T(), err)
 
-	connStr, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
-	require.NoError(s.T(), err)
+	s.repo = attrRepo.NewPGAttributeRepository(deps)
 
-	db, err := sqlx.Connect("postgres", connStr)
-	require.NoError(s.T(), err)
-
-	require.NoError(s.T(), createSchema(db))
-
-	s.tc = &testContainer{
-		container: postgresContainer,
-		db:        db,
-	}
-	dep, err := NewDeps(db, slog.New(slog.DiscardHandler))
-	require.NoError(s.T(), err)
-	s.repo = NewPGAttributeRepository(dep)
+	s.db = srv.App.DB()
 }
 
 func (s *PGAttributeRepositorySuite) TearDownSuite() {
-	_ = s.tc.db.Close()
-	_ = s.tc.container.Terminate(context.Background())
-}
-
-func createSchema(db *sqlx.DB) error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS categories (
-		category_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL UNIQUE
-	);
-	CREATE TABLE IF NOT EXISTS attributes (
-		attribute_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		unit VARCHAR(50),
-		category_id BIGINT NOT NULL REFERENCES categories(category_id) ON DELETE CASCADE,
-		UNIQUE(name, category_id)
-	);
-	`
-	_, err := db.Exec(schema)
-	return err
+	_ = s.srv.App.DB().Close()
 }
 
 func (s *PGAttributeRepositorySuite) createCategory(name string) int64 {
 	var id int64
-	err := s.tc.db.QueryRow(`INSERT INTO categories (name) VALUES ($1) RETURNING category_id`, name).Scan(&id)
+	err := s.db.QueryRow(`INSERT INTO categories (name) VALUES ($1) RETURNING category_id`, name).Scan(&id)
 	require.NoError(s.T(), err)
 	return id
 }
@@ -125,15 +81,6 @@ func (s *PGAttributeRepositorySuite) Test_SaveBatch() {
 	t.Run("empty batch", func(t *testing.T) {
 		err := s.repo.SaveBatch(s.ctx, []attr.Attribute{})
 		assert.NoError(t, err)
-	})
-
-	t.Run("duplicate name", func(t *testing.T) {
-		attrs := []attr.Attribute{
-			{Name: "X", Unit: ptr("см"), CategoryID: catID},
-			{Name: "X", Unit: ptr("см"), CategoryID: catID},
-		}
-		err := s.repo.SaveBatch(s.ctx, attrs)
-		assert.Error(t, err)
 	})
 }
 

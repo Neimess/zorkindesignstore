@@ -2,115 +2,111 @@ package preset_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"log/slog"
-	"os"
 	"testing"
 	"time"
+
+	testsuite "github.com/Neimess/zorkin-store-project/pkg/database/test_suite"
+	"github.com/Neimess/zorkin-store-project/pkg/migrator"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
-	tlog "github.com/testcontainers/testcontainers-go/log"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	domPreset "github.com/Neimess/zorkin-store-project/internal/domain/preset"
-	presetRepo "github.com/Neimess/zorkin-store-project/internal/infrastructure/preset"
+	"github.com/Neimess/zorkin-store-project/internal/infrastructure/preset"
 )
 
-const (
-	dbName = "testdb"
-	dbUser = "testuser"
-	dbPass = "testpass"
-)
-
-type PresetRepositorySuite struct {
+type PGPresetRepositorySuite struct {
 	suite.Suite
-	container testcontainers.Container
-	db        *sqlx.DB
-	repo      *presetRepo.PGPresetRepository
-	ctx       context.Context
+	repo *preset.PGPresetRepository
+	ctx  context.Context
+	srv  *testsuite.TestServer
+	db   *sqlx.DB
 }
 
-func (s *PresetRepositorySuite) SetupSuite() {
-	tlog.SetDefault(log.New(io.Discard, "", log.LstdFlags))
+func (s *PGPresetRepositorySuite) SetupSuite() {
+	log.SetOutput(io.Discard)
 
+	srv := testsuite.RunTestServer(s.T())
+	require.NotNil(s.T(), srv)
+
+	s.srv = srv
 	s.ctx = context.Background()
-	postgresContainer, err := postgres.Run(s.ctx, "postgres:15-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPass),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(2*time.Minute),
-		),
-	)
-	require.NoError(s.T(), err)
-	s.container = postgresContainer
 
-	connStr, err := postgresContainer.ConnectionString(s.ctx, "sslmode=disable")
-	require.NoError(s.T(), err)
+	require.NoError(s.T(), migrator.Run(srv.Cfg.Storage.DSN(), migrator.Options{Mode: migrator.Up}))
 
-	db, err := sqlx.Connect("postgres", connStr)
-	require.NoError(s.T(), err)
-	s.db = db
+	s.repo = preset.NewPGPresetRepository(srv.App.DB(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 
-	require.NoError(s.T(), s.createSchema())
-	s.repo = presetRepo.NewPGPresetRepository(db, slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	s.db = srv.App.DB()
 }
 
-func (s *PresetRepositorySuite) TearDownSuite() {
-	_ = s.db.Close()
-	_ = s.container.Terminate(s.ctx)
+func (s *PGPresetRepositorySuite) TearDownSuite() {
+	_ = s.srv.App.DB().Close()
 }
 
-func (s *PresetRepositorySuite) createSchema() error {
-	schema := `
-	CREATE TABLE presets (
-		preset_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		description TEXT,
-		total_price NUMERIC(10,2),
-		image_url TEXT,
-		created_at TIMESTAMPTZ DEFAULT now()
-	);
-	CREATE TABLE products (
-		product_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL,
-		price NUMERIC(10,2) NOT NULL,
-		image_url TEXT
-	);
-	CREATE TABLE preset_items (
-		preset_item_id BIGSERIAL PRIMARY KEY,
-		preset_id BIGINT NOT NULL REFERENCES presets(preset_id) ON DELETE CASCADE,
-		product_id BIGINT NOT NULL REFERENCES products(product_id)
-	);
-	`
-	_, err := s.db.Exec(schema)
-	return err
-}
-
-func (s *PresetRepositorySuite) createProduct(name string, price float64) int64 {
+func (s *PGPresetRepositorySuite) createCategory(name string) int64 {
+	uniqueName := fmt.Sprintf("%s_%d", name, time.Now().UnixNano())
 	var id int64
 	err := s.db.QueryRow(
-		`INSERT INTO products (name, price) VALUES ($1, $2) RETURNING product_id`,
-		name, price,
+		`INSERT INTO categories(name) VALUES ($1) RETURNING category_id`,
+		uniqueName,
 	).Scan(&id)
 	require.NoError(s.T(), err)
 	return id
 }
 
-// Test_CreateGetDelete проверяет Create, Get и Delete
-func (s *PresetRepositorySuite) Test_CreateGetDelete() {
-	// Создаём продукт
-	prodID := s.createProduct("Sink", 199.99)
+func (s *PGPresetRepositorySuite) createService(name string, price float64) int64 {
+	uniqueName := fmt.Sprintf("%s_%d", name, time.Now().UnixNano())
+	var id int64
+	err := s.db.QueryRow(
+		`INSERT INTO services(name, price) VALUES ($1, $2) RETURNING service_id`,
+		uniqueName, price,
+	).Scan(&id)
+	require.NoError(s.T(), err)
+	return id
+}
 
-	// Create Preset
+func (s *PGPresetRepositorySuite) createAttribute(name, unit string, categoryID int64) int64 {
+	uniqueName := fmt.Sprintf("%s_%d", name, time.Now().UnixNano())
+	var id int64
+	err := s.db.QueryRow(
+		`INSERT INTO attributes(name, unit, category_id) VALUES ($1, $2, $3) RETURNING attribute_id`,
+		uniqueName, unit, categoryID,
+	).Scan(&id)
+	require.NoError(s.T(), err)
+	return id
+}
+
+func (s *PGPresetRepositorySuite) createProduct(name string, price float64, categoryID int64, attrID int64, svcID int64) int64 {
+	var id int64
+	err := s.db.QueryRow(
+		`INSERT INTO products (name, price, category_id) VALUES ($1, $2, $3) RETURNING product_id`,
+		name, price, categoryID,
+	).Scan(&id)
+	require.NoError(s.T(), err)
+	if attrID > 0 {
+		_, err = s.db.Exec(`INSERT INTO product_attributes (product_id, attribute_id, value) VALUES ($1, $2, $3)`, id, attrID, "val")
+		require.NoError(s.T(), err)
+	}
+	if svcID > 0 {
+		_, err = s.db.Exec(`INSERT INTO product_services (product_id, service_id) VALUES ($1, $2)`, id, svcID)
+		require.NoError(s.T(), err)
+	}
+	return id
+}
+
+func ptr(s string) *string { return &s }
+
+func (s *PGPresetRepositorySuite) Test_CreateGetDelete() {
+	categoryID := s.createCategory("Bathroom")
+	attrID := s.createAttribute("weight", "kg", categoryID)
+	svcID := s.createService("delivery", 100)
+	prodID := s.createProduct("Sink", 199.99, categoryID, attrID, svcID)
 	in := &domPreset.Preset{
 		Name:        "Bathroom Set",
 		Description: ptr("Full set for bathroom"),
@@ -118,33 +114,26 @@ func (s *PresetRepositorySuite) Test_CreateGetDelete() {
 		ImageURL:    ptr("https://example.com/image.jpg"),
 		Items:       []domPreset.PresetItem{{ProductID: prodID}},
 	}
-
 	pRes, err := s.repo.Create(s.ctx, in)
 	require.NoError(s.T(), err)
 	require.NotZero(s.T(), pRes.ID)
-
-	// Get
 	got, err := s.repo.Get(s.ctx, pRes.ID)
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "Bathroom Set", got.Name)
 	require.Len(s.T(), got.Items, 1)
 	require.Equal(s.T(), prodID, got.Items[0].ProductID)
 	require.Equal(s.T(), "Sink", got.Items[0].Product.Name)
-
-	// Delete
 	require.NoError(s.T(), s.repo.Delete(s.ctx, pRes.ID))
-
-	// Get после удаления должен вернуть ошибку
 	_, err = s.repo.Get(s.ctx, pRes.ID)
 	require.ErrorContains(s.T(), err, "not found")
 }
 
-// Test_ListDetailedAndShort проверяет ListDetailed и ListShort
-func (s *PresetRepositorySuite) Test_ListDetailedAndShort() {
-	// Очистка таблиц
+func (s *PGPresetRepositorySuite) Test_ListDetailedAndShort() {
 	_, _ = s.db.Exec(`DELETE FROM presets`)
-
-	prodID := s.createProduct("Toilet", 88.00)
+	categoryID := s.createCategory("Bathroom")
+	attrID := s.createAttribute("weight", "kg", categoryID)
+	svcID := s.createService("delivery", 100)
+	prodID := s.createProduct("Sink", 199.99, categoryID, attrID, svcID)
 	p := &domPreset.Preset{
 		Name:       "Toilet Only",
 		TotalPrice: 88.0,
@@ -152,26 +141,24 @@ func (s *PresetRepositorySuite) Test_ListDetailedAndShort() {
 	}
 	_, err := s.repo.Create(s.ctx, p)
 	require.NoError(s.T(), err)
-
-	// ListDetailed
 	list, err := s.repo.ListDetailed(s.ctx)
 	require.NoError(s.T(), err)
 	require.NotEmpty(s.T(), list)
 	require.NotEmpty(s.T(), list[0].Items)
-
-	// ListShort
 	short, err := s.repo.ListShort(s.ctx)
 	require.NoError(s.T(), err)
 	require.NotEmpty(s.T(), short)
 	require.Empty(s.T(), short[0].Items)
 }
 
-// Test_UpdatePreset проверяет метод Update
-func (s *PresetRepositorySuite) Test_UpdatePreset() {
-	prodA := s.createProduct("Alpha", 50)
-	prodB := s.createProduct("Beta", 75)
-
-	// Создаём Preset
+func (s *PGPresetRepositorySuite) Test_UpdatePreset() {
+	categoryID := s.createCategory("Bathroom")
+	attrA := s.createAttribute("height", "cm", categoryID)
+	attrB := s.createAttribute("width", "cm", categoryID)
+	svcA := s.createService("install", 200)
+	svcB := s.createService("warranty", 50)
+	prodA := s.createProduct("Alpha", 50, categoryID, attrA, svcA)
+	prodB := s.createProduct("Beta", 75, categoryID, attrB, svcB)
 	in := &domPreset.Preset{
 		Name:       "Original",
 		TotalPrice: 50,
@@ -179,8 +166,6 @@ func (s *PresetRepositorySuite) Test_UpdatePreset() {
 	}
 	pRes, err := s.repo.Create(s.ctx, in)
 	require.NoError(s.T(), err)
-
-	// Обновляем Preset
 	pRes.Name = "Updated"
 	pRes.TotalPrice = 75
 	pRes.Items = []domPreset.PresetItem{{ProductID: prodB}}
@@ -188,8 +173,6 @@ func (s *PresetRepositorySuite) Test_UpdatePreset() {
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "Updated", r.Name)
 	require.Equal(s.T(), float64(75), r.TotalPrice)
-
-	// Проверяем через Get
 	got, err := s.repo.Get(s.ctx, pRes.ID)
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "Updated", got.Name)
@@ -197,24 +180,20 @@ func (s *PresetRepositorySuite) Test_UpdatePreset() {
 	require.Equal(s.T(), prodB, got.Items[0].ProductID)
 }
 
-// Test_UpdateIdempotent проверяет идемпотентность Update
-func (s *PresetRepositorySuite) Test_UpdateIdempotent() {
-	prod := s.createProduct("Gamma", 20)
+func (s *PGPresetRepositorySuite) Test_UpdateIdempotent() {
+	categoryID := s.createCategory("Bathroom")
+	attrID := s.createAttribute("depth", "cm", categoryID)
+	svcID := s.createService("support", 30)
+	prod := s.createProduct("Gamma", 20, categoryID, attrID, svcID)
 	p := &domPreset.Preset{Name: "Same", TotalPrice: 20, Items: []domPreset.PresetItem{{ProductID: prod}}}
 	pRes, err := s.repo.Create(s.ctx, p)
 	require.NoError(s.T(), err)
-
-	// Первый Update
 	_, err = s.repo.Update(s.ctx, pRes)
 	require.NoError(s.T(), err)
-
-	// Повторный Update теми же данными
 	_, err = s.repo.Update(s.ctx, pRes)
 	require.NoError(s.T(), err)
 }
 
-func ptr(s string) *string { return &s }
-
-func TestPresetRepositorySuite(t *testing.T) {
-	suite.Run(t, new(PresetRepositorySuite))
+func TestPGPresetRepositorySuite(t *testing.T) {
+	suite.Run(t, new(PGPresetRepositorySuite))
 }

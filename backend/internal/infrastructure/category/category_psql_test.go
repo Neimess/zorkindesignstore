@@ -1,4 +1,4 @@
-package category
+package category_test
 
 import (
 	"context"
@@ -11,61 +11,43 @@ import (
 	"time"
 
 	cat "github.com/Neimess/zorkin-store-project/internal/domain/category"
+	categoryRepo "github.com/Neimess/zorkin-store-project/internal/infrastructure/category"
 	"github.com/Neimess/zorkin-store-project/pkg/app_error"
+	testsuite "github.com/Neimess/zorkin-store-project/pkg/database/test_suite"
+	"github.com/Neimess/zorkin-store-project/pkg/migrator"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/testcontainers/testcontainers-go"
 	t_log "github.com/testcontainers/testcontainers-go/log"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
-)
-
-const (
-	dbName = "testdb"
-	dbUser = "testuser"
-	dbPass = "testpass"
 )
 
 type CategoryRepositorySuite struct {
 	suite.Suite
-	container testcontainers.Container
-	db        *sqlx.DB
-	repo      *PGCategoryRepository
-	ctx       context.Context
+	db   *sqlx.DB
+	srv  *testsuite.TestServer
+	repo *categoryRepo.PGCategoryRepository
+	ctx  context.Context
 }
 
 func (s *CategoryRepositorySuite) SetupSuite() {
 	t_log.SetDefault(log.New(io.Discard, "", log.LstdFlags))
 
+	srv := testsuite.RunTestServer(s.T())
+	require.NotNil(s.T(), srv)
+
+	s.srv = srv
 	s.ctx = context.Background()
 
-	postgresContainer, err := postgres.Run(s.ctx, "postgres:15-alpine",
-		postgres.WithDatabase(dbName),
-		postgres.WithUsername(dbUser),
-		postgres.WithPassword(dbPass),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(2*time.Minute),
-		),
-	)
-	require.NoError(s.T(), err)
-	s.container = postgresContainer
+	require.NoError(s.T(), migrator.Run(srv.Cfg.Storage.DSN(), migrator.Options{Mode: migrator.Up}))
 
-	connStr, err := postgresContainer.ConnectionString(s.ctx, "sslmode=disable")
+	deps, err := categoryRepo.NewDeps(srv.App.DB(), slog.New(slog.NewTextHandler(io.Discard, nil)))
 	require.NoError(s.T(), err)
 
-	db, err := sqlx.Connect("postgres", connStr)
-	require.NoError(s.T(), err)
-	s.db = db
+	s.repo = categoryRepo.NewPGCategoryRepository(deps)
 
-	err = s.createSchema()
-	require.NoError(s.T(), err)
-
-	s.repo = NewPGCategoryRepository(Deps{db: s.db, log: slog.New(slog.DiscardHandler)})
+	s.db = srv.App.DB()
 }
 
 func (s *CategoryRepositorySuite) SetupTest() {
@@ -74,19 +56,6 @@ func (s *CategoryRepositorySuite) SetupTest() {
 
 func (s *CategoryRepositorySuite) TearDownSuite() {
 	_ = s.db.Close()
-	_ = s.container.Terminate(s.ctx)
-}
-
-func (s *CategoryRepositorySuite) createSchema() error {
-	schema := `
-	CREATE TABLE IF NOT EXISTS categories (
-		category_id BIGSERIAL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL UNIQUE,
-		parent_id BIGINT REFERENCES categories(category_id) ON DELETE CASCADE
-	);
-	`
-	_, err := s.db.Exec(schema)
-	return err
 }
 
 func (s *CategoryRepositorySuite) createCategory(name string) int64 {
@@ -107,7 +76,7 @@ func (s *CategoryRepositorySuite) Test_CreateAndGetByID() {
 }
 
 func (s *CategoryRepositorySuite) Test_GetByID_NotFound() {
-	_, err := s.repo.GetByID(s.ctx, 99999)
+	_, err := s.repo.GetByID(s.ctx, 30000)
 	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 
@@ -123,7 +92,7 @@ func (s *CategoryRepositorySuite) Test_Update() {
 }
 
 func (s *CategoryRepositorySuite) Test_Update_NotFound() {
-	categ := &cat.Category{ID: 99999, Name: "newname"}
+	categ := &cat.Category{ID: 30000, Name: "newname"}
 	_, err := s.repo.Update(s.ctx, categ)
 	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
@@ -139,7 +108,7 @@ func (s *CategoryRepositorySuite) Test_Delete() {
 }
 
 func (s *CategoryRepositorySuite) Test_Delete_NotFound() {
-	err := s.repo.Delete(s.ctx, 99999)
+	err := s.repo.Delete(s.ctx, 30000)
 	assert.ErrorIs(s.T(), err, app_error.ErrNotFound)
 }
 

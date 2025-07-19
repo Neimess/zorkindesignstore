@@ -167,6 +167,12 @@ export const productAPI = {
   getAll: () => apiRequest('/product'),
   getByCategory: (categoryId) => apiRequest(`/product/category/${categoryId}`),
 
+  getAdminById: (id, token) =>
+  apiRequest(`/admin/product/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }),
+
+
   create: (productData, token) =>
     apiRequest('/admin/product', {
       method: 'POST',

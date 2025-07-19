@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
-import StyleSelector from '../components/StyleSelector';
 import TelegramIcon from '../assets/telegram-icon.png';
 import { categoryAPI } from '../services/api'; // уже должен быть
-import { buildCategoryTree } from '../utils/buildCategoryTree';
 /**
  * Компонент главной страницы с конфигуратором
  *
@@ -15,7 +13,6 @@ import { buildCategoryTree } from '../utils/buildCategoryTree';
  */
 function MainPage({ products, styles }) {
   const [categories, setCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [showStyleModal, setShowStyleModal] = useState(false);
@@ -40,20 +37,6 @@ const subElements = categories.filter(c => String(c.parent_id) === String(select
     };
   }, [showStyleModal]);
 
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     try {
-  //       const flat = await categoryAPI.getAll(); // <-- если /category отдаёт parent_id
-  //       const tree = buildCategoryTree(flat);
-  //       console.log('🌲 tree:', tree);
-  //       setCategories(tree);
-  //     } catch (e) {
-  //       console.error('Ошибка при загрузке категорий:', e);
-  //     }
-  //   };
-
-  //   fetchCategories();
-  // }, []);
 // Получение плоского списка категорий
 useEffect(() => {
   const fetchCategories = async () => {
@@ -73,15 +56,6 @@ useEffect(() => {
    * Обработчик выбора категории
    * @param {number} category_id - ID категории
    */
-  const handleCategorySelect = (category_id) => {
-    if (selectedCategories.includes(category_id)) {
-      setSelectedCategories(
-        selectedCategories.filter((id) => id !== category_id),
-      );
-    } else {
-      setSelectedCategories([...selectedCategories, category_id]);
-    }
-  };
 
   /**
    * Обработчик выбора товара
@@ -150,20 +124,7 @@ useEffect(() => {
    * Обработчик выбора стиля
    * @param {Object} style - Объект стиля
    */
-  const handleStyleSelect = (style) => {
-    const newProducts = (style.items || [])
-      .map((item) => item.product)
-      .filter(
-        (product) =>
-          product && !selectedProducts.some((p) => p.product_id === product.id),
-      )
-      .map((product) => ({
-        ...product,
-        product_id: product.id,
-      }));
 
-    setSelectedProducts((prev) => [...prev, ...newProducts]);
-  };
 
   // Вычисляем общую стоимость выбранных товаров
   // const totalPrice = selectedProducts.reduce(

@@ -20,17 +20,7 @@ const parseAttributes = (input) => {
     };
   });
 };
-
-
-
     
-const parseServices = (input) => {
-  if (!input.trim()) return [];
-
-  return input.split(',').map((id) => ({
-    service_id: Number(id.trim())
-  }));
-};
 
 const stringifyAttributes = (arr = []) =>
   arr
@@ -41,8 +31,6 @@ const stringifyAttributes = (arr = []) =>
     })
     .join('; ');
 
-const stringifyServices = (arr = []) =>
-  arr.map((s) => `${s.id}:${s.name}:${s.description}:${s.price}`).join('; ');
 
 /* ============================================================
  * ProductManager
@@ -144,13 +132,6 @@ useEffect(() => {
     color: '#4ade80',
   };
  
-const prepareAttributes = (rawAttributes) => {
-  return rawAttributes.map((attr) => ({
-    name: attr.name.trim(),
-    unit: attr.unit.trim(),
-    value: attr.value.toString().trim(),
-  }));
-};
 
 const saveProduct = async () => {
   if (!form.name.trim() || !form.price) return;
@@ -164,28 +145,38 @@ const saveProduct = async () => {
       return;
     }
 
-    const rawAttributes = Array.isArray(form.attributes) ? form.attributes : [];
+  
     // Парсинг атрибутов
     // 🔻 внутри saveProduct (или где формируешь payload)
 const preparedAttributes = Array.isArray(form.attributes)
   ? form.attributes
   : parseAttributes(form.attributes);   // ← твой парсер строки "Цвет: белый"
 
-const attributesForApi = preparedAttributes.map(a => {
-  const attr = {
-    name: a.name.trim(),
-    value: a.value.trim(),
-  };
- 
+  const isUpdate = Boolean(editingId);
+const attributesForApi = preparedAttributes.map((a) => {
+  if (isUpdate) {
+    // В update unit всегда есть
+    return {
+      name: a.name?.trim() || '',
+      unit: (a.unit ?? '').trim(),
+      value: a.value?.toString().trim() || '',
+    };
+  } else {
+    // В create unit добавляется только если не пустой
+    const attr = {
+      name: a.name?.trim() || '',
+      value: a.value?.toString().trim() || '',
+    };
 
-  
-  // unit добавляем ТОЛЬКО если не пустая строка
-  if (a.unit && a.unit.trim().length > 0) {
-    attr.unit = a.unit.trim();
+    if (a.unit && a.unit.trim().length > 0) {
+      attr.unit = a.unit.trim();
+    }
+
+    return attr;
   }
-
-  return attr;
 });
+
+
 
 
 
@@ -200,16 +191,6 @@ const attributesForApi = preparedAttributes.map(a => {
 console.log('ATTR', preparedAttributes);
   console.log('SERV', preparedServices);
 
-  // Получаем допустимые attribute_id для выбранной подкатегории
-const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
-  .then(arr => {
-    console.log('API ATTRIBUTES:', arr);
-    return arr.map(a => a.id);
-  })
-  .catch(err => {
-    console.error('Ошибка получения атрибутов:', err);
-    return [];
-  });
 
 
 
@@ -233,22 +214,20 @@ const allowedAttrIds = await categoryAttributeAPI.getAll(subId)
   // console.log('payload:', payload);
 
     if (editingId) {
-      // -------- UPDATE ----------
-      
-      // UPDATE
-    const method = hasExtras ? 'updateDetailed' : 'update';
-    const updated = await productAPI.update(editingId, payload, token);
-      setProducts(prev =>
-        prev.map(p =>
-          getProductId(p) === editingId
-            ? { ...updated, categoryId: updated.category_id }
-            : p
-        )
-      );
-      showMessage('Товар обновлён');
-    } else {
+  const updated = await productAPI.update(editingId, payload, token);
+
+  setProducts(prev =>
+    prev.map(p =>
+      getProductId(p) === editingId
+        ? { ...updated, categoryId: updated.category_id }
+        : p
+    )
+  );
+
+  showMessage('Товар обновлён');
+}
+else {
       // -------- CREATE ----------
-      const method = hasExtras ? 'createDetailed' : 'create';
      const created = await productAPI.create(payload, token);
 
       if (!created?.product_id && !created?.id) {

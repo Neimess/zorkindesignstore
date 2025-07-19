@@ -26,12 +26,6 @@ function AdminPage({
   const [message, setMessage] = useState('');
   const [modalProducts, setModalProducts] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [categoryForm, setCategoryForm] = useState({
-    name: '',
-    type: 'room', // room | element | sub
-    parentRoom: '',
-    parentElement: '',
-  });
 
   const ADMIN_KEY = 'V2patTbDXS1wuqbqpyZGwg2vq70cem2wk3ElHO6y9l2FhfgNfN';
 

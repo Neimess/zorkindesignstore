@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify
 import requests
 from flask_cors import CORS
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={r"/send_order": {"origins": "*"}})
 
-BOT_TOKEN = '7674430759:AAGwZzc184Jwazd7ZpxFEVnCOkfjOCy9BOM'
-CHAT_ID = '436092326'
+BOT_TOKEN = os.getenv('TELEGRAM_TOKEN')
+CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 
 @app.route('/send_order', methods=['POST'])

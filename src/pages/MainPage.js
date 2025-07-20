@@ -82,13 +82,10 @@ const handleSendToTelegram = () => {
 
   const finalMessage = messageLines.join('\n');
 
-  fetch('https://api.telegram.org/bot<ТОКЕН>/sendMessage', {
+  fetch('http://127.0.0.1:5000/send_order', {   // <-- отправка на Python сервер
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: '<ID_ЧАТА>',
-      text: finalMessage,
-    }),
+    body: JSON.stringify({ message: finalMessage }),
   }).then(res => {
     if (res.ok) {
       alert('Отправлено в Telegram!');
@@ -97,6 +94,7 @@ const handleSendToTelegram = () => {
     }
   });
 };
+
 
 
 const [formData, setFormData] = useState({

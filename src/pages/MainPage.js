@@ -58,15 +58,35 @@ const handleOpenProductModal = async (product) => {
   }
 };
 
+
 const handleSendToTelegram = () => {
   const messageLines = [];
+  const totalProductsPrice = selectedProducts.reduce(
+  (sum, p) => sum + p.price * p.quantity,
+  0
+);
+
+const totalServicesPrice = serviceCart.reduce(
+  (sum, s) => sum + s.price * s.quantity,
+  0
+);
+
+const propertyTypeDisplay =
+  formData.propertyType === 'primary'
+    ? 'Первичный рынок'
+    : formData.propertyType === 'secondary'
+    ? 'Вторичный рынок'
+    : 'не указано';
+
+const totalPrice = totalProductsPrice + totalServicesPrice;
 
   messageLines.push('📋 Данные проекта:');
   messageLines.push(`• Площадь: ${formData.area} м²`);
-  messageLines.push(`• Тип недвижимости: ${formData.propertyType || 'не указано'}`);
+  messageLines.push(`• Тип недвижимости: ${propertyTypeDisplay}`);
   messageLines.push(`• Комнат: ${formData.rooms}`);
   messageLines.push(`• Санузлов: ${formData.bathrooms}`);
   messageLines.push('');
+  messageLines.push(`💰 Общая стоимость: ${totalPrice.toLocaleString()} ₽`);
 
   messageLines.push('🛒 Товары:');
   selectedProducts.forEach(p => {

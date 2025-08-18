@@ -54,8 +54,9 @@ useEffect(() => {
   const fetchServices = async () => {
     try {
       const token = await getAdminToken();
+      console.log('Получаем токен для сервисов:', token);
       if (!token) return;
-      const data = await serviceAPI.getAll(token); // <-- правильный API
+      const data = await serviceAPI.getAll(token);
       setAvailableServices(data || []);
     } catch (err) {
       console.error('Ошибка загрузки сервисов:', err);

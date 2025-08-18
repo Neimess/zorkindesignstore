@@ -49,24 +49,65 @@ const fetchCategories = async () => {
 };
 
   
-  const getAdminToken = async () => {
-    if (adminToken) return adminToken;
+// helpers
+const cleanKey = (val) => String(val || '').trim().replace(/\r|\n|"/g, '');
+const isJwtExpired = (tok) => {
+  try {
+    const [, p] = String(tok).split('.');
+    if (!p) return true;
+    const { exp } = JSON.parse(atob(p));
+    return typeof exp === 'number' && Date.now() / 1000 >= exp;
+  } catch {
+    return true;
+  }
+};
+const isLikelyJwt = (tok) => typeof tok === 'string' && tok.split('.').length === 3;
 
-    try {
-      setIsLoading(true);
-      const response = await authAPI.login(ADMIN_KEY);
-      const token = response.token;
-      tokenUtils.save(token);
-      setAdminToken(token);
-      return token;
-    } catch (error) {
-      console.error('Ошибка получения токена:', error);
-      showMessage('Ошибка авторизации', true);
-      return null;
-    } finally {
-      setIsLoading(false);
+const getAdminToken = async () => {
+  // 1) если в памяти есть неистёкший токен — используем его
+  if (adminToken && !isJwtExpired(adminToken)) return adminToken;
+
+  // 2) санитайзим ключ
+  const ADMIN_KEY_CLEAN = cleanKey(ADMIN_KEY);
+  if (!ADMIN_KEY_CLEAN) {
+    console.error('ADMIN_KEY пустой/не задан');
+    showMessage('Админ-ключ не задан', true);
+    return null;
+  }
+
+  try {
+    setIsLoading(true);
+
+    // 3) логин — ВАЖНО: у axios токен обычно в response.data.token
+    const response = await authAPI.login(ADMIN_KEY_CLEAN);
+    const token = response?.data?.token ?? response?.token; // на случай своей обёртки
+
+    if (!token) throw new Error('Логин вернул пустой token');
+    if (!isLikelyJwt(token)) throw new Error('Получен токен неверного формата');
+
+    // 4) можно сразу отсечь просроченный токен (не должен быть, но вдруг)
+    if (isJwtExpired(token)) throw new Error('Получен протухший токен');
+
+    tokenUtils.save(token);
+    setAdminToken(token);
+    return token;
+  } catch (error) {
+    // полезные детали
+    const status = error?.response?.status;
+    const data = error?.response?.data;
+    console.error('Ошибка получения токена:', { status, data, error: String(error) });
+
+    // если сервер сказал "JWT is invalid" — чистим мусор и покажем понятное сообщение
+    if (status === 401) {
+      try { tokenUtils.clear?.(); } catch {}
     }
-  };
+    showMessage(`Ошибка авторизации${status ? ` (${status})` : ''}`, true);
+    return null;
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const showMessage = (msg, isError = false) => {
     setMessage({ text: msg, isError });

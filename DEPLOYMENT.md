@@ -6,10 +6,11 @@
 
 ```
 Клиент → NGINX (порт 80/443)
-           ├─→ /api/*     → Backend (Go API на порту 8080)
-           └─→ /*         → Frontend (React SPA на порту 80)
-                              ↓
-                         PostgreSQL (порт 5432)
+           ├─→ /api/*       → Backend (Go API на порту 8080)
+           ├─→ /telegram/*  → Telegram Bot (Python на порту 5000)
+           └─→ /*           → Frontend (React SPA на порту 80)
+                                ↓
+                           PostgreSQL (порт 5432)
 ```
 
 ## 🔧 Предварительные требования
@@ -73,6 +74,10 @@ ADMIN_CODE=your_admin_secret_code_12345
 # Frontend настройки
 REACT_APP_API_URL=/api
 
+# Telegram Bot настройки
+TELEGRAM_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+TELEGRAM_CHAT_ID=123456789
+
 # Домен вашего сервера (опционально)
 DOMAIN=yourdomain.com
 ```
@@ -80,6 +85,8 @@ DOMAIN=yourdomain.com
 **⚠️ ВАЖНО:** 
 - Используйте надежные пароли для production!
 - JWT_SECRET должен быть минимум 32 символа
+- Получите TELEGRAM_TOKEN от [@BotFather](https://t.me/BotFather)
+- Получите TELEGRAM_CHAT_ID от [@userinfobot](https://t.me/userinfobot)
 - Сохраните эти данные в безопасном месте
 
 ### 3. Собрать и запустить все сервисы
@@ -103,6 +110,9 @@ curl http://localhost/health
 
 # Проверить API
 curl http://localhost/api/health
+
+# Проверить Telegram Bot
+curl http://localhost/telegram/health
 
 # Проверить frontend
 curl http://localhost/
@@ -137,6 +147,12 @@ docker-compose -f docker-compose.prod.yaml up -d --build backend
 
 ```bash
 docker-compose -f docker-compose.prod.yaml up -d --build frontend
+```
+
+### Обновить только Telegram Bot
+
+```bash
+docker-compose -f docker-compose.prod.yaml up -d --build telegram-bot
 ```
 
 ## 🗄️ Управление базой данных
@@ -253,6 +269,9 @@ docker-compose -f docker-compose.prod.yaml logs -f postgres
 
 # NGINX
 docker-compose -f docker-compose.prod.yaml logs -f nginx
+
+# Telegram Bot
+docker-compose -f docker-compose.prod.yaml logs -f telegram-bot
 ```
 
 ### Проверить использование ресурсов
@@ -350,6 +369,13 @@ docker-compose -f docker-compose.prod.yaml build --build-arg REACT_APP_API_URL=/
 | `JWT_SECRET` | Секретный ключ для JWT | `secret_key_min_32_chars` |
 | `ADMIN_CODE` | Код для получения admin токена | `admin_code_123` |
 
+### Telegram Bot ENV переменные
+
+| Переменная | Описание | Пример |
+|-----------|----------|--------|
+| `TELEGRAM_TOKEN` | Токен бота от BotFather | `123456:ABC-DEF...` |
+| `TELEGRAM_CHAT_ID` | ID чата для уведомлений | `123456789` |
+
 ### Frontend ENV переменные
 
 | Переменная | Описание | Пример |
@@ -415,6 +441,7 @@ docker exec -it store-postgres psql -U storeuser -d zorkinstore
 | NGINX | 80, 443 | 80, 443 | Веб-сервер |
 | Backend | 8080 | - | API (доступен через NGINX) |
 | Frontend | 80 | - | React SPA (доступен через NGINX) |
+| Telegram Bot | 5000 | - | Python Flask (доступен через NGINX) |
 | PostgreSQL | 5432 | - | База данных (внутренняя сеть) |
 
 ## 📚 Дополнительные ресурсы

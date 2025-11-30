@@ -83,6 +83,35 @@ services:
       backend:
         condition: service_healthy
 
+  # Telegram Bot для обработки заказов
+  telegram-bot:
+    build:
+      context: ./backend/telegram-bot
+      dockerfile: Dockerfile
+    image: neimes/store-telegram-bot:latest
+    container_name: store-telegram-bot
+    restart: unless-stopped
+    networks: [store-net]
+    environment:
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command:
+      [
+        "gunicorn",
+        "--bind",
+        "0.0.0.0:5000",
+        "--workers",
+        "2",
+        "--timeout",
+        "30",
+        "bot:app",
+      ]
+
   # NGINX - единая точка входа
   nginx:
     image: nginx:1.25-alpine
@@ -90,6 +119,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - telegram-bot
     networks: [store-net]
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro

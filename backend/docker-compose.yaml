@@ -13,11 +13,11 @@ services:
     image: postgres:16
     container_name: store-postgres
     restart: unless-stopped
-    networks: [ store-net ]
+    networks: [store-net]
     environment:
-      POSTGRES_USER:   ${POSTGRES_USER}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB:     ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,7 +29,7 @@ services:
   migrate:
     image: neimes/store-migrate:latest
     container_name: store-migrate
-    networks: [ store-net ]
+    networks: [store-net]
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,7 +40,7 @@ services:
   backend:
     image: neimes/store-backend:latest
     container_name: store-backend
-    networks: [ store-net ]
+    networks: [store-net]
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -65,6 +65,33 @@ services:
       retries: 5
     command: ["--config=/configs/dev.yaml"]
 
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    container_name: store-telegram-bot
+    networks: [store-net]
+    environment:
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command:
+      [
+        "gunicorn",
+        "--bind",
+        "0.0.0.0:5000",
+        "--workers",
+        "2",
+        "--timeout",
+        "30",
+        "--reload",
+        "bot:app",
+      ]
 
   nginx:
     image: nginx:1.25-alpine
@@ -72,12 +99,12 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    networks: [ store-net ]
+      telegram-bot:
+        condition: service_healthy
+    networks: [store-net]
     volumes:
       - ./deployment/nginx/nginx.docker.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
       - "443:443"
     restart: unless-stopped
-
-

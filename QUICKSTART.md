@@ -29,6 +29,8 @@ POSTGRES_DB=zorkinstore
 JWT_SECRET=your_jwt_secret_min_32_chars_long
 ADMIN_CODE=your_admin_code
 REACT_APP_API_URL=/api
+TELEGRAM_TOKEN=123456:ABC-DEF...  # От @BotFather
+TELEGRAM_CHAT_ID=123456789         # От @userinfobot
 ```
 
 ### 4. Запустить
@@ -67,6 +69,7 @@ docker exec store-postgres pg_dump -U storeuser zorkinstore > backup.sql
 # Логи конкретного сервиса
 docker-compose -f docker-compose.prod.yaml logs -f backend
 docker-compose -f docker-compose.prod.yaml logs -f frontend
+docker-compose -f docker-compose.prod.yaml logs -f telegram-bot
 ```
 
 ## Структура портов

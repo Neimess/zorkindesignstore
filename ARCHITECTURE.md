@@ -11,35 +11,35 @@
                     │  Port 80/443   │
                     └────────┬───────┘
                              │
-        ┌────────────────────┼────────────────────┐
-        │       Docker Network: store-net         │
-        │                                          │
-        │  ┌─────────────────────────────────┐    │
-        │  │         NGINX Proxy             │    │
-        │  │      (store-nginx:80)           │    │
-        │  └──────┬───────────────┬──────────┘    │
-        │         │               │                │
-        │         │ /api/*        │ /*             │
-        │         │               │                │
-        │         ▼               ▼                │
-        │  ┌──────────┐    ┌──────────┐           │
-        │  │ Backend  │    │ Frontend │           │
-        │  │  Go API  │    │  React   │           │
-        │  │   :8080  │    │   :80    │           │
-        │  └────┬─────┘    └──────────┘           │
-        │       │                                  │
-        │       │ SQL queries                      │
-        │       ▼                                  │
-        │  ┌──────────┐                           │
-        │  │PostgreSQL│                           │
-        │  │   :5432  │                           │
-        │  └──────────┘                           │
-        │       ▲                                  │
-        │       │                                  │
-        │  ┌────┴─────┐                           │
-        │  │ Migrate  │ (выполняется при старте)  │
-        │  └──────────┘                           │
-        └──────────────────────────────────────────┘
+        ┌────────────────────┼────────────────────────────┐
+        │       Docker Network: store-net                 │
+        │                                                  │
+        │  ┌─────────────────────────────────────────┐    │
+        │  │         NGINX Proxy                     │    │
+        │  │      (store-nginx:80)                   │    │
+        │  └──┬──────────────┬────────────┬──────────┘    │
+        │     │              │            │                │
+        │     │ /api/*       │ /telegram/* │ /*            │
+        │     │              │            │                │
+        │     ▼              ▼            ▼                │
+        │  ┌─────────┐  ┌──────────┐ ┌──────────┐        │
+        │  │ Backend │  │Telegram  │ │ Frontend │        │
+        │  │  Go API │  │   Bot    │ │  React   │        │
+        │  │  :8080  │  │ Python   │ │   :80    │        │
+        │  └────┬────┘  │  :5000   │ └──────────┘        │
+        │       │       └──────────┘                      │
+        │       │ SQL queries                             │
+        │       ▼                                         │
+        │  ┌──────────┐                                  │
+        │  │PostgreSQL│                                  │
+        │  │   :5432  │                                  │
+        │  └──────────┘                                  │
+        │       ▲                                        │
+        │       │                                        │
+        │  ┌────┴─────┐                                 │
+        │  │ Migrate  │ (выполняется при старте)        │
+        │  └──────────┘                                 │
+        └────────────────────────────────────────────────┘
 ```
 
 ## Потоки данных
@@ -60,7 +60,18 @@ React App → NGINX:80 (/api/*) → Backend:8080 → PostgreSQL:5432
                                Backend → NGINX → React
 ```
 
-### 3. Первый запуск системы
+### 3. Frontend отправляет заказ в Telegram (/telegram/*)
+```
+React App → NGINX:80 (/telegram/send_order) → Telegram Bot:5000
+                                                      ↓
+                                              Telegram API
+                                                      ↓
+                                               Notification sent
+                                                      ↓
+                                            Response → NGINX → React
+```
+
+### 4. Первый запуск системы
 ```
 1. Docker Compose запускает PostgreSQL
 2. PostgreSQL health check проходит успешно
@@ -68,7 +79,9 @@ React App → NGINX:80 (/api/*) → Backend:8080 → PostgreSQL:5432
 4. После успешной миграции запускается Backend
 5. Backend health check проходит
 6. Запускается Frontend
-7. Запускается NGINX и начинает принимать запросы
+7. Запускается Telegram Bot
+8. Telegram Bot health check проходит
+9. Запускается NGINX и начинает принимать запросы
 ```
 
 ## Переменные окружения
@@ -81,6 +94,10 @@ React App → NGINX:80 (/api/*) → Backend:8080 → PostgreSQL:5432
 
 ### Frontend контейнер собирается с:
 - `REACT_APP_API_URL=/api` - относительный путь к API
+
+### Telegram Bot контейнер получает:
+- `TELEGRAM_TOKEN` - токен бота от BotFather
+- `TELEGRAM_CHAT_ID` - ID чата для отправки уведомлений
 
 ### PostgreSQL получает:
 - `POSTGRES_USER` - пользователь БД
@@ -102,6 +119,7 @@ store-net (bridge):
   ├─ postgres:5432
   ├─ backend:8080
   ├─ frontend:80
+  ├─ telegram-bot:5000
   └─ nginx:80,443
 ```
 
@@ -113,5 +131,7 @@ store-net (bridge):
 ✅ PostgreSQL не доступен извне (нет port mapping)
 ✅ Backend не доступен напрямую (только через NGINX)
 ✅ Frontend не доступен напрямую (только через NGINX)
+✅ Telegram Bot не доступен напрямую (только через NGINX)
 ✅ Единственная точка входа - NGINX на портах 80/443
 ✅ Все секреты в .env файле (не в репозитории)
+✅ TELEGRAM_TOKEN защищен переменными окружения

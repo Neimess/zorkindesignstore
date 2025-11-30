@@ -1,0 +1,100 @@
+name: zorkin-store-production
+
+networks:
+  store-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+services:
+  # База данных PostgreSQL
+  postgres:
+    image: postgres:16
+    container_name: store-postgres
+    restart: unless-stopped
+    networks: [store-net]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 15s
+      retries: 10
+
+  # Миграция базы данных
+  migrate:
+    image: neimes/store-migrate:latest
+    container_name: store-migrate
+    networks: [store-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+    command: ["-up"]
+    restart: "no"
+
+  # Backend API
+  backend:
+    image: neimes/store-backend:latest
+    container_name: store-backend
+    networks: [store-net]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      ENV: production
+      STORAGE_USER: ${POSTGRES_USER}
+      STORAGE_PASSWORD: ${POSTGRES_PASSWORD}
+      STORAGE_DBNAME: ${POSTGRES_DB}
+      STORAGE_PORT: 5432
+      STORAGE_HOST: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_CODE: ${ADMIN_CODE}
+    volumes:
+      - ./backend/configs:/app/configs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command: ["--config=/app/configs/prod.yaml"]
+
+  # Frontend React приложение
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-/api}
+    image: neimes/store-frontend:latest
+    container_name: store-frontend
+    restart: unless-stopped
+    networks: [store-net]
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # NGINX - единая точка входа
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: store-nginx
+    depends_on:
+      - backend
+      - frontend
+    networks: [store-net]
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro # если используете SSL сертификаты
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped

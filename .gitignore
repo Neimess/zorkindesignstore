@@ -1,1 +1,33 @@
-.vscode
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# SSL certificates
+nginx/ssl/*
+!nginx/ssl/.gitkeep
+
+# Backups
+*.sql
+*.sql.gz
+backup_*
+
+# Docker volumes
+postgres_data/
+pgadmin-data/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

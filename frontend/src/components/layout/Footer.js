@@ -202,7 +202,7 @@ function Footer() {
           textAlign: 'center',
         }}
       >
-        © 2023 ROYAL INTERIORS. Все права защищены.
+        © 2023 RemCents Все права защищены.
       </div>
     </footer>
   );
